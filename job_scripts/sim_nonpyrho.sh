@@ -10,16 +10,6 @@
 #           sim_nonpyrho.sh
 ###############################################################################
 
-#SBATCH --time=1-00:00:00
-#SBATCH --cpus-per-task=1
-#SBATCH --mem=8G
-#SBATCH --partition=qcb
-#SBATCH --account=jazlynmo_738
-#SBATCH --nodes=1
-#SBATCH --output=/home1/karatas/logs/sim.%A_%a.%x.out
-#SBATCH --error=/home1/karatas/logs/sim.%A_%a.%x.err
-#SBATCH --mail-type=ALL
-#SBATCH --mail-user=karatas@usc.edu
 
 set -euo pipefail
 module purge
@@ -33,31 +23,31 @@ source /home1/karatas/ibd_compare/other_scripts/log_msg.sh
 : "${SLURM_ARRAY_TASK_ID:?ERROR: run as a Slurm array}"
 
 # inputs
-TREE_DIR="$1"
-SAMPLE_SIZE="$2"
-NUM_REPS="$3"
-MSPRIME_MODEL="$4"
-DEMO_MODEL="$5"
-CHR="$6"
+tree_dir="$1"
+sample_size="$2"
+num_reps="$3"
+msprime_model="$4"
+demo_model="$5"
+chr="$6"
 shift 6
 # decode task id to which map + replicate
-MAPS=( "$@" )
-if [[ ${#MAPS[@]} -eq 0 ]]; then
+maps=( "$@" )
+if [[ ${#maps[@]} -eq 0 ]]; then
   echo "ERROR: no GMAPs provided (after shifting args)" >&2
   exit 1
 fi
 tid="${SLURM_ARRAY_TASK_ID}"
-map_idx=$(( (tid - 1) / NUM_REPS ))      # 0..n_maps-1
-rep_id=$(( (tid - 1) % NUM_REPS + 1 ))   # 1..NUM_REPS
-if (( map_idx < 0 || map_idx >= ${#MAPS[@]} )); then
-  echo "ERROR: task ${tid} produced map_idx=${map_idx}, but n_maps=${#MAPS[@]}" >&2
+map_idx=$(( (tid - 1) / num_reps ))      # 0..n_maps-1
+rep_id=$(( (tid - 1) % num_reps + 1 ))   # 1..num_reps
+if (( map_idx < 0 || map_idx >= ${#maps[@]} )); then
+  echo "ERROR: task ${tid} produced map_idx=${map_idx}, but n_maps=${#maps[@]}" >&2
   exit 1
 fi
-gmap="${MAPS[$map_idx]}"
+gmap="${maps[$map_idx]}"
 seed="${rep_id}"
 
 # check if this task was already completed; if so, skip
-out_ts="${TREE_DIR}/${gmap}_${seed}_all.ts"
+out_ts="${tree_dir}/${gmap}_${seed}_all.ts"
 if [[ -s "${out_ts}.tsz" ]]; then
   log_msg "outputs exist (${out_ts}.tsz); skipping"
   exit 0
@@ -65,35 +55,35 @@ fi
 
 # define sampling specification
 sample_spec=(
-  "AFR:${SAMPLE_SIZE}"
-  "EUR:${SAMPLE_SIZE}"
-  "ASIA:${SAMPLE_SIZE}"
-  "ADMIX:${SAMPLE_SIZE}"
+  "AFR:${sample_size}"
+  "EUR:${sample_size}"
+  "ASIA:${sample_size}"
+  "ADMIX:${sample_size}"
 )
 
-mkdir -p "${TREE_DIR}"
+mkdir -p "${tree_dir}"
 
 log_msg "stdpopsim sim (combined array)
-TASK_ID=${tid}
-GMAP=${gmap} (map_idx=${map_idx}/${#MAPS[@]})
-SEED=${seed}
-TREE_DIR=${TREE_DIR}
-SAMPLE_SIZE=${SAMPLE_SIZE}
-MODEL=${MSPRIME_MODEL}
+task_id=${tid}
+gmap=${gmap} (map_idx=${map_idx}/${#maps[@]})
+seed=${seed}
+tree_dir=${tree_dir}
+sample_size=${sample_size}
+model=${msprime_model}
 sample_spec=${sample_spec[*]}"
 
 # run stdpopsim (adjust specifications here)
 if [[ "${gmap}" == *DefaultUniform* ]]; then
-  stdpopsim -v -e msprime --msprime-model "$MSPRIME_MODEL" \
-    HomSap -s "$seed" -c "chr${CHR}" \
+  stdpopsim -v -e msprime --msprime-model "$msprime_model" \
+    HomSap -s "$seed" -c "chr${chr}" \
     -o "$out_ts" \
-    -d "$DEMO_MODEL" \
+    -d "$demo_model" \
     "${sample_spec[@]}"
 else
-  stdpopsim -v -e msprime --msprime-model "$MSPRIME_MODEL" \
-    HomSap -s "$seed" -g "$gmap" -c "chr${CHR}" \
+  stdpopsim -v -e msprime --msprime-model "$msprime_model" \
+    HomSap -s "$seed" -g "$gmap" -c "chr${chr}" \
     -o "$out_ts" \
-    -d "$DEMO_MODEL" \
+    -d "$demo_model" \
     "${sample_spec[@]}"
 fi
 

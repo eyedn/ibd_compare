@@ -1,3 +1,14 @@
+###############################################################################
+#           Aydin Loid Karatas
+#           ---
+#           University of Southern California
+#           Department of Quantitative and Computational Biology
+#           Mooney Lab
+#           ---
+#           __init__.py
+###############################################################################
+
+
 from .build_ooaa_demography import build_ooaa_demography
 from .build_sampling_set import build_sample_sets
 from .get_contig import get_contig

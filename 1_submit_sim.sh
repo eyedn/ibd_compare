@@ -7,38 +7,46 @@
 #           Department of Quantitative and Computational Biology 
 #           Mooney Lab
 #           ---
-#           submit_sim.sh
+#           1_submit_sim.sh
 ###############################################################################
+
 
 set -euo pipefail
 source /home1/karatas/ibd_compare/other_scripts/const.sh
 source /home1/karatas/ibd_compare/other_scripts/log_msg.sh
 
 # NOTE:  sim. specs in /home1/karatas/ibd_compare/const.sh
-TOTAL_TASKS=$(( NUM_REPS * ${#TMAPS[@]} ))
+total_tasks=$(( NUM_REPS * ${#TMAPS[@]} ))
 log_msg "Detected sim specifications
-OUTDIR=${OUTDIR}
-NUM_REPS=${NUM_REPS}
-SAMPLE_SIZE=${SAMPLE_SIZE}
-TREE_DIR=${TREE_DIR}
-MSPRIME_MODEL=${MSPRIME_MODEL}
-ANC_DIR=${ANC_DIR}
-CHR=${CHR}
-TOTAL_TASKS=${TOTAL_TASKS} (per job array)"
+outdir=${OUTDIR}
+num_reps=${NUM_REPS}
+sample_size=${SAMPLE_SIZE}
+tree_dir=${TREE_DIR}
+msprime_model=${MSPRIME_MODEL}
+anc_dir=${ANC_DIR}
+chr=${CHR}
+total_tasks=${total_tasks} (per job array)"
 
 # submit sims
-TOTAL_TASKS=$(( NUM_REPS * ${#TMAPS[@]} ))
+total_tasks=$(( NUM_REPS * ${#TMAPS[@]} ))
 sim_jid=$(sbatch \
     --parsable \
     --chdir=/home1/karatas/ibd_compare \
     --exclude=d11-05,d11-06,d11-07,b23-11,b23-13,b18-08 \
     --job-name="sim" \
-    --array="1-${TOTAL_TASKS}%${MAX_JOBS}" \
+    --array="1-${total_tasks}%${MAX_JOBS}" \
     "job_scripts/sim_ooaa.sh" \
         "$TREE_DIR" "$SAMPLE_SIZE" "$NUM_REPS" \
         "$MSPRIME_MODEL" "$CHR" \
+        "$GENERATION_TIME" "$MUTATION_RATE" \
+        "$T_AF_YEARS" "$T_OOA_YEARS" "$T_EU0_YEARS" "$T_EG_YEARS" \
+        "$R_EU0" "$R_EU" "$R_AF" \
+        "$N_A" "$N_AF1" "$N_B" "$N_EU0" \
+        "$M_AF_B" "$M_AF_EU" \
         "$ADMIXTURE_TIME" "$AFR_PROP" "$EUR_PROP" \
-        "$ADMIX_INITIAL_SIZE" "$ADMIX_GROWTH_RATE" "$CENSUS_TIME_OFFSET" \
+        "$ADMIX_INITIAL_SIZE" "$ADMIX_GROWTH_RATE_1" \
+        "$ADMIX_GROWTH_RATE_2" "$ADMIX_GROWTH_RATE_2_CHANGE_TIME" \
+        "$CENSUS_TIME_OFFSET" \
         "${TMAPS[@]}"
 )
 log_msg "submitted combined sim array; jid=${sim_jid}"
@@ -49,7 +57,7 @@ anc_jid=$(sbatch \
     --exclude=d11-05,d11-06,d11-07,b23-11,b23-13,b18-08 \
     --dependency=afterok:${sim_jid} \
     --job-name="anc" \
-    --array="1-${TOTAL_TASKS}%${MAX_JOBS}" \
+    --array="1-${total_tasks}%${MAX_JOBS}" \
     "job_scripts/get_local_ancestry.sh" \
         "$TREE_DIR" \
         "$ANC_DIR" \
@@ -65,14 +73,14 @@ anc_jid=$(sbatch \
 log_msg "local ancestry array for each pop and map; jid=${anc_jid}; dep on ${sim_jid}"
 
 # subset vcf file by population
-TOTAL_TASKS=$(( NUM_REPS * ${#TMAPS[@]} ))
+total_tasks=$(( NUM_REPS * ${#TMAPS[@]} ))
 subset_jid=$(sbatch \
     --parsable \
     --chdir=/home1/karatas/ibd_compare \
     --exclude=d11-05,d11-06,d11-07,b23-11,b23-13,b18-08 \
     --dependency=afterok:${sim_jid} \
     --job-name="sub" \
-    --array="1-${TOTAL_TASKS}%${MAX_JOBS}" \
+    --array="1-${total_tasks}%${MAX_JOBS}" \
     "job_scripts/subset_ts.sh" \
         "$TREE_DIR" \
         "$VCF_DIR" \
@@ -93,7 +101,7 @@ unrel_jid=$(sbatch \
     --exclude=d11-05,d11-06,d11-07,b23-11,b23-13,b18-08 \
     --dependency=afterok:${subset_jid} \
     --job-name="unrel" \
-    --array="1-${TOTAL_TASKS}%${MAX_JOBS}" \
+    --array="1-${total_tasks}%${MAX_JOBS}" \
     "job_scripts/get_unrels.sh" \
         "$KIN_CUTOFF" \
         "$VCF_DIR" \

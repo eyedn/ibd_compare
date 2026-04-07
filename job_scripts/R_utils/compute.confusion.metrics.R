@@ -8,6 +8,7 @@
 # compute.confusion.metrics.R
 # ______________________________________________________________________________
 
+
 library(tidyverse)
 
 compute.confusion.metrics <- function(
@@ -23,55 +24,55 @@ compute.confusion.metrics <- function(
   tot.pos.hap.pairs <- 4 * choose(n.diploids, 2)
   
   # true positive bp: overlapped portion of true IBD segments
-  TP <- as.numeric(sum(as.numeric(cov.res$bp.cov), na.rm = TRUE))
+  tp <- as.numeric(sum(as.numeric(cov.res$bp.cov), na.rm = TRUE))
   
   # false negative bp: un-covered portion of true IBD segments
-  FN <- as.numeric(
+  fn <- as.numeric(
     sum(as.numeric(cov.res$bp.len - cov.res$bp.cov), na.rm = TRUE)
     )
   
   # false positive bp: inferred bp that do NOT overlap any true segment
   total.infer.bp <- if (nrow(inf.ibd) == 0) 0 else
     sum(as.numeric(inf.ibd$bp.len), na.rm = TRUE)
-  FP <- total.infer.bp - TP
-  FP <- as.numeric(pmax(FP, 0))
+  fp <- total.infer.bp - tp
+  fp <- as.numeric(pmax(fp, 0))
   
   # true negative: everything else
   total.bp.space <- as.numeric(region.len.bp) * as.numeric(tot.pos.hap.pairs)
-  TN <- total.bp.space - TP - FN - FP
-  TN <- as.numeric(pmax(TN, 0))
+  tn <- total.bp.space - tp - fn - fp
+  tn <- as.numeric(pmax(tn, 0))
   
   # derive confusion matrix metrics (NA-safe, numeric)
-  den_TP_FN <- TP + FN
-  den_TN_FP <- TN + FP
-  den_TP_FP <- TP + FP
-  den_TN_FN <- TN + FN
-  den_FP_TN <- FP + TN
-  den_ALL   <- TP + TN + FP + FN
+  den.tp.fn <- tp + fn
+  den.tn.fp <- tn + fp
+  den.tp.fp <- tp + fp
+  den.tn.fn <- tn + fn
+  den.fp.tn <- fp + tn
+  den.all   <- tp + tn + fp + fn
   
   sensitivity <- 
-    if (!is.na(den_TP_FN) && den_TP_FN > 0) TP / den_TP_FN else NA_real_
+    if (!is.na(den.tp.fn) && den.tp.fn > 0) tp / den.tp.fn else NA_real_
   specificity <- 
-    if (!is.na(den_TN_FP) && den_TN_FP > 0) TN / den_TN_FP else NA_real_
-  PPV <- 
-    if (!is.na(den_TP_FP) && den_TP_FP > 0) TP / den_TP_FP else NA_real_
-  NPV <- 
-    if (!is.na(den_TN_FN) && den_TN_FN > 0) TN / den_TN_FN else NA_real_
-  FPR <- 
-    if (!is.na(den_FP_TN) && den_FP_TN > 0) FP / den_FP_TN else NA_real_
+    if (!is.na(den.tn.fp) && den.tn.fp > 0) tn / den.tn.fp else NA_real_
+  ppv <- 
+    if (!is.na(den.tp.fp) && den.tp.fp > 0) tp / den.tp.fp else NA_real_
+  npv <- 
+    if (!is.na(den.tn.fn) && den.tn.fn > 0) tn / den.tn.fn else NA_real_
+  fpr <- 
+    if (!is.na(den.fp.tn) && den.fp.tn > 0) fp / den.fp.tn else NA_real_
   accuracy <- 
-    if (!is.na(den_ALL)   && den_ALL   > 0) (TP + TN) / den_ALL else NA_real_
+    if (!is.na(den.all)   && den.all   > 0) (tp + tn) / den.all else NA_real_
   
   data.frame(
-    "TP" = as.numeric(TP),
-    "FN" = as.numeric(FN),
-    "FP" = as.numeric(FP),
-    "TN" = as.numeric(TN),
+    "tp" = as.numeric(tp),
+    "fn" = as.numeric(fn),
+    "fp" = as.numeric(fp),
+    "tn" = as.numeric(tn),
     "sensitivity" = sensitivity,
     "specificity" = specificity,
-    "PPV" = PPV,
-    "NPV" = NPV,
-    "FPR" = FPR,
+    "ppv" = ppv,
+    "npv" = npv,
+    "fpr" = fpr,
     "accuracy" = accuracy
     )
 }

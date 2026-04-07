@@ -8,6 +8,7 @@
 # count.polytomies.R
 # ______________________________________________________________________________
 
+
 count.polytomies <- function(tr) {
   
   stopifnot(inherits(tr, "phylo"))

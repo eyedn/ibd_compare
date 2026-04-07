@@ -1,12 +1,12 @@
-# ______________________________________________________________________________
-# Aydin Karatas
-# ___
-# University of Southern California
-# Department of Quantitative and Computational Biology
-# Mooney Lab
-# ___
-# phase_of_node.py
-# ______________________________________________________________________________
+###############################################################################
+#           Aydin Loid Karatas
+#           ---
+#           University of Southern California
+#           Department of Quantitative and Computational Biology
+#           Mooney Lab
+#           ---
+#           phase_of_node.py
+###############################################################################
 
 
 def phase_of_node(u: int, node_to_individual, ind_to_samples) -> int:

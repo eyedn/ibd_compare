@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 ###############################################################################
 #           Aydin Loid Karatas
 #           ---
@@ -10,12 +8,13 @@
 #           get_true_ibd.py
 ###############################################################################
 
+
 from sys import argv
 
+from python_utils import log_msg
 from python_utils.get_true_ibd_utils import (
     extend_haplotypes,
     load_and_subset_ts,
-    log_msg,
     write_ibd_segments,
 )
 

@@ -1,12 +1,13 @@
 # ______________________________________________________________________________
 # Aydin Karatas
 # ___
-# University of Southern California 
+# University of Southern California
 # Department of Quantitative and Computational Biology 
-# Mooney Lab 
+# Mooney Lab
 # ___
 # boot.mean.ci.R
 # ______________________________________________________________________________
+
 
 boot.mean.ci <- function(x, R = 1000, conf = 0.95) {
   x <- x[is.finite(x)]

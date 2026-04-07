@@ -4,22 +4,12 @@
 #           Aydin Loid Karatas
 #           ---
 #           University of Southern California
-#           Department of Quantitative and Computational Biology
+#           Department of Quantitative and Computational Biology 
 #           Mooney Lab
 #           ---
 #           get_local_ancestry.sh
 ###############################################################################
 
-#SBATCH --cpus-per-task=1
-#SBATCH --mem=8G
-#SBATCH --time=1-00:00:00
-#SBATCH --partition=qcb
-#SBATCH --account=jazlynmo_738
-#SBATCH --nodes=1
-#SBATCH --output=/home1/karatas/logs/slurm.%A_%a.%x.out
-#SBATCH --error=/home1/karatas/logs/slurm.%A_%a.%x.err
-#SBATCH --mail-type=ALL
-#SBATCH --mail-user=karatas@usc.edu
 
 set -euo pipefail
 
@@ -32,43 +22,43 @@ source /home1/karatas/ibd_compare/other_scripts/log_msg.sh
 
 : "${SLURM_ARRAY_TASK_ID:?ERROR: run as a Slurm array}"
 
-TREE_DIR="$1"
-ANC_DIR="$2"
-CHR="$3"
-SAMPLE_SIZE="$4"
-ADMIXTURE_TIME="$5"
-CENSUS_TIME_OFFSET="$6"
-NUM_REPS="$7"
+tree_dir="$1"
+anc_dir="$2"
+chr="$3"
+sample_size="$4"
+admixture_time="$5"
+census_time_offset="$6"
+num_reps="$7"
 shift 7
 
-MAPS=()
+maps=()
 while [[ $# -gt 0 && "$1" != "--" ]]; do
-    MAPS+=( "$1" )
+    maps+=( "$1" )
     shift
 done
 shift 1
-POPS=( "$@" )
+pops=( "$@" )
 
-if [[ ${#MAPS[@]} -eq 0 ]]; then
-    echo "ERROR: no MAPS provided" >&2
+if [[ ${#maps[@]} -eq 0 ]]; then
+    echo "ERROR: no maps provided" >&2
     exit 1
 fi
-if [[ ${#POPS[@]} -eq 0 ]]; then
-    echo "ERROR: no POPS provided" >&2
+if [[ ${#pops[@]} -eq 0 ]]; then
+    echo "ERROR: no pops provided" >&2
     exit 1
 fi
 
 tid="${SLURM_ARRAY_TASK_ID}"
-map_idx=$(( (tid - 1) / NUM_REPS ))
-rep_id=$(( (tid - 1) % NUM_REPS + 1 ))
-if (( map_idx < 0 || map_idx >= ${#MAPS[@]} )); then
-    echo "ERROR: task ${tid} produced map_idx=${map_idx}, but n_maps=${#MAPS[@]}" >&2
+map_idx=$(( (tid - 1) / num_reps ))
+rep_id=$(( (tid - 1) % num_reps + 1 ))
+if (( map_idx < 0 || map_idx >= ${#maps[@]} )); then
+    echo "ERROR: task ${tid} produced map_idx=${map_idx}, but n_maps=${#maps[@]}" >&2
     exit 1
 fi
-gmap="${MAPS[$map_idx]}"
+gmap="${maps[$map_idx]}"
 seed="${rep_id}"
 
-in_ts="${TREE_DIR}/${gmap}_${seed}_all.ts"
+in_ts="${tree_dir}/${gmap}_${seed}_all.ts"
 if [[ -s "${in_ts}.tsz" ]]; then
     log_msg "found compressed ts (${in_ts}.tsz); unzipping"
     tsunzip "${in_ts}.tsz"
@@ -79,30 +69,30 @@ else
     exit 1
 fi
 
-mkdir -p "${ANC_DIR}"
+mkdir -p "${anc_dir}"
 log_msg "local ancestry task
-TASK_ID=${tid}
-GMAP=${gmap}
-SEED=${seed}
-CHR=${CHR}
-SAMPLE_SIZE=${SAMPLE_SIZE}
-POPS=${POPS[*]}"
+task_id=${tid}
+gmap=${gmap}
+seed=${seed}
+chr=${chr}
+sample_size=${sample_size}
+pops=${pops[*]}"
 
-for idx in "${!POPS[@]}"; do
-    pop="${POPS[$idx]}"
-    start=$(( idx * SAMPLE_SIZE ))
-    end=$(( (idx + 1) * SAMPLE_SIZE - 1 ))
-    out_tsv="${ANC_DIR}/${gmap}_${seed}_${pop}.tsv"
+for idx in "${!pops[@]}"; do
+    pop="${pops[$idx]}"
+    start=$(( idx * sample_size ))
+    end=$(( (idx + 1) * sample_size - 1 ))
+    out_tsv="${anc_dir}/${gmap}_${seed}_${pop}.tsv"
 
     python /home1/karatas/ibd_compare/job_scripts/get_local_ancestry.py \
         "${in_ts}" \
         "${out_tsv}" \
-        "${CHR}" \
+        "${chr}" \
         "${pop}" \
         "${start}" \
         "${end}" \
-        "${ADMIXTURE_TIME}" \
-        "${CENSUS_TIME_OFFSET}"
+        "${admixture_time}" \
+        "${census_time_offset}"
 done
 
 log_msg "rezipping input tree sequence to ${in_ts}.tsz"

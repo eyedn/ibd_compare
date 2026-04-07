@@ -1,12 +1,13 @@
 # ______________________________________________________________________________
 # Aydin Karatas
-# ---
+# ___
 # University of Southern California
 # Department of Quantitative and Computational Biology 
 # Mooney Lab
 # ___
 # subset.replicate.R
-###############################################################################
+# ______________________________________________________________________________
+
 
 library(tidyverse)
 

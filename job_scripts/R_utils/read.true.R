@@ -8,8 +8,9 @@
 # read.true.R
 # ______________________________________________________________________________
 
+
 library(tidyverse)
-source("job_scripts/R_utils/interp.cM.R")
+source("job_scripts/R_utils/interp.cm.R")
 
 read.true <- function(true.fname,  min.bp.len = 0, min.cM.len = 0, gmap) {
   # read in true segments
@@ -50,8 +51,8 @@ read.true <- function(true.fname,  min.bp.len = 0, min.cM.len = 0, gmap) {
   # generate cM.str and cM.end for each ibd call using linear interpolation
   true.segs <- true.segs %>%
     mutate(
-      cM.str = interp.cM(bp.str, true.gmap$bp, true.gmap$cM),
-      cM.end = interp.cM(bp.end, true.gmap$bp, true.gmap$cM),
+      cM.str = interp.cm(bp.str, true.gmap$bp, true.gmap$cM),
+      cM.end = interp.cm(bp.end, true.gmap$bp, true.gmap$cM),
       cM.len = cM.end - cM.str
     )
   

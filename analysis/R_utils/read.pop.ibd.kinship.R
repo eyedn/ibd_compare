@@ -1,12 +1,13 @@
 # ______________________________________________________________________________
-# Aydin Karatas 
+# Aydin Karatas
 # ___
-# University of Southern California 
+# University of Southern California
 # Department of Quantitative and Computational Biology 
-# Mooney Lab 
+# Mooney Lab
 # ___
-# read.pop.ibd.kinship.R 
+# read.pop.ibd.kinship.R
 # ______________________________________________________________________________
+
 
 library(tidyverse)
 library(furrr)
@@ -74,7 +75,7 @@ read.pop.ibd.kinship <- function(focal.pop, dir.paths.map, cores,
         f     <- file.tbl$file[i]
         fname <- basename(f)
         
-        # parse: {true|inf}_{POP}_{REP}.{FILT}.rds
+        # parse: {true|inf}_{pop}_{REP}.{filt}.rds
         m <- str_match(fname, "^(true|inf)_([^_]+)_(\\d+)\\.([^.]+)\\.rds$")
         pop  <- m[, 3]
         rep  <- as.integer(m[, 4])

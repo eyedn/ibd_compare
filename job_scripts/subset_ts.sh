@@ -4,22 +4,12 @@
 #           Aydin Loid Karatas
 #           ---
 #           University of Southern California
-#           Department of Quantitative and Computational Biology
+#           Department of Quantitative and Computational Biology 
 #           Mooney Lab
 #           ---
 #           subset_ts.sh
 ###############################################################################
 
-#SBATCH --cpus-per-task=4
-#SBATCH --mem=4G
-#SBATCH --time=1-00:00:00
-#SBATCH --partition=qcb
-#SBATCH --account=jazlynmo_738
-#SBATCH --nodes=1
-#SBATCH --output=/home1/karatas/logs/slurm.%A_%a.%x.out
-#SBATCH --error=/home1/karatas/logs/slurm.%A_%a.%x.err
-#SBATCH --mail-type=ALL
-#SBATCH --mail-user=karatas@usc.edu
 
 set -euo pipefail
 module purge
@@ -30,53 +20,53 @@ export PATH="/home1/karatas/.conda/envs/stdpopsim/bin:$PATH"
 source /home1/karatas/ibd_compare/other_scripts/log_msg.sh
 
 : "${SLURM_ARRAY_TASK_ID:?ERROR: run as a Slurm array}"
-THREADS="${SLURM_CPUS_PER_TASK:-1}"
+threads="${SLURM_CPUS_PER_TASK:-1}"
 
 # inputs
-TREE_DIR="$1"
-VCF_DIR="$2"
-POP_INFO_DIR="$3"
-CHR="$4"
-SAMPLE_SIZE="$5"
-NUM_REPS="$6"
+tree_dir="$1"
+vcf_dir="$2"
+pop_info_dir="$3"
+chr="$4"
+sample_size="$5"
+num_reps="$6"
 shift 6
 
-# read MAPS until "--", then read POPS after
-MAPS=()
+# read maps until "--", then read pops after
+maps=()
 while [[ $# -gt 0 && "$1" != "--" ]]; do
-    MAPS+=( "$1" )
+    maps+=( "$1" )
     shift
 done
 if [[ $# -eq 0 ]]; then
-    echo "ERROR: expected '--' separator between MAPS and POPS" >&2
+    echo "ERROR: expected '--' separator between maps and pops" >&2
     exit 1
 fi
 shift 1
-POPS=( "$@" )
+pops=( "$@" )
 
-if [[ ${#MAPS[@]} -eq 0 ]]; then
-    echo "ERROR: no MAPS provided" >&2
+if [[ ${#maps[@]} -eq 0 ]]; then
+    echo "ERROR: no maps provided" >&2
     exit 1
 fi
-if [[ ${#POPS[@]} -eq 0 ]]; then
-    echo "ERROR: no POPS provided" >&2
+if [[ ${#pops[@]} -eq 0 ]]; then
+    echo "ERROR: no pops provided" >&2
     exit 1
 fi
 
 tid="${SLURM_ARRAY_TASK_ID}"
-map_idx=$(( (tid - 1) / NUM_REPS ))
-rep_id=$(( (tid - 1) % NUM_REPS + 1 ))
+map_idx=$(( (tid - 1) / num_reps ))
+rep_id=$(( (tid - 1) % num_reps + 1 ))
 
-if (( map_idx < 0 || map_idx >= ${#MAPS[@]} )); then
-    echo "ERROR: task ${tid} produced map_idx=${map_idx}, but n_maps=${#MAPS[@]}" >&2
+if (( map_idx < 0 || map_idx >= ${#maps[@]} )); then
+    echo "ERROR: task ${tid} produced map_idx=${map_idx}, but n_maps=${#maps[@]}" >&2
     exit 1
 fi
 
-gmap="${MAPS[$map_idx]}"
+gmap="${maps[$map_idx]}"
 seed="${rep_id}"
 
 # check ts file was created
-in_ts="${TREE_DIR}/${gmap}_${seed}_all.ts"
+in_ts="${tree_dir}/${gmap}_${seed}_all.ts"
 if [[ -s "${in_ts}.tsz" ]]; then
     log_msg "found compressed ts (${in_ts}.tsz); unzipping"
     tsunzip "${in_ts}.tsz"
@@ -87,37 +77,37 @@ else
     exit 1
 fi
 
-mkdir -p "${VCF_DIR}"
-mkdir -p "${POP_INFO_DIR}"
+mkdir -p "${vcf_dir}"
+mkdir -p "${pop_info_dir}"
 log_msg "subset_ts task
-TASK_ID=${tid}
-GMAP=${gmap} (map_idx=${map_idx}/${#MAPS[@]})
-SEED=${seed}
-IN_TS=${in_ts}
-POPS=${POPS[*]}"
-all_vcf="${VCF_DIR}/${gmap}_${seed}_all.vcf.gz"
-tmp_vcf="${VCF_DIR}/${gmap}_${seed}_all.vcf"
+task_id=${tid}
+gmap=${gmap} (map_idx=${map_idx}/${#maps[@]})
+seed=${seed}
+in_ts=${in_ts}
+pops=${pops[*]}"
+all_vcf="${vcf_dir}/${gmap}_${seed}_all.vcf.gz"
+tmp_vcf="${vcf_dir}/${gmap}_${seed}_all.vcf"
 
 log_msg "generate vcf of all samples from tree (python export, 1-based)"
-python - <<'PY' "${in_ts}" "${CHR}" "${tmp_vcf}"
+python - <<'PY' "${in_ts}" "${chr}" "${tmp_vcf}"
 import tskit, sys
 ts = tskit.load(sys.argv[1])
 sim_chr = sys.argv[2]
 with open(sys.argv[3], "w") as f:
     ts.write_vcf(f, contig_id=f"chr{sim_chr}", position_transform=lambda xs: [x + 1 for x in xs])
 PY
-bcftools norm --rm-dup all --threads "$THREADS" "$tmp_vcf" | \
-    bcftools view --types snps --min-alleles 2 --max-alleles 2 --threads "$THREADS" \
+bcftools norm --rm-dup all --threads "$threads" "$tmp_vcf" | \
+    bcftools view --types snps --min-alleles 2 --max-alleles 2 --threads "$threads" \
     -Oz -o "${all_vcf}"
 tabix -p vcf "${all_vcf}"
 rm -f "${tmp_vcf}"
 
-for idx in "${!POPS[@]}"; do
-    pop="${POPS[$idx]}"
-    start=$(( idx * SAMPLE_SIZE ))
-    end=$(( (idx + 1) * SAMPLE_SIZE - 1 ))
-    sample_ids="${POP_INFO_DIR}/${gmap}_${seed}_${pop}_samples.txt"
-    out_vcf="${VCF_DIR}/${gmap}_${seed}_${pop}.vcf.gz"
+for idx in "${!pops[@]}"; do
+    pop="${pops[$idx]}"
+    start=$(( idx * sample_size ))
+    end=$(( (idx + 1) * sample_size - 1 ))
+    sample_ids="${pop_info_dir}/${gmap}_${seed}_${pop}_samples.txt"
+    out_vcf="${vcf_dir}/${gmap}_${seed}_${pop}.vcf.gz"
 
     : > "${sample_ids}"
     for i in $(seq "${start}" "${end}"); do
@@ -127,7 +117,7 @@ for idx in "${!POPS[@]}"; do
     log_msg "subsetting ${pop} samples tsk_${start}..tsk_${end} -> ${out_vcf}"
     bcftools view \
         -S "${sample_ids}" \
-        --threads "$THREADS" \
+        --threads "$threads" \
         -Oz -o "${out_vcf}" \
         "${all_vcf}"
     tabix -p vcf "${out_vcf}"

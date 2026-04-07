@@ -1,14 +1,14 @@
 # ______________________________________________________________________________
 # Aydin Karatas
 # ___
-# University of Southern California 
+# University of Southern California
 # Department of Quantitative and Computational Biology 
-# Mooney Lab 
+# Mooney Lab
 # ___
 # true_vs_inference_aggregate.R
 # ______________________________________________________________________________
 
-# libraries ----
+
 library(tidyverse)
 library(glue)
 
@@ -26,42 +26,46 @@ source("job_scripts/R_utils/infer.software.with.params.R")
 # inputs ----
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) != 7) {
-  stop("Usage: true_vs_inference_aggregate.R MANIFEST.FILE TMAP SIM.CHR N.DIPLOIDS RES.OUT")
+  stop("Usage: true_vs_inference_aggregate.R manifest.file tmap sim.chr n.diploids res.out")
 }
-MANIFEST.FILE <- args[1]
-TMAP <- args[2]
-SIM.CHR <- args[3]
-N.DIPLOIDS <- as.integer(args[4])
-RES.OUT <- args[5]
-FILT <- args[6]
-POP <- args[7]
+manifest.file <- args[1]
+tmap <- args[2]
+sim.chr <- args[3]
+n.diploids <- as.integer(args[4])
+res.out <- args[5]
+filt <- args[6]
+pop <- args[7]
 
 # constants ----
-CHR1.100MB.LEN <- data.frame(
+chr1.100mb.len <- data.frame(
   "hapmap" = c(128.2627, 100000000),
   "flat"   = c(115.235, 100000000),
   "decode" = c(116.2396745, 100000000)
 )
-CHR18.LEN <- data.frame(
+chr18.len <- data.frame(
   "hapmap" = c(117.708923, 80257297),
   "flat"   = c(92.618155, 80373285),
   "decode" = c(105.783407, 80257297)
 )
 
-genome.seg.len.bp <- ifelse(SIM.CHR == "1", CHR1.100MB.LEN[2, TMAP], CHR18.LEN[2, TMAP])
-genome.seg.len.cM <- ifelse(SIM.CHR == "1", CHR1.100MB.LEN[1, TMAP], CHR18.LEN[1, TMAP])
+genome.seg.len.bp <- ifelse(sim.chr == "1", chr1.100mb.len[2, tmap], chr18.len[2, tmap])
+genome.seg.len.cm <- ifelse(
+  sim.chr == "1",
+  chr1.100mb.len[1, tmap],
+  chr18.len[1, tmap]
+)
 
 message("inputs:")
-message("MANIFEST.FILE = ", MANIFEST.FILE)
-message("TMAP = ", TMAP)
-message("SIM.CHR = ", SIM.CHR)
-message("N.DIPLOIDS = ", N.DIPLOIDS)
+message("manifest.file = ", manifest.file)
+message("tmap = ", tmap)
+message("sim.chr = ", sim.chr)
+message("n.diploids = ", n.diploids)
 message("genome.seg.len.bp = ", genome.seg.len.bp)
-message("genome.seg.len.cM = ", genome.seg.len.cM)
-message("RES.OUT = ", RES.OUT)
+message("genome.seg.len.cm = ", genome.seg.len.cm)
+message("res.out = ", res.out)
 
 # read manifest ----
-manifest.df <- readr::read_tsv(MANIFEST.FILE, show_col_types = FALSE)
+manifest.df <- readr::read_tsv(manifest.file, show_col_types = FALSE)
 req.cols <- c("seed", "true_ibd", "inf_ibd", "coverage_out", "unrels")
 if (!all(req.cols %in% names(manifest.df))) {
   stop("manifest must contain columns: ", paste(req.cols, collapse = ", "))
@@ -69,17 +73,17 @@ if (!all(req.cols %in% names(manifest.df))) {
 
 # parse metadata from manifest basename ----
 # expected: software_tmap_imap_filt_pop.manifest.tsv
-manifest.base <- basename(MANIFEST.FILE)
+manifest.base <- basename(manifest.file)
 manifest.base <- sub("\\.manifest\\.tsv$", "", manifest.base)
 parts <- strsplit(manifest.base, "_", fixed = TRUE)[[1]]
 
 if (length(parts) < 5) {
-  stop("manifest basename not parseable: ", basename(MANIFEST.FILE))
+  stop("manifest basename not parseable: ", basename(manifest.file))
 }
 
 # infer software parameterization from directory name (software.dir.base)
 software.base <- parts[1]
-software.dir.base <- basename(dirname(MANIFEST.FILE))
+software.dir.base <- basename(dirname(manifest.file))
 software.with.params <- infer.software.with.params(software.base, software.dir.base)
 
 message("meta data:")
@@ -99,7 +103,7 @@ meta.df <- tibble(
 )
 
 # output dir for per-rep kinship matrices ----
-kin.dir <- file.path(dirname(MANIFEST.FILE), "ibd_kinship_mats")
+kin.dir <- file.path(dirname(manifest.file), "ibd_kinship_mats")
 dir.create(kin.dir, recursive = TRUE, showWarnings = FALSE)
 message("kinship matrices will be saved to: ", kin.dir)
 
@@ -107,8 +111,8 @@ message("kinship matrices will be saved to: ", kin.dir)
 n.reps <- nrow(manifest.df)
 conf.list <- vector("list", n.reps)
 ibd.list <- vector("list", n.reps)
-K.true.list <- vector("list", n.reps)
-K.inf.list  <- vector("list", n.reps)
+k.true.list <- vector("list", n.reps)
+k.inf.list  <- vector("list", n.reps)
 
 for (i in seq_len(n.reps)) {
   
@@ -130,7 +134,7 @@ for (i in seq_len(n.reps)) {
     cov.res = cov.res,
     inf.ibd = inf.ibd,
     region.len.bp = genome.seg.len.bp,
-    n.diploids = N.DIPLOIDS
+    n.diploids = n.diploids
   ) %>%
     tibble::as_tibble()
 
@@ -139,7 +143,7 @@ for (i in seq_len(n.reps)) {
     cov.res = cov.res,
     inf.ibd = inf.ibd,
     region.len.bp = genome.seg.len.bp,
-    n.diploids = N.DIPLOIDS
+    n.diploids = n.diploids
   )
 
   conf.list[[i]] <- dplyr::bind_cols(conf.base, conf.win) %>%
@@ -172,22 +176,22 @@ for (i in seq_len(n.reps)) {
   
   # kinship matrices
   message("calculating true ibd-based kinship")
-  K.true <- compute.kinship.coeffs(
-    true.ibd, N.DIPLOIDS, genome.seg.len.cM
+  k.true <- compute.kinship.coeffs(
+    true.ibd, n.diploids, genome.seg.len.cM
   )$kinship.matrix
 
   message("calculating inferred ibd-based kinship")
-  K.inf <- compute.kinship.coeffs(
-    inf.ibd,  N.DIPLOIDS, genome.seg.len.cM
+  k.inf <- compute.kinship.coeffs(
+    inf.ibd,  n.diploids, genome.seg.len.cM
   )$kinship.matrix
 
   # store in lists (unchanged behavior)
-  K.true.list[[i]] <- K.true
-  K.inf.list[[i]]  <- K.inf
+  k.true.list[[i]] <- k.true
+  k.inf.list[[i]]  <- k.inf
 
   # write to disk for quick later access
-  saveRDS(K.true, file = file.path(kin.dir, glue("true_{POP}_{seed}.{FILT}.rds")))
-  saveRDS(K.inf,  file = file.path(kin.dir, glue("inf_{POP}_{seed}.{FILT}.rds")))
+  saveRDS(k.true, file = file.path(kin.dir, glue("true_{pop}_{seed}.{filt}.rds")))
+  saveRDS(k.inf,  file = file.path(kin.dir, glue("inf_{pop}_{seed}.{filt}.rds")))
 }
 
 conf.df <- bind_rows(conf.list)
@@ -216,9 +220,9 @@ per.rep.df <- per.rep.base %>%
     -seed
   )
 
-PER_REP_OUT <- sub("\\.tsv$", ".per_rep.tsv", RES.OUT)
-readr::write_tsv(per.rep.df, PER_REP_OUT, col_names = TRUE)
-message("wrote per-replicate TSV: ", PER_REP_OUT)
+per.rep.out <- sub("\\.tsv$", ".per_rep.tsv", res.out)
+readr::write_tsv(per.rep.df, per.rep.out, col_names = TRUE)
+message("wrote per-replicate TSV: ", per.rep.out)
 
 # aggregate confusion metrics ----
 message("aggregate confusion metrics")
@@ -269,17 +273,17 @@ ibd.summary <- tibble(
 
 # aggregate kinship: bias/var/mse across replicates, averaged over pairs ----
 message("aggregate kinship: bias/var/mse across replicates")
-idx <- upper.tri(K.true.list[[1]], diag = FALSE)
+idx <- upper.tri(k.true.list[[1]], diag = FALSE)
 
-K.true.mat <- sapply(K.true.list, function(K) K[idx])  # [n.pairs, n.reps]
-K.inf.mat  <- sapply(K.inf.list,  function(K) K[idx])
+k.true.mat <- sapply(k.true.list, function(K) K[idx])  # [n.pairs, n.reps]
+k.inf.mat  <- sapply(k.inf.list,  function(K) K[idx])
 
-K.inf.bar  <- rowMeans(K.inf.mat)
-K.true.bar <- rowMeans(K.true.mat)
+k.inf.bar  <- rowMeans(k.inf.mat)
+k.true.bar <- rowMeans(k.true.mat)
 
-bias.ij <- K.inf.bar - K.true.bar
-var.ij  <- apply(K.inf.mat, 1, var)
-mse.ij  <- rowMeans((K.inf.mat - K.true.mat)^2)
+bias.ij <- k.inf.bar - k.true.bar
+var.ij  <- apply(k.inf.mat, 1, var)
+mse.ij  <- rowMeans((k.inf.mat - k.true.mat)^2)
 
 kinship.summary <- tibble(
   kinship.bias = mean(bias.ij),
@@ -296,5 +300,5 @@ res.df <- bind_cols(
   kinship.summary
 )
 
-readr::write_tsv(res.df, RES.OUT, col_names = TRUE)
-message("wrote: ", RES.OUT)
+readr::write_tsv(res.df, res.out, col_names = TRUE)
+message("wrote: ", res.out)

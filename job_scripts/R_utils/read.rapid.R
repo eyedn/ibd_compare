@@ -5,8 +5,9 @@
 # Department of Quantitative and Computational Biology 
 # Mooney Lab
 # ___
-# read.rapid.bed.R
+# read.rapid.R
 # ______________________________________________________________________________
+
 
 library(tidyverse)
 

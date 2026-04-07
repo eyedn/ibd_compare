@@ -1,12 +1,12 @@
-# ______________________________________________________________________________
-# Aydin Karatas
-# ___
-# University of Southern California
-# Department of Quantitative and Computational Biology
-# Mooney Lab
-# ___
-# write_local_ancestry.py
-# ______________________________________________________________________________
+###############################################################################
+#           Aydin Loid Karatas
+#           ---
+#           University of Southern California
+#           Department of Quantitative and Computational Biology
+#           Mooney Lab
+#           ---
+#           write_local_ancestry.py
+###############################################################################
 
 
 POP_ID_TO_NAME = {
@@ -31,6 +31,15 @@ def write_local_ancestry(ancestry_table, sample_node_rows, out_tsv, chr_used):
     )
     ancestry_table.insert(0, "chrom", f"chr{chr_used}")
     ancestry_table = ancestry_table[
-        ["chrom", "left", "right", "sample_id", "hap", "population_name", "population", "ancestor"]
+        [
+        "chrom",
+        "left",
+        "right",
+        "sample_id",
+        "hap",
+        "population_name",
+        "population",
+        "ancestor",
+    ]
     ]
     ancestry_table.to_csv(out_tsv, sep="\t", header=False, index=False)

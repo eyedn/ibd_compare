@@ -1,3 +1,14 @@
+# ______________________________________________________________________________
+# Aydin Karatas
+# ___
+# University of Southern California
+# Department of Quantitative and Computational Biology 
+# Mooney Lab
+# ___
+# constants.R
+# ______________________________________________________________________________
+
+
 library(glue)
 
 n.samples <- 300

@@ -10,16 +10,6 @@
 #           sim_ooaa.sh
 ###############################################################################
 
-#SBATCH --time=1-00:00:00
-#SBATCH --cpus-per-task=1
-#SBATCH --mem=8G
-#SBATCH --partition=qcb
-#SBATCH --account=jazlynmo_738
-#SBATCH --nodes=1
-#SBATCH --output=/home1/karatas/logs/sim.%A_%a.%x.out
-#SBATCH --error=/home1/karatas/logs/sim.%A_%a.%x.err
-#SBATCH --mail-type=ALL
-#SBATCH --mail-user=karatas@usc.edu
 
 set -euo pipefail
 module purge
@@ -33,36 +23,53 @@ source /home1/karatas/ibd_compare/other_scripts/log_msg.sh
 : "${SLURM_ARRAY_TASK_ID:?ERROR: run as a Slurm array}"
 
 # inputs
-TREE_DIR="$1"
-SAMPLE_SIZE="$2"
-NUM_REPS="$3"
-MSPRIME_MODEL="$4"
-CHR="$5"
-ADMIXTURE_TIME="$6"
-AFR_PROP="$7"
-EUR_PROP="$8"
-ADMIX_INITIAL_SIZE="$9"
-ADMIX_GROWTH_RATE="${10}"
-CENSUS_TIME_OFFSET="${11}"
-shift 11
+tree_dir="$1"
+sample_size="$2"
+num_reps="$3"
+msprime_model="$4"
+chr="$5"
+generation_time="$6"
+mutation_rate="$7"
+t_af_years="$8"
+t_ooa_years="$9"
+t_eu0_years="${10}"
+t_eg_years="${11}"
+r_eu0="${12}"
+r_eu="${13}"
+r_af="${14}"
+n_a="${15}"
+n_af1="${16}"
+n_b="${17}"
+n_eu0="${18}"
+m_af_b="${19}"
+m_af_eu="${20}"
+admixture_time="${21}"
+afr_prop="${22}"
+eur_prop="${23}"
+admix_initial_size="${24}"
+admix_growth_rate_1="${25}"
+admix_growth_rate_2="${26}"
+admix_growth_rate_2_change_time="${27}"
+census_time_offset="${28}"
+shift 28
 # decode task id to which map + replicate
-MAPS=( "$@" )
-if [[ ${#MAPS[@]} -eq 0 ]]; then
+maps=( "$@" )
+if [[ ${#maps[@]} -eq 0 ]]; then
     echo "ERROR: no GMAPs provided (after shifting args)" >&2
     exit 1
 fi
 tid="${SLURM_ARRAY_TASK_ID}"
-map_idx=$(( (tid - 1) / NUM_REPS ))      # 0..n_maps-1
-rep_id=$(( (tid - 1) % NUM_REPS + 1 ))   # 1..NUM_REPS
-if (( map_idx < 0 || map_idx >= ${#MAPS[@]} )); then
-    echo "ERROR: task ${tid} produced map_idx=${map_idx}, but n_maps=${#MAPS[@]}" >&2
+map_idx=$(( (tid - 1) / num_reps ))      # 0..n_maps-1
+rep_id=$(( (tid - 1) % num_reps + 1 ))   # 1..num_reps
+if (( map_idx < 0 || map_idx >= ${#maps[@]} )); then
+    echo "ERROR: task ${tid} produced map_idx=${map_idx}, but n_maps=${#maps[@]}" >&2
     exit 1
 fi
-gmap="${MAPS[$map_idx]}"
+gmap="${maps[$map_idx]}"
 seed="${rep_id}"
 
 # check if this task was already completed; if so, skip
-out_ts="${TREE_DIR}/${gmap}_${seed}_all.ts"
+out_ts="${tree_dir}/${gmap}_${seed}_all.ts"
 if [[ -s "${out_ts}.tsz" ]]; then
     log_msg "outputs exist (${out_ts}.tsz); skipping"
     exit 0
@@ -70,39 +77,76 @@ fi
 
 # define sampling specification
 sample_spec=(
-    "AFR:${SAMPLE_SIZE}"
-    "EUR:${SAMPLE_SIZE}"
-    "ADMIX:${SAMPLE_SIZE}"
+    "AFR:${sample_size}"
+    "EUR:${sample_size}"
+    "ADMIX:${sample_size}"
 )
 
-mkdir -p "${TREE_DIR}"
+mkdir -p "${tree_dir}"
 
 log_msg "stdpopsim sim (combined array)
-TASK_ID=${tid}
-GMAP=${gmap} (map_idx=${map_idx}/${#MAPS[@]})
-SEED=${seed}
-TREE_DIR=${TREE_DIR}
-SAMPLE_SIZE=${SAMPLE_SIZE}
-MODEL=${MSPRIME_MODEL}
-ADMIXTURE_TIME=${ADMIXTURE_TIME}
-AFR_PROP=${AFR_PROP}
-EUR_PROP=${EUR_PROP}
+task_id=${tid}
+gmap=${gmap} (map_idx=${map_idx}/${#maps[@]})
+seed=${seed}
+tree_dir=${tree_dir}
+sample_size=${sample_size}
+model=${msprime_model}
+admixture_time=${admixture_time}
+afr_prop=${afr_prop}
+eur_prop=${eur_prop}
+generation_time=${generation_time}
+mutation_rate=${mutation_rate}
+t_af_years=${t_af_years}
+t_ooa_years=${t_ooa_years}
+t_eu0_years=${t_eu0_years}
+t_eg_years=${t_eg_years}
+r_eu0=${r_eu0}
+r_eu=${r_eu}
+r_af=${r_af}
+n_a=${n_a}
+n_af1=${n_af1}
+n_b=${n_b}
+n_eu0=${n_eu0}
+m_af_b=${m_af_b}
+m_af_eu=${m_af_eu}
+admix_initial_size=${admix_initial_size}
+admix_growth_rate_1=${admix_growth_rate_1}
+admix_growth_rate_2=${admix_growth_rate_2}
+admix_growth_rate_2_change_time=${admix_growth_rate_2_change_time}
 sample_spec=${sample_spec[*]}"
 
 sim_cmd=(
     python /home1/karatas/ibd_compare/job_scripts/sim_ooaa.py
     --output "$out_ts"
-    --sample-size "$SAMPLE_SIZE"
+    --sample-size "$sample_size"
     --seed "$seed"
-    --msprime-model "$MSPRIME_MODEL"
-    --chromosome "$CHR"
+    --msprime-model "$msprime_model"
+    --chromosome "$chr"
     --genetic-map "$gmap"
-    --admixture-time "$ADMIXTURE_TIME"
-    --afr-proportion "$AFR_PROP"
-    --eur-proportion "$EUR_PROP"
-    --admix-initial-size "$ADMIX_INITIAL_SIZE"
-    --admix-growth-rate "$ADMIX_GROWTH_RATE"
-    --census-time-offset "$CENSUS_TIME_OFFSET"
+    --generation-time "$generation_time"
+    --mutation-rate "$mutation_rate"
+    --t-af-years "$t_af_years"
+    --t-ooa-years "$t_ooa_years"
+    --t-eu0-years "$t_eu0_years"
+    --t-eg-years "$t_eg_years"
+    --r-eu0 "$r_eu0"
+    --r-eu "$r_eu"
+    --r-af "$r_af"
+    --n-a "$n_a"
+    --n-af1 "$n_af1"
+    --n-b "$n_b"
+    --n-eu0 "$n_eu0"
+    --m-af-b "$m_af_b"
+    --m-af-eu "$m_af_eu"
+    --admixture-time "$admixture_time"
+    --afr-proportion "$afr_prop"
+    --eur-proportion "$eur_prop"
+    --admix-initial-size "$admix_initial_size"
+    --admix-growth-rate-1 "$admix_growth_rate_1"
+    --admix-growth-rate-2 "$admix_growth_rate_2"
+    --admix-growth-rate-2-change-time \
+        "$admix_growth_rate_2_change_time"
+    --census-time-offset "$census_time_offset"
 )
 "${sim_cmd[@]}"
 

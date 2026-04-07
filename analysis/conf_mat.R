@@ -1,14 +1,14 @@
 # ______________________________________________________________________________
-# Aydin Karatas 
+# Aydin Karatas
 # ___
-# University of Southern California 
+# University of Southern California
 # Department of Quantitative and Computational Biology 
-# Mooney Lab 
+# Mooney Lab
 # ___
-# conf_mat.R 
+# conf_mat.R
 # ______________________________________________________________________________
 
-# libraries ----
+
 library(tidyverse)
 library(furrr)
 library(future)
@@ -167,28 +167,28 @@ ggplot(
       )
   )
 
-# analyze PPV ----
-## pop specific PPV ----
-df.PPV <- all.stats.per.rep %>%
+# analyze ppv ----
+## pop specific ppv ----
+df.ppv <- all.stats.per.rep %>%
   filter(
     pop == focal.pop,
     imap == focal.imap,
     filt != "ibdendshot"
   ) %>%
   pivot_longer(
-    cols = matches("^PPV(\\.|$)"),
+    cols = matches("^ppv(\\.|$)"),
     names_to = "threshold",
-    values_to = "PPV"
+    values_to = "ppv"
   ) %>%
   mutate(
     threshold = case_when(
-      threshold == "PPV" ~ "overall",
-      TRUE ~ sub("^PPV\\.", "", threshold)
+      threshold == "ppv" ~ "overall",
+      TRUE ~ sub("^ppv\\.", "", threshold)
     ),
     threshold = factor(threshold, levels = thr.levels)
   )
 
-ggplot(df.PPV, aes(x = threshold, y = PPV)) +
+ggplot(df.ppv, aes(x = threshold, y = ppv)) +
   geom_boxplot(
     aes(group = interaction(threshold, software.code), fill = software.code)
   ) +
@@ -206,35 +206,35 @@ ggplot(df.PPV, aes(x = threshold, y = PPV)) +
   ) +
   labs(
     x = "IBD length bins (cM)",
-    y = "PPV",
-    title = glue("PPV of {focal.pop} IBD with a {focal.imap} map"),
-    # title = glue("PPV of hap-IBD + ibd-ends across populations"),
+    y = "ppv",
+    title = glue("ppv of {focal.pop} IBD with a {focal.imap} map"),
+    # title = glue("ppv of hap-IBD + ibd-ends across populations"),
     fill = NULL
   ) +
   theme_bw(base_size = 32) + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
 
-## across pops PPV ----
-df.PPV.allpops <- all.stats.per.rep %>%
+## across pops ppv ----
+df.ppv.allpops <- all.stats.per.rep %>%
   filter(
     software == focal.software,
     imap == focal.imap,
     filt != "ibdendshot"
   ) %>%
   pivot_longer(
-    cols = matches("^PPV(\\.|$)"),
+    cols = matches("^ppv(\\.|$)"),
     names_to = "threshold",
-    values_to = "PPV"
+    values_to = "ppv"
   ) %>%
   mutate(
     threshold = case_when(
-      threshold == "PPV" ~ "overall",
-      TRUE ~ sub("^PPV\\.", "", threshold)
+      threshold == "ppv" ~ "overall",
+      TRUE ~ sub("^ppv\\.", "", threshold)
     ),
     threshold = factor(threshold, levels = thr.levels)
   )
 
-ggplot(df.PPV.allpops, aes(x = threshold, y = PPV)) +
+ggplot(df.ppv.allpops, aes(x = threshold, y = ppv)) +
   geom_boxplot(
     aes(group = interaction(threshold, software.code), fill = software.code)
   ) +
@@ -252,8 +252,8 @@ ggplot(df.PPV.allpops, aes(x = threshold, y = PPV)) +
   ) +
   labs(
     x = "IBD length bins (cM)",
-    y = "PPV",
-    title = glue("PPV of {focal.software} calls with a {focal.imap} map"),
+    y = "ppv",
+    title = glue("ppv of {focal.software} calls with a {focal.imap} map"),
     fill = NULL
   ) +
   theme_bw(base_size = 32) + 

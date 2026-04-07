@@ -1,12 +1,12 @@
-# ______________________________________________________________________________
-# Aydin Karatas
-# ___
-# University of Southern California
-# Department of Quantitative and Computational Biology
-# Mooney Lab
-# ___
-# simulate_ooaa.py
-# ______________________________________________________________________________
+###############################################################################
+#           Aydin Loid Karatas
+#           ---
+#           University of Southern California
+#           Department of Quantitative and Computational Biology
+#           Mooney Lab
+#           ---
+#           simulate_ooaa.py
+###############################################################################
 
 
 import msprime

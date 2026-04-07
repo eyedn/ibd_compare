@@ -5,8 +5,9 @@
 # Department of Quantitative and Computational Biology 
 # Mooney Lab
 # ___
-# compute.kinship.coefs.R
+# compute.kinship.coeffs.old.R
 # ______________________________________________________________________________
+
 
 library(tidyverse)
 

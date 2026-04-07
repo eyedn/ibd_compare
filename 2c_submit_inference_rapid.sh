@@ -7,8 +7,9 @@
 #           Department of Quantitative and Computational Biology 
 #           Mooney Lab
 #           ---
-#           submit_inference_rapid.sh
+#           2c_submit_inference_rapid.sh
 ###############################################################################
+
 
 set -euo pipefail
 source /home1/karatas/ibd_compare/other_scripts/const.sh
@@ -16,17 +17,17 @@ source /home1/karatas/ibd_compare/other_scripts/log_msg.sh
 
 # submit ibd inference
 log_msg "Detected rapid params
-SIM_CHR=${CHR}
-OUTDIR=${OUTDIR}
-MIN_LEN=${RAP_MIN_LEN} 
-WINDOW_SIZE=${RAP_WINDOW_SIZE}
-NUM_RUNS=${RAP_NUM_RUNS}
-NUM_SUCCESSES=${RAP_NUM_SUCCESSES}"
-TOTAL_TASKS=$(( NUM_REPS * ${#TMAPS[@]} * ${#IMAPS[@]} ))
+sim_chr=${CHR}
+outdir=${OUTDIR}
+min_len=${RAP_MIN_LEN} 
+window_size=${RAP_WINDOW_SIZE}
+num_runs=${RAP_NUM_RUNS}
+num_successes=${RAP_NUM_SUCCESSES}"
+total_tasks=$(( NUM_REPS * ${#TMAPS[@]} * ${#IMAPS[@]} ))
 sbatch \
   --chdir=/home1/karatas/ibd_compare \
   --job-name=rapid \
-  --array="1-${TOTAL_TASKS}%${MAX_JOBS}" \
+  --array="1-${total_tasks}%${MAX_JOBS}" \
   --exclude=d11-05,d11-06,d11-07,b23-11,b23-13 \
   job_scripts/inference_rapid.sh \
     "$RAP_MIN_LEN" \
@@ -42,4 +43,4 @@ sbatch \
     "${IMAPS[@]}" \
     -- \
     "${POPS[@]}"
-log_msg "submitted rapid inference TOTAL_TASKS=${TOTAL_TASKS}"
+log_msg "submitted rapid inference total_tasks=${total_tasks}"

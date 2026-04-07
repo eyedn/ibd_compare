@@ -5,8 +5,9 @@
 # Department of Quantitative and Computational Biology 
 # Mooney Lab
 # ___
-# compute.kinship.coeffs.R ONE-BASED VER!!!
+# compute.kinship.coeffs.R
 # ______________________________________________________________________________
+
 
 library(tidyverse)
 

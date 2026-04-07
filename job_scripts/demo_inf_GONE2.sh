@@ -10,16 +10,6 @@
 #           demo_inf_GONE2.sh
 ###############################################################################
 
-#SBATCH --time=1-00:00:00
-#SBATCH --cpus-per-task=16
-#SBATCH --mem=32G
-#SBATCH --partition=qcb
-#SBATCH --account=jazlynmo_738
-#SBATCH --nodes=1
-#SBATCH --output=/home1/karatas/logs/gone2.%A_%a.%x.out
-#SBATCH --error=/home1/karatas/logs/gone2.%A_%a.%x.err
-#SBATCH --mail-type=ALL
-#SBATCH --mail-user=karatas@usc.edu
 
 set -euo pipefail
 source /home1/karatas/ibd_compare/other_scripts/log_msg.sh
@@ -28,64 +18,64 @@ ml purge
 ml gcc/13.3.0 htslib/1.19.1 bcftools/1.19
 
 : "${SLURM_ARRAY_TASK_ID:?ERROR: run as a Slurm array}"
-THREADS="${SLURM_CPUS_PER_TASK:-1}"
+threads="${SLURM_CPUS_PER_TASK:-1}"
 
 # inputs
-VCF_DIR="$1"
-DEMO_DIR="$2"
-CHR="$3"
-FLAT_RATE="$4"
-NUM_REPS="$5"
+vcf_dir="$1"
+demo_dir="$2"
+chr="$3"
+flat_rate="$4"
+num_reps="$5"
 shift 5
 
-# read TMAPS until "--", then read POPS after
-TMAPS=()
+# read tmaps until "--", then read pops after
+tmaps=()
 while [[ $# -gt 0 && "$1" != "--" ]]; do
-    TMAPS+=( "$1" )
+    tmaps+=( "$1" )
     shift
 done
 if [[ $# -eq 0 ]]; then
-    echo "ERROR: expected '--' separator between TMAPS and POPS" >&2
+    echo "ERROR: expected '--' separator between tmaps and pops" >&2
     exit 1
 fi
 shift 1
-POPS=( "$@" )
+pops=( "$@" )
 
-if [[ ${#TMAPS[@]} -eq 0 ]]; then
-    echo "ERROR: no TMAPS provided" >&2
+if [[ ${#tmaps[@]} -eq 0 ]]; then
+    echo "ERROR: no tmaps provided" >&2
     exit 1
 fi
-if [[ ${#POPS[@]} -eq 0 ]]; then
-    echo "ERROR: no POPS provided" >&2
+if [[ ${#pops[@]} -eq 0 ]]; then
+    echo "ERROR: no pops provided" >&2
     exit 1
 fi
 
 tid="${SLURM_ARRAY_TASK_ID}"
-tmap_idx=$(( (tid - 1) / NUM_REPS ))
-rep_id=$(( (tid - 1) % NUM_REPS + 1 ))
+tmap_idx=$(( (tid - 1) / num_reps ))
+rep_id=$(( (tid - 1) % num_reps + 1 ))
 
-if (( tmap_idx < 0 || tmap_idx >= ${#TMAPS[@]} )); then
-    echo "ERROR: task ${tid} produced tmap_idx=${tmap_idx}, but n_maps=${#TMAPS[@]}" >&2
+if (( tmap_idx < 0 || tmap_idx >= ${#tmaps[@]} )); then
+    echo "ERROR: task ${tid} produced tmap_idx=${tmap_idx}, but n_maps=${#tmaps[@]}" >&2
     exit 1
 fi
 
-tmap="${TMAPS[$tmap_idx]}"
+tmap="${tmaps[$tmap_idx]}"
 seed="${rep_id}"
 
-common_gone2_dir="${DEMO_DIR}/gone2"
+common_gone2_dir="${demo_dir}/gone2"
 mkdir -p "${common_gone2_dir}"
 log_msg "GONE2 task
-TASK_ID=${tid}
-TMAP=${tmap} (tmap_idx=${tmap_idx}/${#TMAPS[@]})
-SEED=${seed}
-CHR=${CHR}
-FLAT_RATE=${FLAT_RATE}
-POPS=${POPS[*]}"
+task_id=${tid}
+tmap=${tmap} (tmap_idx=${tmap_idx}/${#tmaps[@]})
+seed=${seed}
+chr=${chr}
+flat_rate=${flat_rate}
+pops=${pops[*]}"
 
-for pop in "${POPS[@]}"; do
+for pop in "${pops[@]}"; do
     log_msg "detected pop=${pop}"
-    vcf="${VCF_DIR}/${tmap}_${seed}_${pop}.vcf.gz"
-    vcf_in="${VCF_DIR}/${tmap}_${seed}_${pop}_tmp.vcf"
+    vcf="${vcf_dir}/${tmap}_${seed}_${pop}.vcf.gz"
+    vcf_in="${vcf_dir}/${tmap}_${seed}_${pop}_tmp.vcf"
     gone2_out="${common_gone2_dir}/${tmap}_${seed}_${pop}"
 
     # uncompress vcf file
@@ -102,8 +92,8 @@ for pop in "${POPS[@]}"; do
     if [[ "$pop" == *ADMIX* ]]; then
         log_msg "running gone with -x"
         /home1/karatas/software/GONE2/gone2 \
-            -r "$FLAT_RATE" \
-            -t "$THREADS" \
+            -r "$flat_rate" \
+            -t "$threads" \
             -o "${gone2_out}_x" \
             -S "$seed" \
             -x \
@@ -112,8 +102,8 @@ for pop in "${POPS[@]}"; do
 
     log_msg "running gone without -x"
     /home1/karatas/software/GONE2/gone2 \
-        -r "$FLAT_RATE" \
-        -t "$THREADS" \
+        -r "$flat_rate" \
+        -t "$threads" \
         -o "$gone2_out" \
         -S "$seed" \
         "$vcf_in"

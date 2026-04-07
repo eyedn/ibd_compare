@@ -8,6 +8,7 @@
 # compute.confusion.metrics.windows.R
 # ______________________________________________________________________________
 
+
 library(dplyr)
 library(purrr)
 library(tibble)
@@ -47,7 +48,7 @@ compute.confusion.metrics.windows <- function(
 
     out <- tibble::as_tibble(out)
 
-    # suffix columns with ".<lowerbound>" e.g., TP.2, sensitivity.3.5, ...
+    # suffix columns with ".<lowerbound>" e.g., tp.2, sensitivity.3.5, ...
     suffix <- format(lo, trim = TRUE, scientific = FALSE)
     names(out) <- paste0(names(out), ".", suffix)
 

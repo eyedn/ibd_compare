@@ -10,16 +10,6 @@
 #           get_true_ibd.sh
 ###############################################################################
 
-#SBATCH --cpus-per-task=1
-#SBATCH --mem=8G
-#SBATCH --time=1-00:00:00
-#SBATCH --partition=qcb
-#SBATCH --account=jazlynmo_738
-#SBATCH --nodes=1
-#SBATCH --output=/home1/karatas/logs/slurm.%A_%a.%x.out
-#SBATCH --error=/home1/karatas/logs/slurm.%A_%a.%x.err
-#SBATCH --mail-type=ALL
-#SBATCH --mail-user=karatas@usc.edu
 
 set -euo pipefail
 
@@ -34,52 +24,52 @@ log_msg "using python: $(which python)"
 : "${SLURM_ARRAY_TASK_ID:?ERROR: run as a Slurm array}"
 
 # inputs
-MIN_SPAN="$1"
-MAX_TIME="$2"
-CHR="$3"
-TREE_DIR="$4"   
-TRUE_DIR="$5"  
-SAMPLE_SIZE="$6"
-NUM_REPS="$7"
+min_span="$1"
+max_time="$2"
+chr="$3"
+tree_dir="$4"   
+true_dir="$5"  
+sample_size="$6"
+num_reps="$7"
 shift 7
 
-# read MAPS until "--", then read POPS after
-MAPS=()
+# read maps until "--", then read pops after
+maps=()
 while [[ $# -gt 0 && "$1" != "--" ]]; do
-    MAPS+=( "$1" )
+    maps+=( "$1" )
     shift
 done
 shift 1
-POPS=( "$@" )
-if [[ ${#MAPS[@]} -eq 0 ]]; then
-    echo "ERROR: no MAPS provided" >&2
+pops=( "$@" )
+if [[ ${#maps[@]} -eq 0 ]]; then
+    echo "ERROR: no maps provided" >&2
     exit 1
 fi
-if [[ ${#POPS[@]} -eq 0 ]]; then
-    echo "ERROR: no POPS provided" >&2
+if [[ ${#pops[@]} -eq 0 ]]; then
+    echo "ERROR: no pops provided" >&2
     exit 1
 fi
 
 # decode task id to which map + replicate
 tid="${SLURM_ARRAY_TASK_ID}"
-map_idx=$(( (tid - 1) / NUM_REPS ))
-rep_id=$(( (tid - 1) % NUM_REPS + 1 ))
-if (( map_idx < 0 || map_idx >= ${#MAPS[@]} )); then
-    echo "ERROR: task ${tid} produced map_idx=${map_idx}, but n_maps=${#MAPS[@]}" >&2
+map_idx=$(( (tid - 1) / num_reps ))
+rep_id=$(( (tid - 1) % num_reps + 1 ))
+if (( map_idx < 0 || map_idx >= ${#maps[@]} )); then
+    echo "ERROR: task ${tid} produced map_idx=${map_idx}, but n_maps=${#maps[@]}" >&2
     exit 1
 fi
-gmap="${MAPS[$map_idx]}"
+gmap="${maps[$map_idx]}"
 seed="${rep_id}"
 
 log_msg "Detected true ibd specifications
-MIN_SPAN=${MIN_SPAN}
-MAX_TIME=${MAX_TIME}
-TREE_DIR=${TREE_DIR}
-TRUE_DIR=${TRUE_DIR}
-CHR=${CHR}"
+min_span=${min_span}
+max_time=${max_time}
+tree_dir=${tree_dir}
+true_dir=${true_dir}
+chr=${chr}"
 
-mkdir -p "$TRUE_DIR"
-in_ts="${TREE_DIR}/${gmap}_${seed}_all.ts"
+mkdir -p "$true_dir"
+in_ts="${tree_dir}/${gmap}_${seed}_all.ts"
 if [[ -s "${in_ts}.tsz" ]]; then
     log_msg "found compressed ts (${in_ts}.tsz); unzipping"
     tsunzip "${in_ts}.tsz"
@@ -90,15 +80,15 @@ else
     exit 1
 fi
 
-for idx in "${!POPS[@]}"; do
-    pop="${POPS[$idx]}"
-    start=$(( idx * SAMPLE_SIZE ))
-    end=$(( (idx + 1) * SAMPLE_SIZE - 1 ))
-    out_tsv="${TRUE_DIR}/${gmap}_${seed}_${pop}.tsv"
+for idx in "${!pops[@]}"; do
+    pop="${pops[$idx]}"
+    start=$(( idx * sample_size ))
+    end=$(( (idx + 1) * sample_size - 1 ))
+    out_tsv="${true_dir}/${gmap}_${seed}_${pop}.tsv"
 
     log_msg "generating true ibd segments in ${out_tsv}"
     python /home1/karatas/ibd_compare/job_scripts/get_true_ibd.py \
-        "$in_ts" "$out_tsv" "$CHR" "$MIN_SPAN" "$MAX_TIME" "$start" "$end"
+        "$in_ts" "$out_tsv" "$chr" "$min_span" "$max_time" "$start" "$end"
 done
 
 log_msg "rezipping input tree sequence to ${in_ts}.tsz"

@@ -5,11 +5,12 @@
 # Department of Quantitative and Computational Biology 
 # Mooney Lab
 # ___
-# read.hapibd.bed.R
+# read.hapibd.R
 # ______________________________________________________________________________
 
+
 library(tidyverse)
-source("job_scripts/R_utils/interp.cM.R")
+source("job_scripts/R_utils/interp.cm.R")
 
 read.hapibd.bed <- function(fname, min.bp.len = 0, min.cM.len = 0, gmap) {
   # read in ibd calls
@@ -49,8 +50,8 @@ read.hapibd.bed <- function(fname, min.bp.len = 0, min.cM.len = 0, gmap) {
   # generate cM.str and cM.end for each ibd call using linear interpolation
   hapibd.calls <- hapibd.calls %>%
     mutate(
-      cM.str = interp.cM(bp.str, hapmap.gmap$bp, hapmap.gmap$cM),
-      cM.end = interp.cM(bp.end, hapmap.gmap$bp, hapmap.gmap$cM)
+      cM.str = interp.cm(bp.str, hapmap.gmap$bp, hapmap.gmap$cM),
+      cM.end = interp.cm(bp.end, hapmap.gmap$bp, hapmap.gmap$cM)
     )
   
   # finalize standard format for future comparison

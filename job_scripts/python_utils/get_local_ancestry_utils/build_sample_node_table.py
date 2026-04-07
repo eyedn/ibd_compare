@@ -1,12 +1,12 @@
-# ______________________________________________________________________________
-# Aydin Karatas
-# ___
-# University of Southern California
-# Department of Quantitative and Computational Biology
-# Mooney Lab
-# ___
-# build_sample_node_table.py
-# ______________________________________________________________________________
+###############################################################################
+#           Aydin Loid Karatas
+#           ---
+#           University of Southern California
+#           Department of Quantitative and Computational Biology
+#           Mooney Lab
+#           ---
+#           build_sample_node_table.py
+###############################################################################
 
 
 def build_sample_node_table(ts):

@@ -2,11 +2,12 @@
 # Aydin Karatas
 # ___
 # University of Southern California
-# Department of Quantitative and Computational Biology
+# Department of Quantitative and Computational Biology 
 # Mooney Lab
 # ___
 # read.rep.ibd.kinship.R
 # ______________________________________________________________________________
+
 
 library(tidyverse)
 library(furrr)
@@ -46,7 +47,7 @@ read.rep.ibd.kinship <- function(rep.idx, dir.paths.map, cores,
         f     <- rep.file.tbl$file[i]
         fname <- basename(f)
         
-        # parse: {true|inf}_{POP}_{REP}.{FILT}.rds
+        # parse: {true|inf}_{pop}_{REP}.{filt}.rds
         m <- str_match(fname, "^(true|inf)_([^_]+)_(\\d+)\\.([^.]+)\\.rds$")
         pop  <- m[, 3]
         rep  <- as.integer(m[, 4])

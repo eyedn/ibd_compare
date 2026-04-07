@@ -1,12 +1,12 @@
-# ______________________________________________________________________________
-# Aydin Karatas
-# ___
-# University of Southern California
-# Department of Quantitative and Computational Biology
-# Mooney Lab
-# ___
-# load_and_subset_ts.py
-# ______________________________________________________________________________
+###############################################################################
+#           Aydin Loid Karatas
+#           ---
+#           University of Southern California
+#           Department of Quantitative and Computational Biology
+#           Mooney Lab
+#           ---
+#           load_and_subset_ts.py
+###############################################################################
 
 
 import tskit

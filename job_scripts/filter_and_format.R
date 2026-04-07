@@ -8,7 +8,7 @@
 # filter_and_format.R
 # ______________________________________________________________________________
 
-# libraries ----
+
 library(tidyverse)
 
 # source function ----
@@ -23,59 +23,59 @@ if (length(args) != 9) {
 }
 
 # inputs ----
-MIN.BP.SIZE <- as.numeric(args[1])
-MIN.CM.SIZE <- as.numeric(args[2])
-HOT.BIN.SIZE <- as.numeric(args[3])
-HOT.BIN.SD <- as.numeric(args[4])
-IBD.FILE <- args[5]
-GMAP <- args[6]
-FF.OUT <- args[7]
-FF.HOT.OUT <- args[8]
-IS.HAPIBD.FORMAT <- tolower(args[9])
-if (!IS.HAPIBD.FORMAT %in% c("true", "false")) {
-  stop("IS.HAPIBD.FORMAT must be TRUE/true or FALSE/false; got: ", args[9])
+min.bp.size <- as.numeric(args[1])
+min.cm.size <- as.numeric(args[2])
+hot.bin.size <- as.numeric(args[3])
+hot.bin.sd <- as.numeric(args[4])
+ibd.file <- args[5]
+gmap.file <- args[6]
+ff.out <- args[7]
+ff.hot.out <- args[8]
+is.hapibd.format <- tolower(args[9])
+if (!is.hapibd.format %in% c("true", "false")) {
+  stop("is.hapibd.format must be TRUE/true or FALSE/false; got: ", args[9])
 }
-IS.HAPIBD.FORMAT <- IS.HAPIBD.FORMAT == "true"
+is.hapibd.format <- is.hapibd.format == "true"
 
 print("inputs:")
-print(paste("MIN.BP.SIZE = ", MIN.BP.SIZE))
-print(paste("MIN.CM.SIZE = ", MIN.CM.SIZE))
-print(paste("IBD.FILE = ", IBD.FILE))
-print(paste("GMAP = ", GMAP))
-print(paste("FF.OUT = ", FF.OUT))
-print(paste("FF.HOT.OUT = ", FF.HOT.OUT))
-print(paste("IS.HAPIBD.FORMAT = ", IS.HAPIBD.FORMAT))
+print(paste("min.bp.size = ", min.bp.size))
+print(paste("min.cm.size = ", min.cm.size))
+print(paste("ibd.file = ", ibd.file))
+print(paste("gmap.file = ", gmap.file))
+print(paste("ff.out = ", ff.out))
+print(paste("ff.hot.out = ", ff.hot.out))
+print(paste("is.hapibd.format = ", is.hapibd.format))
 
 # read in ibd calls ----
-if (grepl("true_ibd", IBD.FILE, ignore.case = TRUE)) {
-  segs <- read.true(IBD.FILE, MIN.BP.SIZE, MIN.CM.SIZE, GMAP)
+if (grepl("true_ibd", ibd.file, ignore.case = TRUE)) {
+  segs <- read.true(ibd.file, min.bp.size, min.cm.size, gmap.file)
   
   # print true segments in BED format
-  readr::write_tsv(segs, FF.OUT, col_names = TRUE)
+  readr::write_tsv(segs, ff.out, col_names = TRUE)
   quit(status = 0)
-} else if (IS.HAPIBD.FORMAT) {
-  calls <- read.hapibd.bed(IBD.FILE, MIN.BP.SIZE, MIN.CM.SIZE, GMAP)
+} else if (is.hapibd.format) {
+  calls <- read.hapibd.bed(ibd.file, min.bp.size, min.cm.size, gmap.file)
   gmap <- readr::read_table(
-    file = GMAP, col_names = FALSE, show_col_types = FALSE
+    file = gmap.file, col_names = FALSE, show_col_types = FALSE
   ) %>%
     rename(chr = X1, snp = X2, cM = X3, bp = X4)
 } else {
-  calls <- read.rapid.bed(IBD.FILE, MIN.BP.SIZE, MIN.CM.SIZE, GMAP)
+  calls <- read.rapid.bed(ibd.file, min.bp.size, min.cm.size, gmap.file)
   gmap <- readr::read_table(
-    file = GMAP, col_names = FALSE, show_col_types = FALSE
+    file = gmap.file, col_names = FALSE, show_col_types = FALSE
   ) %>%
     rename(idx = X1, cM = X2)
 }
 
 # print ibd segments in BED format ----
-readr::write_tsv(calls, FF.OUT, col_names = TRUE)
+readr::write_tsv(calls, ff.out, col_names = TRUE)
 
 # filter out hot bins (bins with too great of a number of segemnts) ----
-chr.len.cM <- max(as.numeric(gmap$cM), na.rm = TRUE)
+chr.len.cm <- max(as.numeric(gmap$cM), na.rm = TRUE)
 hot.all <- filter.ibd.by.hot.bins(
-  calls = calls, chr.len.cM = chr.len.cM, bin.size.cM = HOT.BIN.SIZE, 
-  sd.thresh = HOT.BIN.SD, trim.frac = 0.03
+  calls = calls, chr.len.cm = chr.len.cm, bin.size.cM = hot.bin.size, 
+  sd.thresh = hot.bin.sd, trim.frac = 0.03
   )
 
 # print ibd segments filter by hot bins in BED format ----
-readr::write_tsv(hot.all$calls.filtered, FF.HOT.OUT, col_names = TRUE)
+readr::write_tsv(hot.all$calls.filtered, ff.hot.out, col_names = TRUE)

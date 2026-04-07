@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-#!/usr/bin/env bash
-
 ###############################################################################
 #           Aydin Loid Karatas
 #           ---
@@ -9,19 +7,20 @@
 #           Department of Quantitative and Computational Biology 
 #           Mooney Lab
 #           ---
-#           submit_true_vs_rapid.sh
+#           4b_submit_true_vs_rapid.sh
 ###############################################################################
+
 
 set -euo pipefail
 source /home1/karatas/ibd_compare/other_scripts/const.sh
 source /home1/karatas/ibd_compare/other_scripts/log_msg.sh
 
-TOTAL_TASKS=$(( ${#TMAPS[@]} * ${#IMAPS[@]} * ${#FILTERING[@]} * ${#POPS[@]} ))
+total_tasks=$(( ${#TMAPS[@]} * ${#IMAPS[@]} * ${#FILTERING[@]} * ${#POPS[@]} ))
 
 sbatch \
     --chdir=/home1/karatas/ibd_compare \
     --job-name="tvRAP" \
-    --array="1-${TOTAL_TASKS}%${MAX_JOBS}" \
+    --array="1-${total_tasks}%${MAX_JOBS}" \
     --exclude=d11-05,d11-06,d11-07,b23-11,b23-13 \
     /home1/karatas/ibd_compare/job_scripts/true_vs_rapid.sh \
         "$COMMON_FF_DIR" \
@@ -42,12 +41,12 @@ sbatch \
         -- \
         "${POPS[@]}"
 log_msg "submitted rapid true-vs-inference
-TOTAL_TASKS=${TOTAL_TASKS}
-NUM_REPS=${NUM_REPS}
-TVI_DIR=${TVI_DIR}
+total_tasks=${total_tasks}
+num_reps=${NUM_REPS}
+tvi_dir=${TVI_DIR}
 
 rapid params:
-RAP_MIN_LEN=${RAP_MIN_LEN}
-RAP_WINDOW_SIZE=${RAP_WINDOW_SIZE}
-RAP_NUM_RUNS=${RAP_NUM_RUNS}
-RAP_NUM_SUCCESSE=${RAP_NUM_SUCCESSES}"
+rap_min_len=${RAP_MIN_LEN}
+rap_window_size=${RAP_WINDOW_SIZE}
+rap_num_runs=${RAP_NUM_RUNS}
+rap_num_successe=${RAP_NUM_SUCCESSES}"

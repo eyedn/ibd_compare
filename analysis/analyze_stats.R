@@ -1,14 +1,14 @@
 # ______________________________________________________________________________
-# Aydin Karatas 
+# Aydin Karatas
 # ___
-# University of Southern California 
+# University of Southern California
 # Department of Quantitative and Computational Biology 
-# Mooney Lab 
+# Mooney Lab
 # ___
-# true_v_inferred_analysis.R 
+# analyze_stats.R
 # ______________________________________________________________________________
 
-# libraries ----
+
 library(tidyverse)
 library(furrr)
 library(future)
@@ -40,7 +40,7 @@ library(emmeans)
 # 
 # # read in statistics per replicates ----
 # base.metrics <- c(
-#   "TP","FN","FP","TN","sensitivity","specificity","PPV","NPV","FPR","accuracy"
+#   "tp","fn","fp","tn","sensitivity","specificity","ppv","npv","fpr","accuracy"
 #   )
 # suffixes <- c("", ".2", ".2.5", ".3", ".3.5", ".4", ".4.5", ".5")
 # metric.names <- unlist(
@@ -263,30 +263,30 @@ king.tbl <- tibble(
 #   theme_bw(base_size = 32) + 
 #   theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
 # 
-# # analyze PPV performance ----
-# PPV.focal.pop <- "ADMIX"
-# PPV.focal.imap <- "hapmap"
-# df.PPV <- all.stats.per.rep %>%
+# # analyze ppv performance ----
+# ppv.focal.pop <- "ADMIX"
+# ppv.focal.imap <- "hapmap"
+# df.ppv <- all.stats.per.rep %>%
 #   filter(
-#     # pop == PPV.focal.pop,
-#     imap == PPV.focal.imap,
+#     # pop == ppv.focal.pop,
+#     imap == ppv.focal.imap,
 #     filt == "hot",
 #     software == "hapibd"
 #   ) %>%
 #   pivot_longer(
-#     cols = matches("^PPV(\\.|$)"),
+#     cols = matches("^ppv(\\.|$)"),
 #     names_to = "threshold",
-#     values_to = "PPV"
+#     values_to = "ppv"
 #   ) %>%
 #   mutate(
 #     threshold = case_when(
-#       threshold == "PPV" ~ "overall",
-#       TRUE ~ sub("^PPV\\.", "", threshold)
+#       threshold == "ppv" ~ "overall",
+#       TRUE ~ sub("^ppv\\.", "", threshold)
 #     ),
 #     threshold = factor(threshold, levels = thr.levels)
 #   )
 # 
-# ggplot(df.PPV, aes(x = threshold, y = PPV)) +
+# ggplot(df.ppv, aes(x = threshold, y = ppv)) +
 #   geom_boxplot(
 #     aes(group = interaction(threshold, software.code), fill = software.code)
 #   ) +
@@ -304,9 +304,9 @@ king.tbl <- tibble(
 #   ) +
 #   labs(
 #     x = "IBD length bins (cM)",
-#     y = "PPV",
-#     # title = glue("PPV of {PPV.focal.pop} IBD with a {PPV.focal.imap} map"),
-#     title = glue("PPV of hap-IBD + ibd-ends across populations"),
+#     y = "ppv",
+#     # title = glue("ppv of {ppv.focal.pop} IBD with a {ppv.focal.imap} map"),
+#     title = glue("ppv of hap-IBD + ibd-ends across populations"),
 #     fill = NULL
 #   ) +
 #   theme_bw(base_size = 32) + 
@@ -1015,23 +1015,23 @@ king.tbl <- tibble(
 #       inf_rel  = inf  > eps
 #     )
 #   
-#   TP <- as.numeric(sum(df$true_rel & df$inf_rel))
-#   FP <- as.numeric(sum(!df$true_rel & df$inf_rel))
-#   FN <- as.numeric(sum(df$true_rel & !df$inf_rel))
-#   TN <- as.numeric(sum(!df$true_rel & !df$inf_rel))
+#   tp <- as.numeric(sum(df$true_rel & df$inf_rel))
+#   fp <- as.numeric(sum(!df$true_rel & df$inf_rel))
+#   fn <- as.numeric(sum(df$true_rel & !df$inf_rel))
+#   tn <- as.numeric(sum(!df$true_rel & !df$inf_rel))
 #   
-#   precision <- ifelse(TP + FP == 0, NA_real_, TP / (TP + FP))
-#   recall    <- ifelse(TP + FN == 0, NA_real_, TP / (TP + FN))
+#   precision <- ifelse(tp + fp == 0, NA_real_, tp / (tp + fp))
+#   recall    <- ifelse(tp + fn == 0, NA_real_, tp / (tp + fn))
 #   f1        <- ifelse(is.na(precision) | is.na(recall) | (precision + recall) == 0,
 #                       NA_real_, 2 * precision * recall / (precision + recall))
 #   bal_acc   <- {
-#     tpr <- ifelse(TP + FN == 0, NA_real_, TP / (TP + FN))
-#     tnr <- ifelse(TN + FP == 0, NA_real_, TN / (TN + FP))
+#     tpr <- ifelse(tp + fn == 0, NA_real_, tp / (tp + fn))
+#     tnr <- ifelse(tn + fp == 0, NA_real_, tn / (tn + fp))
 #     ifelse(is.na(tpr) | is.na(tnr), NA_real_, (tpr + tnr) / 2)
 #   }
 #   mcc <- {
-#     tp <- as.numeric(TP); fp <- as.numeric(FP)
-#     fn <- as.numeric(FN); tn <- as.numeric(TN)
+#     tp <- as.numeric(tp); fp <- as.numeric(fp)
+#     fn <- as.numeric(fn); tn <- as.numeric(tn)
 #     
 #     denom <- sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
 #     ifelse(denom == 0, NA_real_, (tp * tn - fp * fn) / denom)
@@ -1040,7 +1040,7 @@ king.tbl <- tibble(
 #   detect_stats <- tibble(
 #     software = software,
 #     eps = eps,
-#     TP = TP, FP = FP, FN = FN, TN = TN,
+#     tp = tp, fp = fp, fn = fn, tn = tn,
 #     precision = precision,
 #     recall = recall,
 #     f1 = f1,
@@ -1221,19 +1221,19 @@ king.tbl <- tibble(
 # compute.kin.cors.one <- function(true.file, inf.file,
 #                                  use.only.nonzero = FALSE,
 #                                  use.log10 = FALSE) {
-#   K.true <- readRDS(true.file)
-#   K.inf  <- readRDS(inf.file)
+#   k.true <- readRDS(true.file)
+#   k.inf  <- readRDS(inf.file)
 #   
-#   if (!is.matrix(K.true) || !is.matrix(K.inf)) {
+#   if (!is.matrix(k.true) || !is.matrix(k.inf)) {
 #     stop("One of the RDS files is not a matrix: ", true.file, " / ", inf.file)
 #   }
-#   if (!all(dim(K.true) == dim(K.inf))) {
+#   if (!all(dim(k.true) == dim(k.inf))) {
 #     stop("Matrix dim mismatch: ", true.file, " vs ", inf.file)
 #   }
 #   
-#   ut <- upper.tri(K.true, diag = FALSE)
-#   true.vec <- K.true[ut]
-#   inf.vec  <- K.inf[ut]
+#   ut <- upper.tri(k.true, diag = FALSE)
+#   true.vec <- k.true[ut]
+#   inf.vec  <- k.inf[ut]
 #   
 #   keep <- is.finite(true.vec) & is.finite(inf.vec)
 #   if (use.only.nonzero) keep <- keep & (true.vec > 0) & (inf.vec > 0)

@@ -1,13 +1,12 @@
-# ______________________________________________________________________________
-# Aydin Karatas
-# ___
-# University of Southern California
-# Department of Quantitative and Computational Biology
-# Mooney Lab
-# ___
-# subset_ancestry_table.py
-# ______________________________________________________________________________
-
+###############################################################################
+#           Aydin Loid Karatas
+#           ---
+#           University of Southern California
+#           Department of Quantitative and Computational Biology
+#           Mooney Lab
+#           ---
+#           subset_ancestry_table.py
+###############################################################################
 
 
 def subset_ancestry_table(ancestry_table, start_node, end_node):

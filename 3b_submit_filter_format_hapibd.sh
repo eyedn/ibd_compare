@@ -7,34 +7,35 @@
 #           Department of Quantitative and Computational Biology 
 #           Mooney Lab
 #           ---
-#           submit_filter_format_hapibd.sh
+#           3b_submit_filter_format_hapibd.sh
 ###############################################################################
+
 
 set -euo pipefail
 source /home1/karatas/ibd_compare/other_scripts/const.sh
 source /home1/karatas/ibd_compare/other_scripts/log_msg.sh
 
 log_msg "Submitting hapibd filter+format
-MIN_BP_LEN=${MIN_BP_LEN}
-MIN_CM_LEN=${MIN_CM_LEN}
-HOT_BIN_SIZE=${HOT_BIN_SIZE}
-HOT_BIN_SD=${HOT_BIN_SD}
+min_bp_len=${MIN_BP_LEN}
+min_cm_len=${MIN_CM_LEN}
+hot_bin_size=${HOT_BIN_SIZE}
+hot_bin_sd=${HOT_BIN_SD}
 
 hapibd params: 
-HAP_MIN_SEED=${HAP_MIN_SEED} 
-HAP_MAX_GAP=${HAP_MAX_GAP} 
-HAP_MIN_EXTEND=${HAP_MIN_EXTEND} 
-HAP_MIN_OUTPUT=${HAP_MIN_OUTPUT} 
-HAP_MIN_MARKERS=${HAP_MIN_MARKERS} 
-HAP_MIN_MAC=${HAP_MIN_MAC}
-CHR=${CHR}"
+hap_min_seed=${HAP_MIN_SEED} 
+hap_max_gap=${HAP_MAX_GAP} 
+hap_min_extend=${HAP_MIN_EXTEND} 
+hap_min_output=${HAP_MIN_OUTPUT} 
+hap_min_markers=${HAP_MIN_MARKERS} 
+hap_min_mac=${HAP_MIN_MAC}
+chr=${CHR}"
 
-TOTAL_TASKS=$(( NUM_REPS * ${#TMAPS[@]} * ${#IMAPS[@]} ))
+total_tasks=$(( NUM_REPS * ${#TMAPS[@]} * ${#IMAPS[@]} ))
 
 sbatch \
     --chdir=/home1/karatas/ibd_compare \
     --job-name=hapFF \
-    --array="1-${TOTAL_TASKS}%${MAX_JOBS}" \
+    --array="1-${total_tasks}%${MAX_JOBS}" \
     /home1/karatas/ibd_compare/job_scripts/filter_format_hapibd.sh \
         "$OUTDIR" \
         "$VCF_DIR" \
@@ -58,4 +59,4 @@ sbatch \
         -- \
         "${POPS[@]}"
 
-log_msg "submitted hapibd filter+format jobs; TOTAL_TASKS=${TOTAL_TASKS}"
+log_msg "submitted hapibd filter+format jobs; total_tasks=${total_tasks}"

@@ -1,12 +1,13 @@
 # ______________________________________________________________________________
-# Aydin Karatas 
+# Aydin Karatas
 # ___
-# University of Southern California 
+# University of Southern California
 # Department of Quantitative and Computational Biology 
-# Mooney Lab 
+# Mooney Lab
 # ___
-# infer.software.with.params.R 
+# infer.software.with.params.R
 # ______________________________________________________________________________
+
 
 library(tidyverse)
 

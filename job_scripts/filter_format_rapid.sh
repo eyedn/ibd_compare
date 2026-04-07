@@ -10,16 +10,6 @@
 #           filter_format_rapid.sh
 ###############################################################################
 
-#SBATCH --cpus-per-task=6
-#SBATCH --mem-per-cpu=8G
-#SBATCH --time=1-00:00:00
-#SBATCH --partition=qcb
-#SBATCH --account=jazlynmo_738
-#SBATCH --nodes=1
-#SBATCH --output=/home1/karatas/logs/rapFF.%A_%a.out
-#SBATCH --error=/home1/karatas/logs/rapFF.%A_%a.err
-#SBATCH --mail-type=ALL
-#SBATCH --mail-user=karatas@usc.edu
 
 set -euo pipefail
 source /home1/karatas/ibd_compare/other_scripts/log_msg.sh
@@ -27,66 +17,66 @@ source /home1/karatas/ibd_compare/other_scripts/log_msg.sh
 : "${SLURM_ARRAY_TASK_ID:?ERROR: run as a Slurm array}"
 
 # inputs
-OUTDIR="$1"
-VCF_DIR="$2"
-COMMON_FF_DIR="$3"
-REF_DIR="$4"
-CHR="$5"
-MIN_BP_LEN="$6"
-MIN_CM_LEN="$7"
-HOT_BIN_SIZE="$8"
-HOT_BIN_SD="$9"
-NUM_REPS="${10}"
+outdir="$1"
+vcf_dir="$2"
+common_ff_dir="$3"
+ref_dir="$4"
+chr="$5"
+min_bp_len="$6"
+min_cm_len="$7"
+hot_bin_size="$8"
+hot_bin_sd="$9"
+num_reps="${10}"
 
 # rapid params (from submit script)
-RAP_MIN_LEN="${11}"
-RAP_WINDOW_SIZE="${12}"
-RAP_NUM_RUNS="${13}"
-RAP_NUM_SUCCESSES="${14}"
+rap_min_len="${11}"
+rap_window_size="${12}"
+rap_num_runs="${13}"
+rap_num_successes="${14}"
 shift 14
 
-# read TMAPs until "--", then IMAPS until "--", then POPS
-TMAPS=()
-while [[ $# -gt 0 && "$1" != "--" ]]; do TMAPS+=( "$1" ); shift; done
-[[ $# -gt 0 && "$1" == "--" ]] || { echo "ERROR: expected '--' after TMAPS" >&2; exit 1; }
+# read TMAPs until "--", then imaps until "--", then pops
+tmaps=()
+while [[ $# -gt 0 && "$1" != "--" ]]; do tmaps+=( "$1" ); shift; done
+[[ $# -gt 0 && "$1" == "--" ]] || { echo "ERROR: expected '--' after tmaps" >&2; exit 1; }
 shift
 
-IMAPS=()
-while [[ $# -gt 0 && "$1" != "--" ]]; do IMAPS+=( "$1" ); shift; done
-[[ $# -gt 0 && "$1" == "--" ]] || { echo "ERROR: expected '--' after IMAPS" >&2; exit 1; }
+imaps=()
+while [[ $# -gt 0 && "$1" != "--" ]]; do imaps+=( "$1" ); shift; done
+[[ $# -gt 0 && "$1" == "--" ]] || { echo "ERROR: expected '--' after imaps" >&2; exit 1; }
 shift
 
-POPS=( "$@" )
+pops=( "$@" )
 
-[[ ${#TMAPS[@]} -gt 0 ]] || { echo "ERROR: no TMAPS provided" >&2; exit 1; }
-[[ ${#IMAPS[@]} -gt 0 ]] || { echo "ERROR: no IMAPS provided" >&2; exit 1; }
-[[ ${#POPS[@]} -gt 0 ]] || { echo "ERROR: no POPS provided" >&2; exit 1; }
+[[ ${#tmaps[@]} -gt 0 ]] || { echo "ERROR: no tmaps provided" >&2; exit 1; }
+[[ ${#imaps[@]} -gt 0 ]] || { echo "ERROR: no imaps provided" >&2; exit 1; }
+[[ ${#pops[@]} -gt 0 ]] || { echo "ERROR: no pops provided" >&2; exit 1; }
 
 # decode array task -> (tmap, imap, seed)
 tid="${SLURM_ARRAY_TASK_ID}"
 tid0=$(( tid - 1 ))
 
-seed_id=$(( tid0 % NUM_REPS + 1 ))
-tmp_id=$(( tid0 / NUM_REPS ))
+seed_id=$(( tid0 % num_reps + 1 ))
+tmp_id=$(( tid0 / num_reps ))
 
-imap_idx=$(( tmp_id % ${#IMAPS[@]} ))
-tmap_idx=$(( tmp_id / ${#IMAPS[@]} ))
+imap_idx=$(( tmp_id % ${#imaps[@]} ))
+tmap_idx=$(( tmp_id / ${#imaps[@]} ))
 
-if (( tmap_idx < 0 || tmap_idx >= ${#TMAPS[@]} )); then
-    echo "ERROR: task ${tid} produced tmap_idx=${tmap_idx}, n_tmaps=${#TMAPS[@]}" >&2
+if (( tmap_idx < 0 || tmap_idx >= ${#tmaps[@]} )); then
+    echo "ERROR: task ${tid} produced tmap_idx=${tmap_idx}, n_tmaps=${#tmaps[@]}" >&2
     exit 1
 fi
-if (( imap_idx < 0 || imap_idx >= ${#IMAPS[@]} )); then
-    echo "ERROR: task ${tid} produced imap_idx=${imap_idx}, n_imaps=${#IMAPS[@]}" >&2
+if (( imap_idx < 0 || imap_idx >= ${#imaps[@]} )); then
+    echo "ERROR: task ${tid} produced imap_idx=${imap_idx}, n_imaps=${#imaps[@]}" >&2
     exit 1
 fi
 
 
-tmap="${TMAPS[$tmap_idx]}"
-imap="${IMAPS[$imap_idx]}"
+tmap="${tmaps[$tmap_idx]}"
+imap="${imaps[$imap_idx]}"
 seed="${seed_id}"
 
-mkdir -p "$COMMON_FF_DIR"
+mkdir -p "$common_ff_dir"
 
 # standardized labels
 if [[ "$tmap" == *HapMapII_GRCh38* ]]; then tmap_label="hapmap"
@@ -98,13 +88,13 @@ fi
 # NOTE: ibd-ends needs a NON-RaPID-style map; you were using hapibd_gmap for this
 if [[ "$imap" == *HapMapII_GRCh38* ]]; then
     imap_label="hapmap"
-    hapibd_gmap="${REF_DIR}/HapMapII_GRCh38/plink.chr${CHR}.GRCh38.UCSC.format.map"
+    hapibd_gmap="${ref_dir}/HapMapII_GRCh38/plink.chr${chr}.GRCh38.UCSC.format.map"
 elif [[ "$imap" == *DeCodeSexAveraged_GRCh38* ]]; then
     imap_label="decode"
-    hapibd_gmap="${REF_DIR}/deCODE/addendum/sex-averaged_gmaps/sex_av_chr${CHR}_hg38.gmap"
+    hapibd_gmap="${ref_dir}/deCODE/addendum/sex-averaged_gmaps/sex_av_chr${chr}_hg38.gmap"
 elif [[ "$imap" == *Flat1Mb1cM* ]]; then
     imap_label="1Mb1cM"
-    hapibd_gmap="${REF_DIR}/GRCh38.p14/recomb_maps_1Mb1cM/chr${CHR}.map"
+    hapibd_gmap="${ref_dir}/GRCh38.p14/recomb_maps_1Mb1cM/chr${chr}.map"
 else
     imap_label="$imap"
     hapibd_gmap=""
@@ -112,26 +102,26 @@ fi
 [[ -n "$hapibd_gmap" && -s "$hapibd_gmap" ]] || { echo "ERROR: missing hapibd_gmap: $hapibd_gmap" >&2; exit 1; }
 
 # rapid dir base (use const params)
-rapid_dir_base="rapid_sim_tmap${tmap}_imap${imap}_d${RAP_MIN_LEN}_w${RAP_WINDOW_SIZE}_r${RAP_NUM_RUNS}_s${RAP_NUM_SUCCESSES}"
-rapid_dir="${OUTDIR}/${rapid_dir_base}"
+rapid_dir_base="rapid_sim_tmap${tmap}_imap${imap}_d${rap_min_len}_w${rap_window_size}_r${rap_num_runs}_s${rap_num_successes}"
+rapid_dir="${outdir}/${rapid_dir_base}"
 
-for pop in "${POPS[@]}"; do
-    vcf="${VCF_DIR}/${tmap}_${seed}_${pop}.vcf.gz"
+for pop in "${pops[@]}"; do
+    vcf="${vcf_dir}/${tmap}_${seed}_${pop}.vcf.gz"
 
-    rapid_nonbed_dir="${rapid_dir}/${pop}_chr${CHR}_seed${seed}_out"
+    rapid_nonbed_dir="${rapid_dir}/${pop}_chr${chr}_seed${seed}_out"
     rapid_nonbed="${rapid_nonbed_dir}/results.max.gz"
     rapid_nonbed_hapibdformat="${rapid_nonbed_dir}/results.max.hapibdformat.gz"
-    rapid_ibdends_prefix="${rapid_dir}/${pop}_chr${CHR}_seed${seed}.ibdends"
+    rapid_ibdends_prefix="${rapid_dir}/${pop}_chr${chr}_seed${seed}.ibdends"
     rapid_ibdends_ibd="${rapid_ibdends_prefix}_ibd.ibdends.bed.gz"
 
     # (your existing bed made elsewhere)
-    rapid_ibd="${rapid_dir}/${pop}_chr${CHR}_seed${seed}_ibd.bed.gz"
+    rapid_ibd="${rapid_dir}/${pop}_chr${chr}_seed${seed}_ibd.bed.gz"
 
     # rapid map for cM interpolation during formatting
     rapid_gmap_dir="${rapid_dir}/maps"
-    rapid_gmap="${rapid_gmap_dir}/chr${CHR}.${pop}.${seed}.RaPIDfinal.map"
+    rapid_gmap="${rapid_gmap_dir}/chr${chr}.${pop}.${seed}.RaPIDfinal.map"
 
-    rapid_ff_dir="${COMMON_FF_DIR}/${rapid_dir_base}"
+    rapid_ff_dir="${common_ff_dir}/${rapid_dir_base}"
     rapid_out="${rapid_ff_dir}/rapid_${tmap_label}_${imap_label}_${pop}_${seed}.bed"
     rapid_hot_out="${rapid_ff_dir}/rapid_${tmap_label}_${imap_label}_${pop}_${seed}.hot.bed"
     rapid_ibdends_out="${rapid_ff_dir}/rapid_${tmap_label}_${imap_label}_${pop}_${seed}.ibdends.bed"
@@ -172,7 +162,7 @@ for pop in "${POPS[@]}"; do
 
     log_msg "rapid: format+filter raw calls"
     Rscript "/home1/karatas/ibd_compare/job_scripts/filter_and_format.R" \
-        "$MIN_BP_LEN" "$MIN_CM_LEN" "$HOT_BIN_SIZE" "$HOT_BIN_SD" \
+        "$min_bp_len" "$min_cm_len" "$hot_bin_size" "$hot_bin_sd" \
         "$rapid_ibd" "$rapid_gmap" \
         "$rapid_out" "$rapid_hot_out" \
         "FALSE"
@@ -180,7 +170,7 @@ for pop in "${POPS[@]}"; do
 
     log_msg "rapid: format+filter ibd-ends adjusted calls (hapibd-style map here)"
     Rscript "/home1/karatas/ibd_compare/job_scripts/filter_and_format.R" \
-        "$MIN_BP_LEN" "$MIN_CM_LEN" "$HOT_BIN_SIZE" "$HOT_BIN_SD" \
+        "$min_bp_len" "$min_cm_len" "$hot_bin_size" "$hot_bin_sd" \
         "$rapid_ibdends_ibd" "$hapibd_gmap" \
         "$rapid_ibdends_out" "$rapid_ibdendshot_out" \
         "TRUE"

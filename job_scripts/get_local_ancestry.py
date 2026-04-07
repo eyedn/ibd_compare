@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 ###############################################################################
 #           Aydin Loid Karatas
 #           ---
@@ -10,13 +8,14 @@
 #           get_local_ancestry.py
 ###############################################################################
 
+
 from sys import argv
 
+from python_utils import log_msg
 from python_utils.get_local_ancestry_utils import (
     build_sample_node_table,
     get_pop_ancestry_table,
     load_ts,
-    log_msg,
     subset_ancestry_table,
     write_local_ancestry,
 )

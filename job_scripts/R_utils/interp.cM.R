@@ -8,7 +8,8 @@
 # interp.cM.R
 # ______________________________________________________________________________
 
-interp.cM <- function(bp.query, bp.map, cM.map) {
+
+interp.cm <- function(bp.query, bp.map, cM.map) {
   # limit out-of-bp-range queries
   # below first bp  → 0
   below <- bp.query <= bp.map[1]
@@ -30,16 +31,15 @@ interp.cM <- function(bp.query, bp.map, cM.map) {
     
     bp.low  <- bp.map[idx.low]
     bp.high <- bp.map[idx.low + 1]
-    cM.low  <- cM.map[idx.low]
-    cM.high <- cM.map[idx.low + 1]
+    cm.low  <- cM.map[idx.low]
+    cm.high <- cM.map[idx.low + 1]
     
     frac <- (bp.query[mid] - bp.low) / (bp.high - bp.low)
     frac[!is.finite(frac)] <- 0
     
-    out[mid] <- cM.low + frac * (cM.high - cM.low)
+    out[mid] <- cm.low + frac * (cm.high - cm.low)
   }
   
   out
 }
   
-

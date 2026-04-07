@@ -1,12 +1,13 @@
 # ______________________________________________________________________________
-# Aydin Karatas 
+# Aydin Karatas
 # ___
-# University of Southern California 
+# University of Southern California
 # Department of Quantitative and Computational Biology 
-# Mooney Lab 
+# Mooney Lab
 # ___
-# run.ks.R 
+# run.ks.R
 # ______________________________________________________________________________
+
 
 run.ks <- function(tru, inf) {
   if (length(tru) < 10 || length(inf) < 10) return(NA_real_)

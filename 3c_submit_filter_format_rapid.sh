@@ -7,32 +7,33 @@
 #           Department of Quantitative and Computational Biology 
 #           Mooney Lab
 #           ---
-#           submit_filter_format_rapid.sh
+#           3c_submit_filter_format_rapid.sh
 ###############################################################################
+
 
 set -euo pipefail
 source /home1/karatas/ibd_compare/other_scripts/const.sh
 source /home1/karatas/ibd_compare/other_scripts/log_msg.sh
 
 log_msg "Submitting rapid filter+format
-MIN_BP_LEN=${MIN_BP_LEN}
-MIN_CM_LEN=${MIN_CM_LEN}
-HOT_BIN_SIZE=${HOT_BIN_SIZE}
-HOT_BIN_SD=${HOT_BIN_SD}
+min_bp_len=${MIN_BP_LEN}
+min_cm_len=${MIN_CM_LEN}
+hot_bin_size=${HOT_BIN_SIZE}
+hot_bin_sd=${HOT_BIN_SD}
 
 rapid params: 
-RAP_MIN_LEN=${RAP_MIN_LEN} 
-RAP_WINDOW_SIZE=${RAP_WINDOW_SIZE} 
-RAP_NUM_RUNS=${RAP_NUM_RUNS} 
-RAP_NUM_SUCCESSES=${RAP_NUM_SUCCESSES}
-CHR=${CHR}"
+rap_min_len=${RAP_MIN_LEN} 
+rap_window_size=${RAP_WINDOW_SIZE} 
+rap_num_runs=${RAP_NUM_RUNS} 
+rap_num_successes=${RAP_NUM_SUCCESSES}
+chr=${CHR}"
 
-TOTAL_TASKS=$(( NUM_REPS * ${#TMAPS[@]} * ${#IMAPS[@]} ))
+total_tasks=$(( NUM_REPS * ${#TMAPS[@]} * ${#IMAPS[@]} ))
 
 sbatch \
     --chdir=/home1/karatas/ibd_compare \
     --job-name=rapFF \
-    --array="1-${TOTAL_TASKS}%${MAX_JOBS}" \
+    --array="1-${total_tasks}%${MAX_JOBS}" \
     /home1/karatas/ibd_compare/job_scripts/filter_format_rapid.sh \
         "$OUTDIR" \
         "$VCF_DIR" \
@@ -54,4 +55,4 @@ sbatch \
         -- \
         "${POPS[@]}"
 
-log_msg "submitted rapid filter+format jobs; TOTAL_TASKS=${TOTAL_TASKS}"
+log_msg "submitted rapid filter+format jobs; total_tasks=${total_tasks}"

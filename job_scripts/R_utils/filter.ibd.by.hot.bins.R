@@ -1,4 +1,4 @@
-# ---------------------------------------------------------------------------
+# ______________________________________________________________________________
 # Aydin Karatas
 # ___
 # University of Southern California
@@ -6,11 +6,12 @@
 # Mooney Lab
 # ___
 # filter.ibd.by.hot.bins.R
-# ---------------------------------------------------------------------------
+# ______________________________________________________________________________
+
 
 filter.ibd.by.hot.bins <- function(
     calls,
-    chr.len.cM,  
+    chr.len.cm,  
     bin.size.cM = 0.25,      
     sd.thresh   = 10,
     trim.frac  = 0.03
@@ -27,8 +28,8 @@ filter.ibd.by.hot.bins <- function(
     if (length(miss) > 0) {
         stop("calls missing required columns: ", paste(miss, collapse = ", "))
     }
-    if (!is.numeric(chr.len.cM) || length(chr.len.cM) != 1 || !is.finite(chr.len.cM) || chr.len.cM <= 0) {
-        stop("chr.len.cM must be a single positive finite number")
+    if (!is.numeric(chr.len.cm) || length(chr.len.cm) != 1 || !is.finite(chr.len.cm) || chr.len.cm <= 0) {
+        stop("chr.len.cm must be a single positive finite number")
     }
 
     cat("chromosome: ", chr, "\n")
@@ -44,9 +45,9 @@ filter.ibd.by.hot.bins <- function(
         )
 
     # total bins across FULL chromosome (include empty bins)
-    n.bins <- ceiling(chr.len.cM / bin.size.cM)
+    n.bins <- ceiling(chr.len.cm / bin.size.cM)
     cat("bin size (cM): ", bin.size.cM, "\n")
-    cat("chr.len.cM: ", chr.len.cM, "\n")
+    cat("chr.len.cm: ", chr.len.cm, "\n")
     cat("total bins (full chr): ", n.bins, "\n")
 
     # map segments to bin indices (clamp to [1, n.bins])
@@ -75,7 +76,7 @@ filter.ibd.by.hot.bins <- function(
         bin = seq_len(n.bins),
         count = counts,
         cM.bin.str = (seq_len(n.bins) - 1) * bin.size.cM,
-        cM.bin.end = pmin(seq_len(n.bins) * bin.size.cM, chr.len.cM)
+        cM.bin.end = pmin(seq_len(n.bins) * bin.size.cM, chr.len.cm)
     )
 
 
@@ -117,8 +118,8 @@ filter.ibd.by.hot.bins <- function(
         cat("trim.frac: ", trim.frac, "\n")
         cat("trimmed mean segments/bin: ", signif(mean.trim, 4), "\n")
         cat("trimmed sd segments/bin: ", signif(sd.trim, 4), "\n")
-        max_z <- (max(bin.counts$count) - mean.trim) / sd.trim
-        cat("max trimmed z-score across bins: ", signif(max_z, 4), "\n")
+        max.z <- (max(bin.counts$count) - mean.trim) / sd.trim
+        cat("max trimmed z-score across bins: ", signif(max.z, 4), "\n")
 
         if (!is.finite(sd.trim) || sd.trim <= 0) {
             cat("WARNING: insufficient trimmed variance; no bins flagged.\n")
