@@ -9,7 +9,7 @@
 #           Department of Quantitative and Computational Biology 
 #           Mooney Lab
 #           ---
-#           submit_true_vs_hapibd.sh
+#           submit_true_vs_rapid.sh
 ###############################################################################
 
 set -euo pipefail

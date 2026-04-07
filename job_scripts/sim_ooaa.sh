@@ -7,7 +7,7 @@
 #           Department of Quantitative and Computational Biology 
 #           Mooney Lab
 #           ---
-#           sim_nonpyrho.sh
+#           sim_ooaa.sh
 ###############################################################################
 
 #SBATCH --time=1-00:00:00
@@ -37,9 +37,14 @@ TREE_DIR="$1"
 SAMPLE_SIZE="$2"
 NUM_REPS="$3"
 MSPRIME_MODEL="$4"
-DEMO_MODEL="$5"
-CHR="$6"
-shift 6
+CHR="$5"
+ADMIXTURE_TIME="$6"
+AFR_PROP="$7"
+EUR_PROP="$8"
+ADMIX_INITIAL_SIZE="$9"
+ADMIX_GROWTH_RATE="${10}"
+CENSUS_TIME_OFFSET="${11}"
+shift 11
 # decode task id to which map + replicate
 MAPS=( "$@" )
 if [[ ${#MAPS[@]} -eq 0 ]]; then
@@ -56,6 +61,20 @@ fi
 gmap="${MAPS[$map_idx]}"
 seed="${rep_id}"
 
+# check if this task was already completed; if so, skip
+out_ts="${TREE_DIR}/${gmap}_${seed}_all.ts"
+if [[ -s "${out_ts}.tsz" ]]; then
+    log_msg "outputs exist (${out_ts}.tsz); skipping"
+    exit 0
+fi
+
+# define sampling specification
+sample_spec=(
+    "AFR:${SAMPLE_SIZE}"
+    "EUR:${SAMPLE_SIZE}"
+    "ADMIX:${SAMPLE_SIZE}"
+)
+
 mkdir -p "${TREE_DIR}"
 
 log_msg "stdpopsim sim (combined array)
@@ -65,11 +84,28 @@ SEED=${seed}
 TREE_DIR=${TREE_DIR}
 SAMPLE_SIZE=${SAMPLE_SIZE}
 MODEL=${MSPRIME_MODEL}
+ADMIXTURE_TIME=${ADMIXTURE_TIME}
+AFR_PROP=${AFR_PROP}
+EUR_PROP=${EUR_PROP}
 sample_spec=${sample_spec[*]}"
 
-# TODO:
-python /home1/karatas/ibd_compare/job_scripts/python_util/sim_ooaa.py \
-        
+sim_cmd=(
+    python /home1/karatas/ibd_compare/job_scripts/sim_ooaa.py
+    --output "$out_ts"
+    --sample-size "$SAMPLE_SIZE"
+    --seed "$seed"
+    --msprime-model "$MSPRIME_MODEL"
+    --chromosome "$CHR"
+    --genetic-map "$gmap"
+    --admixture-time "$ADMIXTURE_TIME"
+    --afr-proportion "$AFR_PROP"
+    --eur-proportion "$EUR_PROP"
+    --admix-initial-size "$ADMIX_INITIAL_SIZE"
+    --admix-growth-rate "$ADMIX_GROWTH_RATE"
+    --census-time-offset "$CENSUS_TIME_OFFSET"
+)
+"${sim_cmd[@]}"
+
 # compress tree sequence
 log_msg "compress tree sequence"
 tszip "$out_ts"

@@ -35,9 +35,11 @@ THREADS="${SLURM_CPUS_PER_TASK:-1}"
 # inputs
 TREE_DIR="$1"
 VCF_DIR="$2"
-CHR="$3"
-NUM_REPS="$4"
-shift 4
+POP_INFO_DIR="$3"
+CHR="$4"
+SAMPLE_SIZE="$5"
+NUM_REPS="$6"
+shift 6
 
 # read MAPS until "--", then read POPS after
 MAPS=()
@@ -85,58 +87,50 @@ else
     exit 1
 fi
 
-# for each pop, create a pop-specific ts from ts from sim
 mkdir -p "${VCF_DIR}"
+mkdir -p "${POP_INFO_DIR}"
 log_msg "subset_ts task
 TASK_ID=${tid}
 GMAP=${gmap} (map_idx=${map_idx}/${#MAPS[@]})
 SEED=${seed}
 IN_TS=${in_ts}
 POPS=${POPS[*]}"
-for pop in "${POPS[@]}"; do
-    # hard coded pop ids from demographic model used
-    case "${pop}" in
-    AFR) pop_id=0 ;;
-    EUR) pop_id=1 ;;
-    ASIA) pop_id=2 ;;
-    ADMIX) pop_id=3 ;;
-    *) echo "ERROR: unknown pop '${pop}' (expected AFR/EUR/ASIA/ADMIX)" >&2; exit 1 ;;
-    esac
+all_vcf="${VCF_DIR}/${gmap}_${seed}_all.vcf.gz"
+tmp_vcf="${VCF_DIR}/${gmap}_${seed}_all.vcf"
 
-    out_ts="${TREE_DIR}/${gmap}_${seed}_${pop}.ts"
-    log_msg "subsetting tree to ${pop} (pop_id=${pop_id}) -> ${out_ts}"
-
-    python - <<'PY' "${in_ts}" "${out_ts}" "${pop_id}"
-import sys, tskit
-in_ts, out_ts, pop_id = sys.argv[1], sys.argv[2], int(sys.argv[3])
-ts = tskit.load(in_ts)
-keep = [u for u in ts.samples() if ts.node(u).population == pop_id]
-if not keep:
-    raise RuntimeError(f"No sample nodes found for pop_id={pop_id}")
-ts.simplify(keep, keep_unary=True).dump(out_ts)
-PY
-    log_msg "wrote ${out_ts}"
-
-    # store compressed vcfs for each pop  (VCF-compliant 1-based positions)
-    log_msg "generate vcf of pop-specific tree (python export, 1-based)"
-    tmp_vcf="${VCF_DIR}/${gmap}_${seed}_${pop}.vcf"
-
-    python - <<'PY' "${out_ts}" "${CHR}" "${tmp_vcf}"
+log_msg "generate vcf of all samples from tree (python export, 1-based)"
+python - <<'PY' "${in_ts}" "${CHR}" "${tmp_vcf}"
 import tskit, sys
 ts = tskit.load(sys.argv[1])
 sim_chr = sys.argv[2]
 with open(sys.argv[3], "w") as f:
     ts.write_vcf(f, contig_id=f"chr{sim_chr}", position_transform=lambda xs: [x + 1 for x in xs])
 PY
-    bcftools norm --rm-dup all --threads "$THREADS" "$tmp_vcf" | \
-        bcftools view --types snps --min-alleles 2 --max-alleles 2 --threads "$THREADS" \
-        -Oz -o "${VCF_DIR}/${gmap}_${seed}_${pop}.vcf.gz"
-    tabix -p vcf "${VCF_DIR}/${gmap}_${seed}_${pop}.vcf.gz"
-    rm -f "${tmp_vcf}"
+bcftools norm --rm-dup all --threads "$THREADS" "$tmp_vcf" | \
+    bcftools view --types snps --min-alleles 2 --max-alleles 2 --threads "$THREADS" \
+    -Oz -o "${all_vcf}"
+tabix -p vcf "${all_vcf}"
+rm -f "${tmp_vcf}"
 
-    tszip "${out_ts}"
-    rm -f "${out_ts}"
-    log_msg "wrote ${out_ts}.tsz"
+for idx in "${!POPS[@]}"; do
+    pop="${POPS[$idx]}"
+    start=$(( idx * SAMPLE_SIZE ))
+    end=$(( (idx + 1) * SAMPLE_SIZE - 1 ))
+    sample_ids="${POP_INFO_DIR}/${gmap}_${seed}_${pop}_samples.txt"
+    out_vcf="${VCF_DIR}/${gmap}_${seed}_${pop}.vcf.gz"
+
+    : > "${sample_ids}"
+    for i in $(seq "${start}" "${end}"); do
+        echo "tsk_${i}" >> "${sample_ids}"
+    done
+
+    log_msg "subsetting ${pop} samples tsk_${start}..tsk_${end} -> ${out_vcf}"
+    bcftools view \
+        -S "${sample_ids}" \
+        --threads "$THREADS" \
+        -Oz -o "${out_vcf}" \
+        "${all_vcf}"
+    tabix -p vcf "${out_vcf}"
 done
 
 log_msg "rezipping input tree sequence to ${in_ts}.tsz"

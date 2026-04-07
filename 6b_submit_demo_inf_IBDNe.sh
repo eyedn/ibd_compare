@@ -7,7 +7,7 @@
 #           Department of Quantitative and Computational Biology 
 #           Mooney Lab
 #           ---
-#           7a_submit_demo_inf_IBDNe.sh
+#           6b_submit_demo_inf_IBDNe.sh
 ###############################################################################
 
 set -euo pipefail
@@ -34,4 +34,4 @@ sbatch \
         "${TMAPS[@]}" \
         -- \
         "${POPS[@]}"
-log_msg "submitted gone2 inference; tasks=${TOTAL_TASKS}"
+log_msg "submitted ibdne inference; tasks=${TOTAL_TASKS}"

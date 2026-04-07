@@ -7,7 +7,7 @@
 #           Department of Quantitative and Computational Biology 
 #           Mooney Lab
 #           ---
-#           submit_get_true_ibd.sh
+#           6a_submit_demo_inf_GONE2.sh
 ###############################################################################
 
 set -euo pipefail
@@ -15,25 +15,23 @@ source /home1/karatas/ibd_compare/other_scripts/const.sh
 source /home1/karatas/ibd_compare/other_scripts/log_msg.sh
 
 # run true ibd finding for each tree
-log_msg "Detected true ibd specifications
-MIN_SPAN=${MIN_SPAN}
-MAX_TIME=${MAX_TIME}
-OUTDIR=${OUTDIR}
-CHR=${CHR}"
+log_msg "Detected GONE2 submission specifications
+VCF_DIR=${VCF_DIR}
+DEMO_DIR=${DEMO_DIR}
+CHR=${CHR}
+FLAT_RATE=${FLAT_RATE}"
 TOTAL_TASKS=$(( NUM_REPS * ${#TMAPS[@]} ))
 sbatch \
     --chdir=/home1/karatas/ibd_compare \
-    --job-name=trueIBD \
-    --exclude=d11-05,d11-06,d11-07,b23-11,b23-13 \
+    --job-name=demoGONE2 \
     --array="1-${TOTAL_TASKS}%${MAX_JOBS}" \
-    "job_scripts/get_true_ibd.sh" \
-        "$MIN_SPAN" \
-        "$MAX_TIME" \
+    "job_scripts/demo_inf_GONE2.sh" \
+        "$VCF_DIR" \
+        "$DEMO_DIR" \
         "$CHR" \
-        "$TREE_DIR" \
-        "$TRUE_DIR" \
+        "$FLAT_RATE" \
         "$NUM_REPS" \
         "${TMAPS[@]}" \
         -- \
         "${POPS[@]}"
-log_msg "submitted getting true ibd; tasks=${TOTAL_TASKS}"
+log_msg "submitted gone2 inference; tasks=${TOTAL_TASKS}"

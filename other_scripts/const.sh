@@ -17,6 +17,7 @@ OUTDIR="${SCRATCH}/stdpopsim_runs_chr18_admix"
 TREE_DIR="${OUTDIR}/trees"
 VCF_DIR="${OUTDIR}/vcfs"
 TRUE_DIR="${OUTDIR}/true_ibd"
+ANC_DIR="${OUTDIR}/local_ancestry"
 POP_INFO_DIR="${OUTDIR}/pop_info"
 
 COMMON_FF_DIR="${SCRATCH}/ibd_compare_chr18_admix" 
@@ -31,13 +32,18 @@ MAX_JOBS=100
 TMAPS=(
     "HapMapII_GRCh38"
 )
-POPS=(AFR EUR ASIA ADMIX)
+POPS=(AFR EUR ADMIX)
 NUM_REPS=50
 # NUM_REPS=2
 CHR=18
 SAMPLE_SIZE=300 
 MSPRIME_MODEL="dtwf"
-DEMO_MODEL="AmericanAdmixture_4B18"
+ADMIXTURE_TIME=14
+AFR_PROP=0.75
+EUR_PROP=0.25
+ADMIX_INITIAL_SIZE=1000
+ADMIX_GROWTH_RATE=""
+CENSUS_TIME_OFFSET="1e-6"
 
 # ibd specifications
 MIN_SPAN=250000 # measured in bps

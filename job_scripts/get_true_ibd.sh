@@ -39,8 +39,9 @@ MAX_TIME="$2"
 CHR="$3"
 TREE_DIR="$4"   
 TRUE_DIR="$5"  
-NUM_REPS="$6"
-shift 6
+SAMPLE_SIZE="$6"
+NUM_REPS="$7"
+shift 7
 
 # read MAPS until "--", then read POPS after
 MAPS=()
@@ -70,7 +71,6 @@ fi
 gmap="${MAPS[$map_idx]}"
 seed="${rep_id}"
 
-# for each pop, use its pop-specific ts to find ibd segments
 log_msg "Detected true ibd specifications
 MIN_SPAN=${MIN_SPAN}
 MAX_TIME=${MAX_TIME}
@@ -79,27 +79,30 @@ TRUE_DIR=${TRUE_DIR}
 CHR=${CHR}"
 
 mkdir -p "$TRUE_DIR"
-for pop in "${POPS[@]}"; do
-    in_ts="${TREE_DIR}/${gmap}_${seed}_${pop}.ts"
+in_ts="${TREE_DIR}/${gmap}_${seed}_all.ts"
+if [[ -s "${in_ts}.tsz" ]]; then
+    log_msg "found compressed ts (${in_ts}.tsz); unzipping"
+    tsunzip "${in_ts}.tsz"
+elif [[ -s "${in_ts}" ]]; then
+    log_msg "found uncompressed ts (${in_ts})"
+else
+    echo "ERROR: missing input tree sequence (${in_ts} or ${in_ts}.tsz)" >&2
+    exit 1
+fi
+
+for idx in "${!POPS[@]}"; do
+    pop="${POPS[$idx]}"
+    start=$(( idx * SAMPLE_SIZE ))
+    end=$(( (idx + 1) * SAMPLE_SIZE - 1 ))
     out_tsv="${TRUE_DIR}/${gmap}_${seed}_${pop}.tsv"
-    # check ts file was created
-    if [[ -s "${in_ts}.tsz" ]]; then
-        log_msg "found compressed ts (${in_ts}.tsz); unzipping"
-        tsunzip "${in_ts}.tsz"
-    elif [[ -s "${in_ts}" ]]; then
-        log_msg "found uncompressed ts (${in_ts})"
-    else
-        echo "ERROR: missing input tree sequence (${in_ts} or ${in_ts}.tsz)" >&2
-        exit 1
-    fi
 
     log_msg "generating true ibd segments in ${out_tsv}"
     python /home1/karatas/ibd_compare/job_scripts/get_true_ibd.py \
-        "$in_ts" "$out_tsv" "$CHR" "$MIN_SPAN" "$MAX_TIME"
-
-    log_msg "rezipping input tree sequence to ${in_ts}.tsz"
-    tszip "$in_ts"
-    rm -f "$in_ts"
+        "$in_ts" "$out_tsv" "$CHR" "$MIN_SPAN" "$MAX_TIME" "$start" "$end"
 done
+
+log_msg "rezipping input tree sequence to ${in_ts}.tsz"
+tszip "$in_ts"
+rm -f "$in_ts"
 
 log_msg "done with ${gmap} seed=${seed}"
