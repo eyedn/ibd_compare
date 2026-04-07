@@ -10,69 +10,200 @@
 
 
 library(tidyverse)
-library(furrr)
 library(future)
-library(progressr)
+library(furrr)
 library(glue)
-library(stats)
+library(lme4)
 library(emmeans)
 
-# source function ----
+# source functions ----
 source("R_utils/constants.R")
-source("R_utils/read.all.stats.R")
 source("R_utils/read.all.stats.per.rep.R")
+source("R_utils/pivot.confusion.metric.long.R")
+source("R_utils/fit.confusion.glmm.R")
+source("R_utils/extract.confusion.contrasts.R")
+source("R_utils/complete.condition.cols.R")
+source("R_utils/run.pairwise.question.R")
 
-# read in statistics aggregated across reps / per rep ----
-all.stats <- read.all.stats(
-  glue("{ibd.comp.dir}/true_vs_inference/all_stats.tsv"), param.map
-  )
+# define constants ----
+adj.method <- "bh"
+per.rep.path <- glue("{ibd.comp.dir}/true_vs_inference/all_stats.per_rep.tsv")
+
+if (!file.exists(per.rep.path)) {
+  stop("Could not find all_stats.per_rep.tsv at the expected server path.")
+}
+
+# read in replicate-level statistics ----
 all.stats.per.rep <- read.all.stats.per.rep(
-  glue("{ibd.comp.dir}/true_vs_inference/all_stats.per_rep.tsv"), 
+  per.rep.path,
   stats.meta.names, param.map
-  )
+)
 
-# define focal variables ----
+software.palette <- c(
+  "h1" = "lightblue1",
+  "h2" = "dodgerblue",
+  "h3" = "blue",
+  "r1" = "mistyrose",
+  "r2" = "red",
+  "r3" = "darkred"
+)
+
+pop.palette <- c(
+  "ADMIX" = "dodgerblue",
+  "AFR" = "mistyrose",
+  "ASIA" = "red",
+  "EUR" = "darkred"
+)
+
 focal.pop <- "ADMIX"
 focal.imap <- "hapmap"
-focal.software <- "hapibd"
+focal.software.code <- "h1"
+focal.filter <- "ibdends"
+n.workers <- min(8, future::availableCores())
 
-# analyze sensitivity ----
-## pop specific sensitivity ----
-df.sens <- all.stats.per.rep %>%
+future::plan(future::multisession, workers = n.workers)
+on.exit(future::plan(future::sequential), add = TRUE)
+
+# build long-format metric tables ----
+sens.long <- pivot.confusion.metric.long(
+  all.stats.per.rep = all.stats.per.rep,
+  metric = "sensitivity",
+  thr.levels = thr.levels
+)
+
+precision.long <- pivot.confusion.metric.long(
+  all.stats.per.rep = all.stats.per.rep,
+  metric = "precision",
+  thr.levels = thr.levels
+)
+
+metric.long.list <- list(
+  sensitivity = sens.long,
+  precision = precision.long
+)
+
+# build question-specific tasks ----
+analysis.task.tbl <- tibble(
+  metric = c(
+    "sensitivity", "sensitivity", "sensitivity", "sensitivity",
+    "sensitivity", "precision", "precision", "precision",
+    "precision", "precision"
+  ),
+  question = c(
+    "question_1", "question_2", "question_3", "question_4", "question_5",
+    "question_1", "question_2", "question_3", "question_4", "question_5"
+  ),
+  question.label = c(
+    "Different strategies at hapmap while holding filter constant",
+    "Map changes within strategy while holding filter constant",
+    "Filter changes within strategy with hapmap fixed",
+    "Population differences within fixed inference settings",
+    "IBD bin differences within fixed inference settings",
+    "Different strategies at hapmap while holding filter constant",
+    "Map changes within strategy while holding filter constant",
+    "Filter changes within strategy with hapmap fixed",
+    "Population differences within fixed inference settings",
+    "IBD bin differences within fixed inference settings"
+  ),
+  fixed.effects = c(
+    "software.with.params * filt + pop",
+    "imap * software.with.params * filt + pop",
+    "filt * software.with.params + pop",
+    "pop * software.with.params * imap * filt",
+    "threshold * (software.with.params + imap + filt + pop)",
+    "software.with.params * filt + pop",
+    "imap * software.with.params * filt + pop",
+    "filt * software.with.params + pop",
+    "pop * software.with.params * imap * filt",
+    "threshold * (software.with.params + imap + filt + pop)"
+  ),
+  contrast.var = c(
+    "software.with.params", "imap", "filt", "pop", "threshold",
+    "software.with.params", "imap", "filt", "pop", "threshold"
+  ),
+  by.vars = list(
+    c("filt"),
+    c("software.with.params", "filt"),
+    c("software.with.params"),
+    c("software.with.params", "imap", "filt"),
+    c("software.with.params", "imap", "filt", "pop"),
+    c("filt"),
+    c("software.with.params", "filt"),
+    c("software.with.params"),
+    c("software.with.params", "imap", "filt"),
+    c("software.with.params", "imap", "filt", "pop")
+  ),
+  data = list(
+    sens.long %>% filter(threshold == "overall", imap == "hapmap"),
+    sens.long %>% filter(threshold == "overall"),
+    sens.long %>% filter(threshold == "overall", imap == "hapmap"),
+    sens.long %>% filter(threshold == "overall"),
+    sens.long %>% filter(threshold != "overall"),
+    precision.long %>% filter(threshold == "overall", imap == "hapmap"),
+    precision.long %>% filter(threshold == "overall"),
+    precision.long %>% filter(threshold == "overall", imap == "hapmap"),
+    precision.long %>% filter(threshold == "overall"),
+    precision.long %>% filter(threshold != "overall")
+  )
+)
+
+# run the five inferential analyses in parallel ----
+analysis.result.list <- furrr::future_pmap(
+  .l = analysis.task.tbl,
+  .f = function(
+      metric,
+      question,
+      question.label,
+      fixed.effects,
+      contrast.var,
+      by.vars,
+      data
+  ) {
+    run.pairwise.question(
+      data = data,
+      fixed.effects = fixed.effects,
+      contrast.var = contrast.var,
+      by.vars = by.vars,
+      metric = metric,
+      question = question,
+      question.label = question.label,
+      adjust = adj.method
+    )
+  },
+  .options = furrr::furrr_options(seed = TRUE)
+)
+
+analysis.results <- bind_rows(analysis.result.list) %>%
+  group_by(metric, question) %>%
+  mutate(
+    adjusted.p.value = p.adjust(contrast.p.value, method = adj.method)
+  ) %>%
+  ungroup()
+
+confusion.metric.glmm.results <- analysis.results %>%
+  arrange(metric, question, filt, software.with.params, imap, pop, threshold)
+
+sensitivity.glmm.results <- confusion.metric.glmm.results %>%
+  filter(metric == "sensitivity")
+
+precision.glmm.results <- confusion.metric.glmm.results %>%
+  filter(metric == "precision")
+
+# build manuscript-facing plotting tables ----
+df.sens <- sens.long %>%
   filter(
     pop == focal.pop,
     imap == focal.imap,
     filt != "ibdendshot"
-  ) %>%
-  pivot_longer(
-    cols = matches("^sensitivity(\\.|$)"),
-    names_to = "threshold",
-    values_to = "sensitivity"
-  ) %>%
-  mutate(
-    threshold = case_when(
-      threshold == "sensitivity" ~ "overall",
-      TRUE ~ sub("^sensitivity\\.", "", threshold)
-    ),
-    threshold = factor(threshold, levels = thr.levels)
   )
 
-ggplot(df.sens, aes(x = threshold, y = sensitivity)) +
+ggplot(df.sens, aes(x = threshold, y = estimate)) +
   geom_boxplot(
     aes(group = interaction(threshold, software.code), fill = software.code)
   ) +
   facet_grid(filt ~ software) +
   scale_x_discrete(labels = thr.labels) +
-  scale_fill_manual(
-    values = c(
-      "h1" = "lightblue1",
-      "h2"  = "dodgerblue",
-      "h3" = "blue",
-      "r1" = "mistyrose",
-      "r2"  = "red",
-      "r3" = "darkred"
-    )
-  ) +
+  scale_fill_manual(values = software.palette) +
   labs(
     x = "IBD length bins (cM)",
     y = "Sensitivity",
@@ -83,47 +214,26 @@ ggplot(df.sens, aes(x = threshold, y = sensitivity)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
 
 ## across pops sensitivity ----
-df.sens.allpops <- all.stats.per.rep %>%
+df.sens.allpops <- sens.long %>%
   filter(
-    # software == focal.software,
-    software.code == "h1",
+    software.code == focal.software.code,
     imap == focal.imap,
-    # filt != "ibdendshot"
-    filt == "ibdends"
-  ) %>%
-  pivot_longer(
-    cols = matches("^sensitivity(\\.|$)"),
-    names_to = "threshold",
-    values_to = "sensitivity"
-  ) %>%
-  mutate(
-    threshold = case_when(
-      threshold == "sensitivity" ~ "overall",
-      TRUE ~ sub("^sensitivity\\.", "", threshold)
-    ),
-    threshold = factor(threshold, levels = thr.levels)
+    filt == focal.filter
   )
 
-ggplot(df.sens.allpops, aes(x = threshold, y = sensitivity)) +
+ggplot(df.sens.allpops, aes(x = threshold, y = estimate)) +
   geom_boxplot(
     aes(group = interaction(threshold, software.code), fill = software.code)
   ) +
   facet_grid(filt ~ pop) +
   scale_x_discrete(labels = thr.labels) +
-  scale_fill_manual(
-    values = c(
-      "h1" = "lightblue1",
-      "h2"  = "dodgerblue",
-      "h3" = "blue",
-      "r1" = "mistyrose",
-      "r2"  = "red",
-      "r3" = "darkred"
-    )
-  ) +
+  scale_fill_manual(values = software.palette) +
   labs(
     x = "IBD length bins (cM)",
     y = "Sensitivity",
-    title = glue("Sensitivty of {focal.software} calls with a {focal.imap} map"),
+    title = glue(
+      "Sensitivty of {focal.software.code} calls with a {focal.imap} map"
+    ),
     fill = NULL
   ) +
   theme_bw(base_size = 32) + 
@@ -133,7 +243,7 @@ ggplot(df.sens.allpops, aes(x = threshold, y = sensitivity)) +
 df.sens.allpops.subthresh <- df.sens.allpops %>% 
   filter(threshold %in% c("overall", "2"))
 ggplot(
-  df.sens.allpops.subthresh, aes(x = threshold, y = sensitivity)
+  df.sens.allpops.subthresh, aes(x = threshold, y = estimate)
   ) +
   geom_boxplot(
     aes(group = interaction(threshold, pop), fill = pop), 
@@ -141,14 +251,7 @@ ggplot(
     linewidth = 1
   ) +
   scale_x_discrete(labels = thr.labels.descriptive) +
-  scale_fill_manual(
-    values = c(
-      "ADMIX"  = "dodgerblue",
-      "AFR" = "mistyrose",
-      "ASIA"  = "red",
-      "EUR" = "darkred"
-    )
-  ) +
+  scale_fill_manual(values = pop.palette) +
   labs(
     y = "True positive rate",
     title = "Simulated IBD Inference performance",
@@ -167,93 +270,52 @@ ggplot(
       )
   )
 
-# analyze ppv ----
-## pop specific ppv ----
-df.ppv <- all.stats.per.rep %>%
+# analyze precision ----
+## pop specific precision ----
+df.ppv <- precision.long %>%
   filter(
     pop == focal.pop,
     imap == focal.imap,
     filt != "ibdendshot"
-  ) %>%
-  pivot_longer(
-    cols = matches("^ppv(\\.|$)"),
-    names_to = "threshold",
-    values_to = "ppv"
-  ) %>%
-  mutate(
-    threshold = case_when(
-      threshold == "ppv" ~ "overall",
-      TRUE ~ sub("^ppv\\.", "", threshold)
-    ),
-    threshold = factor(threshold, levels = thr.levels)
   )
 
-ggplot(df.ppv, aes(x = threshold, y = ppv)) +
+ggplot(df.ppv, aes(x = threshold, y = estimate)) +
   geom_boxplot(
     aes(group = interaction(threshold, software.code), fill = software.code)
   ) +
   facet_grid(filt ~ software) +
   scale_x_discrete(labels = thr.labels) +
-  scale_fill_manual(
-    values = c(
-      "h1" = "lightblue1",
-      "h2"  = "dodgerblue",
-      "h3" = "blue",
-      "r1" = "mistyrose",
-      "r2"  = "red",
-      "r3" = "darkred"
-    )
-  ) +
+  scale_fill_manual(values = software.palette) +
   labs(
     x = "IBD length bins (cM)",
-    y = "ppv",
-    title = glue("ppv of {focal.pop} IBD with a {focal.imap} map"),
-    # title = glue("ppv of hap-IBD + ibd-ends across populations"),
+    y = "Precision",
+    title = glue("Precision of {focal.pop} IBD with a {focal.imap} map"),
     fill = NULL
   ) +
   theme_bw(base_size = 32) + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
 
-## across pops ppv ----
-df.ppv.allpops <- all.stats.per.rep %>%
+## across pops precision ----
+df.ppv.allpops <- precision.long %>%
   filter(
-    software == focal.software,
+    software.code == focal.software.code,
     imap == focal.imap,
     filt != "ibdendshot"
-  ) %>%
-  pivot_longer(
-    cols = matches("^ppv(\\.|$)"),
-    names_to = "threshold",
-    values_to = "ppv"
-  ) %>%
-  mutate(
-    threshold = case_when(
-      threshold == "ppv" ~ "overall",
-      TRUE ~ sub("^ppv\\.", "", threshold)
-    ),
-    threshold = factor(threshold, levels = thr.levels)
   )
 
-ggplot(df.ppv.allpops, aes(x = threshold, y = ppv)) +
+ggplot(df.ppv.allpops, aes(x = threshold, y = estimate)) +
   geom_boxplot(
     aes(group = interaction(threshold, software.code), fill = software.code)
   ) +
   facet_grid(filt ~ pop) +
   scale_x_discrete(labels = thr.labels) +
-  scale_fill_manual(
-    values = c(
-      "h1" = "lightblue1",
-      "h2"  = "dodgerblue",
-      "h3" = "blue",
-      "r1" = "mistyrose",
-      "r2"  = "red",
-      "r3" = "darkred"
-    )
-  ) +
+  scale_fill_manual(values = software.palette) +
   labs(
     x = "IBD length bins (cM)",
-    y = "ppv",
-    title = glue("ppv of {focal.software} calls with a {focal.imap} map"),
+    y = "Precision",
+    title = glue(
+      "Precision of {focal.software.code} calls with a {focal.imap} map"
+    ),
     fill = NULL
   ) +
   theme_bw(base_size = 32) + 
