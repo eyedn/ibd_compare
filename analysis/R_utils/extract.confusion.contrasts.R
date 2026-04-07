@@ -46,6 +46,22 @@ extract.confusion.contrasts <- function(
       sep = " - ",
       remove = FALSE
     )
+  
+  if (all(c("asymp.LCL", "asymp.UCL") %in% names(contrast.tbl))) {
+    contrast.tbl <- contrast.tbl %>%
+      rename(
+        lower.CL = asymp.LCL,
+        upper.CL = asymp.UCL
+      )
+  }
+  
+  if (!"lower.CL" %in% names(contrast.tbl)) {
+    contrast.tbl$lower.CL <- NA_real_
+  }
+  
+  if (!"upper.CL" %in% names(contrast.tbl)) {
+    contrast.tbl$upper.CL <- NA_real_
+  }
 
   join.vars <- by.vars
 

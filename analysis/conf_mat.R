@@ -26,12 +26,8 @@ source("R_utils/complete.condition.cols.R")
 source("R_utils/run.pairwise.question.R")
 
 # define constants ----
-adj.method <- "bh"
+adj.method <- "bonferroni"
 per.rep.path <- glue("{ibd.comp.dir}/true_vs_inference/all_stats.per_rep.tsv")
-
-if (!file.exists(per.rep.path)) {
-  stop("Could not find all_stats.per_rep.tsv at the expected server path.")
-}
 
 # read in replicate-level statistics ----
 all.stats.per.rep <- read.all.stats.per.rep(
@@ -60,9 +56,6 @@ focal.imap <- "hapmap"
 focal.software.code <- "h1"
 focal.filter <- "ibdends"
 n.workers <- min(8, future::availableCores())
-
-future::plan(future::multisession, workers = n.workers)
-on.exit(future::plan(future::sequential), add = TRUE)
 
 # build long-format metric tables ----
 sens.long <- pivot.confusion.metric.long(
@@ -148,6 +141,7 @@ analysis.task.tbl <- tibble(
 )
 
 # run the five inferential analyses in parallel ----
+plan(multisession, workers = n.workers)
 analysis.result.list <- furrr::future_pmap(
   .l = analysis.task.tbl,
   .f = function(
@@ -172,6 +166,7 @@ analysis.result.list <- furrr::future_pmap(
   },
   .options = furrr::furrr_options(seed = TRUE)
 )
+plan(sequential)
 
 analysis.results <- bind_rows(analysis.result.list) %>%
   group_by(metric, question) %>%
@@ -240,35 +235,35 @@ ggplot(df.sens.allpops, aes(x = threshold, y = estimate)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
 
 ## for gsg symposium ----
-df.sens.allpops.subthresh <- df.sens.allpops %>% 
-  filter(threshold %in% c("overall", "2"))
-ggplot(
-  df.sens.allpops.subthresh, aes(x = threshold, y = estimate)
-  ) +
-  geom_boxplot(
-    aes(group = interaction(threshold, pop), fill = pop), 
-    outliers = FALSE,
-    linewidth = 1
-  ) +
-  scale_x_discrete(labels = thr.labels.descriptive) +
-  scale_fill_manual(values = pop.palette) +
-  labs(
-    y = "True positive rate",
-    title = "Simulated IBD Inference performance",
-    fill = "Populations"
-  ) +
-  theme_bw(base_size = 42, base_line_size = 2, base_rect_size = 3) +
-  theme(
-    text = element_text(family = "Arial", color = "black"),
-    axis.text.x = element_text(color = "black"),
-    axis.text.y = element_text(color = "black"),
-    axis.title.x = element_blank(),
-    legend.position = c(0.05, 0.05),
-    legend.justification = c(0, 0),
-    legend.background = element_rect(
-      fill = alpha("white"), color = "black", linewidth = 2
-      )
-  )
+# df.sens.allpops.subthresh <- df.sens.allpops %>% 
+#   filter(threshold %in% c("overall", "2"))
+# ggplot(
+#   df.sens.allpops.subthresh, aes(x = threshold, y = estimate)
+#   ) +
+#   geom_boxplot(
+#     aes(group = interaction(threshold, pop), fill = pop), 
+#     outliers = FALSE,
+#     linewidth = 1
+#   ) +
+#   scale_x_discrete(labels = thr.labels.descriptive) +
+#   scale_fill_manual(values = pop.palette) +
+#   labs(
+#     y = "True positive rate",
+#     title = "Simulated IBD Inference performance",
+#     fill = "Populations"
+#   ) +
+#   theme_bw(base_size = 42, base_line_size = 2, base_rect_size = 3) +
+#   theme(
+#     text = element_text(family = "Arial", color = "black"),
+#     axis.text.x = element_text(color = "black"),
+#     axis.text.y = element_text(color = "black"),
+#     axis.title.x = element_blank(),
+#     legend.position = c(0.05, 0.05),
+#     legend.justification = c(0, 0),
+#     legend.background = element_rect(
+#       fill = alpha("white"), color = "black", linewidth = 2
+#       )
+#   )
 
 # analyze precision ----
 ## pop specific precision ----
