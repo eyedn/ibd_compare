@@ -12,6 +12,7 @@
 library(tidyverse)
 library(future)
 library(furrr)
+library(progressr)
 library(glue)
 library(lme4)
 library(emmeans)
@@ -24,6 +25,7 @@ source("R_utils/fit.confusion.glmm.R")
 source("R_utils/extract.confusion.contrasts.R")
 source("R_utils/complete.condition.cols.R")
 source("R_utils/run.pairwise.question.R")
+source("R_utils/run.confusion.analysis.tasks.R")
 
 # define constants ----
 adj.method <- "bonferroni"
@@ -141,39 +143,11 @@ analysis.task.tbl <- tibble(
 )
 
 # run the five inferential analyses in parallel ----
-plan(multisession, workers = n.workers)
-analysis.result.list <- furrr::future_pmap(
-  .l = analysis.task.tbl,
-  .f = function(
-      metric,
-      question,
-      question.label,
-      fixed.effects,
-      contrast.var,
-      by.vars,
-      data
-  ) {
-    run.pairwise.question(
-      data = data,
-      fixed.effects = fixed.effects,
-      contrast.var = contrast.var,
-      by.vars = by.vars,
-      metric = metric,
-      question = question,
-      question.label = question.label,
-      adjust = adj.method
-    )
-  },
-  .options = furrr::furrr_options(seed = TRUE)
+analysis.results <- run.confusion.analysis.tasks(
+  analysis.task.tbl = analysis.task.tbl,
+  adj.method = adj.method,
+  n.workers = n.workers
 )
-plan(sequential)
-
-analysis.results <- bind_rows(analysis.result.list) %>%
-  group_by(metric, question) %>%
-  mutate(
-    adjusted.p.value = p.adjust(contrast.p.value, method = adj.method)
-  ) %>%
-  ungroup()
 
 confusion.metric.glmm.results <- analysis.results %>%
   arrange(metric, question, filt, software.with.params, imap, pop, threshold)
