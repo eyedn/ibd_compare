@@ -23,6 +23,8 @@ source("R_utils/build.confusion.test.specs.R")
 source("R_utils/fit.confusion.glmm.R")
 source("R_utils/run.confusion.lrt.R")
 source("R_utils/tidy.confusion.emmeans.R")
+source("R_utils/tidy.confusion.odds.ratios.R")
+source("R_utils/run.overall.confusion.analysis.R")
 
 # define constants ----
 adj.method <- "bonferroni"
@@ -87,22 +89,18 @@ bin.precision.data <- precision.long %>%
 overall.test.specs <- build.confusion.test.specs("overall")
 bin.test.specs <- build.confusion.test.specs("bin")
 
-overall.sens.fit <- run.confusion.lrt(
-  data = overall.sens.data,
+overall.sens <- run.overall.confusion.analysis(
+  long.data = sens.long,
   metric = "sensitivity",
-  model.scope = "overall",
-  test.specs = overall.test.specs,
   adjust = adj.method,
-  cores = overall.lrt.cores
+  lrt.cores = overall.lrt.cores
 )
 
-overall.precision.fit <- run.confusion.lrt(
-  data = overall.precision.data,
+overall.precision <- run.overall.confusion.analysis(
+  long.data = precision.long,
   metric = "precision",
-  model.scope = "overall",
-  test.specs = overall.test.specs,
   adjust = adj.method,
-  cores = overall.lrt.cores
+  lrt.cores = overall.lrt.cores
 )
 
 bin.sens.fit <- run.confusion.lrt(
@@ -123,13 +121,13 @@ bin.precision.fit <- run.confusion.lrt(
   cores = bin.lrt.cores
 )
 
-overall.sens.model <- overall.sens.fit$full.model
-overall.precision.model <- overall.precision.fit$full.model
+overall.sens.model <- overall.sens$model
+overall.precision.model <- overall.precision$model
 bin.sens.model <- bin.sens.fit$full.model
 bin.precision.model <- bin.precision.fit$full.model
 
-overall.sens.lrt.tbl <- overall.sens.fit$lrt.tbl
-overall.precision.lrt.tbl <- overall.precision.fit$lrt.tbl
+overall.sens.lrt.tbl <- overall.sens$lrt.tbl
+overall.precision.lrt.tbl <- overall.precision$lrt.tbl
 bin.sens.lrt.tbl <- bin.sens.fit$lrt.tbl
 bin.precision.lrt.tbl <- bin.precision.fit$lrt.tbl
 
@@ -141,21 +139,32 @@ confusion.glmm.lrt.results <- bind_rows(
 )
 
 # response-scale marginal means for interpretation ----
+overall.sens.or.tbl <- overall.sens$or.tbl
+overall.precision.or.tbl <- overall.precision$or.tbl
+
 overall.sens.emmeans <- list(
-  method = tidy.confusion.emmeans(overall.sens.model, "software.with.params"),
-  map = tidy.confusion.emmeans(overall.sens.model, "imap"),
-  filter = tidy.confusion.emmeans(overall.sens.model, "filt"),
-  population = tidy.confusion.emmeans(overall.sens.model, "pop")
+  method = overall.sens$emm.method,
+  map = overall.sens$emm.map,
+  filter = overall.sens$emm.filter,
+  population = overall.sens$emm.pop
 )
 
 overall.precision.emmeans <- list(
-  method = tidy.confusion.emmeans(
-    overall.precision.model, "software.with.params"
-  ),
-  map = tidy.confusion.emmeans(overall.precision.model, "imap"),
-  filter = tidy.confusion.emmeans(overall.precision.model, "filt"),
-  population = tidy.confusion.emmeans(overall.precision.model, "pop")
+  method = overall.precision$emm.method,
+  map = overall.precision$emm.map,
+  filter = overall.precision$emm.filter,
+  population = overall.precision$emm.pop
 )
+
+overall.sens.method.pairs <- overall.sens$method.pairs
+overall.sens.map.pairs <- overall.sens$map.pairs
+overall.sens.filter.pairs <- overall.sens$filter.pairs
+overall.sens.pop.pairs <- overall.sens$pop.pairs
+
+overall.precision.method.pairs <- overall.precision$method.pairs
+overall.precision.map.pairs <- overall.precision$map.pairs
+overall.precision.filter.pairs <- overall.precision$filter.pairs
+overall.precision.pop.pairs <- overall.precision$pop.pairs
 
 bin.sens.emmeans <- list(
   threshold = tidy.confusion.emmeans(bin.sens.model, "threshold"),
