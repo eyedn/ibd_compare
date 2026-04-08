@@ -10,7 +10,6 @@
 
 
 library(tidyverse)
-library(progressr)
 library(glue)
 library(lme4)
 library(emmeans)
@@ -19,11 +18,11 @@ library(emmeans)
 source("R_utils/constants.R")
 source("R_utils/read.all.stats.per.rep.R")
 source("R_utils/pivot.confusion.metric.long.R")
+source("R_utils/build.confusion.model.formula.R")
+source("R_utils/build.confusion.test.specs.R")
 source("R_utils/fit.confusion.glmm.R")
-source("R_utils/extract.confusion.contrasts.R")
-source("R_utils/complete.condition.cols.R")
-source("R_utils/run.pairwise.question.R")
-source("R_utils/run.one.confusion.analysis.task.R")
+source("R_utils/run.confusion.lrt.R")
+source("R_utils/tidy.confusion.emmeans.R")
 
 # define constants ----
 adj.method <- "bonferroni"
@@ -69,159 +68,102 @@ precision.long <- pivot.confusion.metric.long(
   thr.levels = thr.levels
 )
 
-# run the five inferential analyses one by one ----
-analysis.result.list <- progressr::with_progress({
-  p <- progressr::progressor(steps = 10)
+# build data subsets for overall and bin models ----
+overall.sens.data <- sens.long %>%
+  filter(threshold == "overall")
 
-  sens.question.1 <- run.one.confusion.analysis.task(
-    metric = "sensitivity",
-    question = "question_1",
-    question.label = "Different strategies at hapmap while holding filter constant",
-    fixed.effects = "software.with.params * filt + pop",
-    contrast.var = "software.with.params",
-    by.vars = c("filt"),
-    data = sens.long %>% filter(threshold == "overall", imap == "hapmap"),
-    adj.method = adj.method
+overall.precision.data <- precision.long %>%
+  filter(threshold == "overall")
+
+bin.sens.data <- sens.long %>%
+  filter(threshold != "overall")
+
+bin.precision.data <- precision.long %>%
+  filter(threshold != "overall")
+
+# fit four primary glmm models and omnibus lrt tables ----
+overall.test.specs <- build.confusion.test.specs("overall")
+bin.test.specs <- build.confusion.test.specs("bin")
+
+overall.sens.fit <- run.confusion.lrt(
+  data = overall.sens.data,
+  metric = "sensitivity",
+  model.scope = "overall",
+  test.specs = overall.test.specs,
+  adjust = adj.method
+)
+
+overall.precision.fit <- run.confusion.lrt(
+  data = overall.precision.data,
+  metric = "precision",
+  model.scope = "overall",
+  test.specs = overall.test.specs,
+  adjust = adj.method
+)
+
+bin.sens.fit <- run.confusion.lrt(
+  data = bin.sens.data,
+  metric = "sensitivity",
+  model.scope = "bin",
+  test.specs = bin.test.specs,
+  adjust = adj.method
+)
+
+bin.precision.fit <- run.confusion.lrt(
+  data = bin.precision.data,
+  metric = "precision",
+  model.scope = "bin",
+  test.specs = bin.test.specs,
+  adjust = adj.method
+)
+
+overall.sens.model <- overall.sens.fit$full.model
+overall.precision.model <- overall.precision.fit$full.model
+bin.sens.model <- bin.sens.fit$full.model
+bin.precision.model <- bin.precision.fit$full.model
+
+overall.sens.lrt.tbl <- overall.sens.fit$lrt.tbl
+overall.precision.lrt.tbl <- overall.precision.fit$lrt.tbl
+bin.sens.lrt.tbl <- bin.sens.fit$lrt.tbl
+bin.precision.lrt.tbl <- bin.precision.fit$lrt.tbl
+
+confusion.glmm.lrt.results <- bind_rows(
+  overall.sens.lrt.tbl,
+  overall.precision.lrt.tbl,
+  bin.sens.lrt.tbl,
+  bin.precision.lrt.tbl
+)
+
+# response-scale marginal means for interpretation ----
+overall.sens.emmeans <- list(
+  method = tidy.confusion.emmeans(overall.sens.model, "software.with.params"),
+  map = tidy.confusion.emmeans(overall.sens.model, "imap"),
+  filter = tidy.confusion.emmeans(overall.sens.model, "filt"),
+  population = tidy.confusion.emmeans(overall.sens.model, "pop")
+)
+
+overall.precision.emmeans <- list(
+  method = tidy.confusion.emmeans(
+    overall.precision.model, "software.with.params"
+  ),
+  map = tidy.confusion.emmeans(overall.precision.model, "imap"),
+  filter = tidy.confusion.emmeans(overall.precision.model, "filt"),
+  population = tidy.confusion.emmeans(overall.precision.model, "pop")
+)
+
+bin.sens.emmeans <- list(
+  threshold = tidy.confusion.emmeans(bin.sens.model, "threshold"),
+  threshold.by.method = tidy.confusion.emmeans(
+    bin.sens.model, "threshold", by.vars = c("software.with.params")
   )
-  p("sensitivity question_1")
+)
 
-  sens.question.2 <- run.one.confusion.analysis.task(
-    metric = "sensitivity",
-    question = "question_2",
-    question.label = "Map changes within strategy while holding filter constant",
-    fixed.effects = "imap * software.with.params * filt + pop",
-    contrast.var = "imap",
-    by.vars = c("software.with.params", "filt"),
-    data = sens.long %>% filter(threshold == "overall"),
-    adj.method = adj.method
+bin.precision.emmeans <- list(
+  threshold = tidy.confusion.emmeans(bin.precision.model, "threshold"),
+  threshold.by.method = tidy.confusion.emmeans(
+    bin.precision.model, "threshold", by.vars = c("software.with.params")
   )
-  p("sensitivity question_2")
-
-  sens.question.3 <- run.one.confusion.analysis.task(
-    metric = "sensitivity",
-    question = "question_3",
-    question.label = "Filter changes within strategy with hapmap fixed",
-    fixed.effects = "filt * software.with.params + pop",
-    contrast.var = "filt",
-    by.vars = c("software.with.params"),
-    data = sens.long %>% filter(threshold == "overall", imap == "hapmap"),
-    adj.method = adj.method
-  )
-  p("sensitivity question_3")
-
-  sens.question.4 <- run.one.confusion.analysis.task(
-    metric = "sensitivity",
-    question = "question_4",
-    question.label = "Population differences within fixed inference settings",
-    fixed.effects = "pop * software.with.params * imap * filt",
-    contrast.var = "pop",
-    by.vars = c("software.with.params", "imap", "filt"),
-    data = sens.long %>% filter(threshold == "overall"),
-    adj.method = adj.method
-  )
-  p("sensitivity question_4")
-
-  sens.question.5 <- run.one.confusion.analysis.task(
-    metric = "sensitivity",
-    question = "question_5",
-    question.label = "IBD bin differences within fixed inference settings",
-    fixed.effects = "threshold * (software.with.params + imap + filt + pop)",
-    contrast.var = "threshold",
-    by.vars = c("software.with.params", "imap", "filt", "pop"),
-    data = sens.long %>% filter(threshold != "overall"),
-    adj.method = adj.method
-  )
-  p("sensitivity question_5")
-
-  precision.question.1 <- run.one.confusion.analysis.task(
-    metric = "precision",
-    question = "question_1",
-    question.label = "Different strategies at hapmap while holding filter constant",
-    fixed.effects = "software.with.params * filt + pop",
-    contrast.var = "software.with.params",
-    by.vars = c("filt"),
-    data = precision.long %>% filter(threshold == "overall", imap == "hapmap"),
-    adj.method = adj.method
-  )
-  p("precision question_1")
-
-  precision.question.2 <- run.one.confusion.analysis.task(
-    metric = "precision",
-    question = "question_2",
-    question.label = "Map changes within strategy while holding filter constant",
-    fixed.effects = "imap * software.with.params * filt + pop",
-    contrast.var = "imap",
-    by.vars = c("software.with.params", "filt"),
-    data = precision.long %>% filter(threshold == "overall"),
-    adj.method = adj.method
-  )
-  p("precision question_2")
-
-  precision.question.3 <- run.one.confusion.analysis.task(
-    metric = "precision",
-    question = "question_3",
-    question.label = "Filter changes within strategy with hapmap fixed",
-    fixed.effects = "filt * software.with.params + pop",
-    contrast.var = "filt",
-    by.vars = c("software.with.params"),
-    data = precision.long %>% filter(threshold == "overall", imap == "hapmap"),
-    adj.method = adj.method
-  )
-  p("precision question_3")
-
-  precision.question.4 <- run.one.confusion.analysis.task(
-    metric = "precision",
-    question = "question_4",
-    question.label = "Population differences within fixed inference settings",
-    fixed.effects = "pop * software.with.params * imap * filt",
-    contrast.var = "pop",
-    by.vars = c("software.with.params", "imap", "filt"),
-    data = precision.long %>% filter(threshold == "overall"),
-    adj.method = adj.method
-  )
-  p("precision question_4")
-
-  precision.question.5 <- run.one.confusion.analysis.task(
-    metric = "precision",
-    question = "question_5",
-    question.label = "IBD bin differences within fixed inference settings",
-    fixed.effects = "threshold * (software.with.params + imap + filt + pop)",
-    contrast.var = "threshold",
-    by.vars = c("software.with.params", "imap", "filt", "pop"),
-    data = precision.long %>% filter(threshold != "overall"),
-    adj.method = adj.method
-  )
-  p("precision question_5")
-
-  list(
-    sens.question.1,
-    sens.question.2,
-    sens.question.3,
-    sens.question.4,
-    sens.question.5,
-    precision.question.1,
-    precision.question.2,
-    precision.question.3,
-    precision.question.4,
-    precision.question.5
-  )
-})
-
-analysis.results <- bind_rows(analysis.result.list) %>%
-  group_by(metric, question) %>%
-  mutate(
-    adjusted.p.value = p.adjust(contrast.p.value, method = adj.method)
-  ) %>%
-  ungroup()
-
-confusion.metric.glmm.results <- analysis.results %>%
-  arrange(metric, question, filt, software.with.params, imap, pop, threshold)
-
-sensitivity.glmm.results <- confusion.metric.glmm.results %>%
-  filter(metric == "sensitivity")
-
-precision.glmm.results <- confusion.metric.glmm.results %>%
-  filter(metric == "precision")
+)
 
 # build manuscript-facing plotting tables ----
 df.sens <- sens.long %>%
