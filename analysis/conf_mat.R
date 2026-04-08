@@ -16,6 +16,7 @@ library(emmeans)
 
 # source functions ----
 source("R_utils/constants.R")
+source("R_utils/log.msg.R")
 source("R_utils/read.all.stats.per.rep.R")
 source("R_utils/pivot.confusion.metric.long.R")
 source("R_utils/build.confusion.model.formula.R")
@@ -72,113 +73,17 @@ precision.long <- pivot.confusion.metric.long(
   thr.levels = thr.levels
 )
 
-# build data subsets for overall and bin models ----
-overall.sens.data <- sens.long %>%
-  filter(threshold == "overall")
-
-overall.precision.data <- precision.long %>%
-  filter(threshold == "overall")
-
-bin.sens.data <- sens.long %>%
-  filter(threshold != "overall")
-
-bin.precision.data <- precision.long %>%
-  filter(threshold != "overall")
-
 # fit four primary glmm models and omnibus lrt tables ----
-overall.test.specs <- build.confusion.test.specs("overall")
-bin.test.specs <- build.confusion.test.specs("bin")
-
-overall.sens <- run.overall.confusion.analysis(
-  long.data = sens.long,
-  metric = "sensitivity",
-  adjust = adj.method,
-  lrt.cores = overall.lrt.cores
-)
-
-overall.precision <- run.overall.confusion.analysis(
-  long.data = precision.long,
-  metric = "precision",
-  adjust = adj.method,
-  lrt.cores = overall.lrt.cores
-)
-
-bin.sens.fit <- run.confusion.lrt(
-  data = bin.sens.data,
-  metric = "sensitivity",
-  model.scope = "bin",
-  test.specs = bin.test.specs,
-  adjust = adj.method,
-  cores = bin.lrt.cores
-)
-
-bin.precision.fit <- run.confusion.lrt(
-  data = bin.precision.data,
-  metric = "precision",
-  model.scope = "bin",
-  test.specs = bin.test.specs,
-  adjust = adj.method,
-  cores = bin.lrt.cores
-)
-
-overall.sens.model <- overall.sens$model
-overall.precision.model <- overall.precision$model
-bin.sens.model <- bin.sens.fit$full.model
-bin.precision.model <- bin.precision.fit$full.model
-
-overall.sens.lrt.tbl <- overall.sens$lrt.tbl
-overall.precision.lrt.tbl <- overall.precision$lrt.tbl
-bin.sens.lrt.tbl <- bin.sens.fit$lrt.tbl
-bin.precision.lrt.tbl <- bin.precision.fit$lrt.tbl
-
-confusion.glmm.lrt.results <- bind_rows(
-  overall.sens.lrt.tbl,
-  overall.precision.lrt.tbl,
-  bin.sens.lrt.tbl,
-  bin.precision.lrt.tbl
-)
-
-# response-scale marginal means for interpretation ----
-overall.sens.or.tbl <- overall.sens$or.tbl
-overall.precision.or.tbl <- overall.precision$or.tbl
-
-overall.sens.emmeans <- list(
-  method = overall.sens$emm.method,
-  map = overall.sens$emm.map,
-  filter = overall.sens$emm.filter,
-  population = overall.sens$emm.pop
-)
-
-overall.precision.emmeans <- list(
-  method = overall.precision$emm.method,
-  map = overall.precision$emm.map,
-  filter = overall.precision$emm.filter,
-  population = overall.precision$emm.pop
-)
-
-overall.sens.method.pairs <- overall.sens$method.pairs
-overall.sens.map.pairs <- overall.sens$map.pairs
-overall.sens.filter.pairs <- overall.sens$filter.pairs
-overall.sens.pop.pairs <- overall.sens$pop.pairs
-
-overall.precision.method.pairs <- overall.precision$method.pairs
-overall.precision.map.pairs <- overall.precision$map.pairs
-overall.precision.filter.pairs <- overall.precision$filter.pairs
-overall.precision.pop.pairs <- overall.precision$pop.pairs
-
-bin.sens.emmeans <- list(
-  threshold = tidy.confusion.emmeans(bin.sens.model, "threshold"),
-  threshold.by.method = tidy.confusion.emmeans(
-    bin.sens.model, "threshold", by.vars = c("software.with.params")
+# note: format of data from pivot.confusion.metric.long
+sens.analysis <- run.overall.confusion.analysis(
+  long.data = sens.long, 
+  adjust.method = adj.method
   )
-)
 
-bin.precision.emmeans <- list(
-  threshold = tidy.confusion.emmeans(bin.precision.model, "threshold"),
-  threshold.by.method = tidy.confusion.emmeans(
-    bin.precision.model, "threshold", by.vars = c("software.with.params")
+precision.analysis <- run.overall.confusion.analysis(
+  long.data = precision.long, 
+  adjust.method = adj.method
   )
-)
 
 # build manuscript-facing plotting tables ----
 df.sens <- sens.long %>%

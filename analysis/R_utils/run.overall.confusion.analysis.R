@@ -8,76 +8,134 @@
 # run.overall.confusion.analysis.R
 # ______________________________________________________________________________
 
+library(lme4)
+library(tidyr)
 
-# run the full overall-only confusion analysis workflow for one metric ----
+# run the full overall-only confusion analysis workflow for sens/precision ----
 run.overall.confusion.analysis <- function(
     long.data,
-    metric,
-    adjust = "bonferroni",
-    lrt.cores = 1
+    adjust.method = "bonferroni"
 ) {
-  overall.data <- long.data %>%
-    filter(threshold == "overall")
-
-  overall.test.specs <- build.confusion.test.specs("overall")
-
-  overall.fit <- run.confusion.lrt(
-    data = overall.data,
-    metric = metric,
-    model.scope = "overall",
-    test.specs = overall.test.specs,
-    adjust = adjust,
-    cores = lrt.cores
+  # note: format of data from pivot.confusion.metric.long
+  # fit binomial glmm
+  log.msg("fitting model")
+  model <- lme4::glmer(
+    cbind(successes, failures) ~
+      software.with.params + imap + filt + pop + (1 | replicate.id),
+    data = long.data,
+    family = binomial(),
+    control = lme4::glmerControl(
+      optimizer = "bobyqa",
+      optCtrl = list(maxfun = 2e5)
+    )
   )
-
-  overall.model <- overall.fit$full.model
-
-  emm.method <- tidy.confusion.emmeans(
-    overall.model,
-    "software.with.params"
+  
+  # run omnibus likelihood ratio tests for each factor
+  log.msg("running omnibus lrt for each factor")
+  mod.no.method <- update(model, . ~ . - software.with.params)
+  mod.no.map <- update(model, . ~ . - imap)
+  mod.no.filter <- update(model, . ~ . - filt)
+  mod.no.pop <- update(model, . ~ . - pop)
+  lrt.method <- anova(mod.no.method, model, test = "Chisq")
+  lrt.map <- anova(mod.no.map, model, test = "Chisq")
+  lrt.filter <- anova(mod.no.filter, model, test = "Chisq")
+  lrt.pop <- anova(mod.no.pop, model, test = "Chisq")
+  
+  # collect omnibus lrt into one table
+  log.msg("generating lrt table")
+  lrt.tbl <- tibble::tibble(
+    term = c("software.with.params", "imap", "filt", "pop"),
+    lrt.statistic = c(
+      lrt.method$Chisq[2],
+      lrt.map$Chisq[2],
+      lrt.filter$Chisq[2],
+      lrt.pop$Chisq[2]
+    ),
+    p.value = c(
+      lrt.method$`Pr(>Chisq)`[2],
+      lrt.map$`Pr(>Chisq)`[2],
+      lrt.filter$`Pr(>Chisq)`[2],
+      lrt.pop$`Pr(>Chisq)`[2]
+    )
+  ) %>%
+    dplyr::mutate(
+      adjusted.p.value = p.adjust(p.value, method = adjust.method)
+    )
+  
+  # get odds ratios and Wald CIs for the fixed effects
+  log.msg("generating or table")
+  or.tbl <- tibble::tibble(
+    term = names(lme4::fixef(model)),
+    estimate = lme4::fixef(model)
+  ) %>%
+    dplyr::mutate(
+      odds.ratio = exp(estimate)
+    ) %>%
+    dplyr::bind_cols(
+      as.data.frame(
+        confint(model, parm = "beta_", method = "Wald")
+        )
+    ) %>%
+    dplyr::rename(
+      ci.lo.logit = `2.5 %`,
+      ci.hi.logit = `97.5 %`
+    ) %>%
+    dplyr::mutate(
+      ci.lo.or = exp(ci.lo.logit),
+      ci.hi.or = exp(ci.hi.logit)
+    ) %>%
+    dplyr::select(term, odds.ratio, ci.lo.or, ci.hi.or)
+  
+  # adjusted post hoc comparisons for any significant factor
+  log.msg("generating methods emmeans")
+  emm.method <- emmeans::emmeans(
+    model,
+    ~ software.with.params,
+    type = "response"
   )
-  emm.map <- tidy.confusion.emmeans(overall.model, "imap")
-  emm.filter <- tidy.confusion.emmeans(overall.model, "filt")
-  emm.pop <- tidy.confusion.emmeans(overall.model, "pop")
-
-  method.pairs <- tidy.confusion.emmeans(
-    overall.model,
-    "software.with.params",
-    pairwise = TRUE,
-    adjust = adjust
+  emm.method.pairs <- pairs(emm.method, adjust = adjust.method)
+  summary.emm.method.pairs <- summary(emm.method.pairs)
+  
+  log.msg("generating maps emmeans")
+  emm.map <- emmeans::emmeans(
+    model,
+    ~ imap,
+    type = "response"
   )
-  map.pairs <- tidy.confusion.emmeans(
-    overall.model,
-    "imap",
-    pairwise = TRUE,
-    adjust = adjust
+  emm.map.pairs <- pairs(emm.map, adjust = adjust.method)
+  summary.emm.map.pairs <- summary(emm.map.pairs)
+  
+  log.msg("generating filter emmeans")
+  emm.filter <- emmeans::emmeans(
+    model,
+    ~ filt,
+    type = "response"
   )
-  filter.pairs <- tidy.confusion.emmeans(
-    overall.model,
-    "filt",
-    pairwise = TRUE,
-    adjust = adjust
+  emm.filter.pairs <- pairs(emm.filter, adjust = adjust.method)
+  summary.emm.filter.pairs <- summary(emm.filter.pairs)
+  
+  log.msg("generating pop emmeans")
+  emm.pop <- emmeans::emmeans(
+    model,
+    ~ pop,
+    type = "response"
   )
-  pop.pairs <- tidy.confusion.emmeans(
-    overall.model,
-    "pop",
-    pairwise = TRUE,
-    adjust = adjust
-  )
-
-  list(
-    metric = metric,
-    data = overall.data,
-    model = overall.model,
-    lrt.tbl = overall.fit$lrt.tbl,
-    or.tbl = tidy.confusion.odds.ratios(overall.model),
-    emm.method = emm.method,
-    emm.map = emm.map,
-    emm.filter = emm.filter,
-    emm.pop = emm.pop,
-    method.pairs = method.pairs,
-    map.pairs = map.pairs,
-    filter.pairs = filter.pairs,
-    pop.pairs = pop.pairs
-  )
+  emm.pop.pairs <- pairs(emm.pop, adjust = adjust.method)
+  summary.emm.pop.pairs <- summary(emm.pop.pairs)
+  
+  # return analysis results
+  return(
+    list(
+      "lrt.tbl" = lrt.tbl,
+      "or.tbl" = or.tbl,
+      "emm.method.pairs" = emm.method.pairs,
+      "summary.emm.method.pairs" = summary.emm.method.pairs,
+      "emm.map.pairs" = emm.map.pairs,
+      "summary.emm.map.pairs" = summary.emm.map.pairs,
+      "emm.filter.pairs" = emm.filter.pairs,
+      "summary.emm.filter.pairs" = summary.emm.filter.pairs,
+      "emm.pop.pairs" = emm.pop.pairs,
+      "summary.emm.pop.pairs" = summary.emm.pop.pairs
+      )
+    )
 }
