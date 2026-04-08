@@ -54,6 +54,8 @@ focal.pop <- "ADMIX"
 focal.imap <- "hapmap"
 focal.software.code <- "h1"
 focal.filter <- "ibdends"
+overall.lrt.cores <- 1
+bin.lrt.cores <- as.numeric(Sys.getenv("SLURM_CPUS_PER_TASK"))
 
 # build long-format metric tables ----
 sens.long <- pivot.confusion.metric.long(
@@ -90,7 +92,8 @@ overall.sens.fit <- run.confusion.lrt(
   metric = "sensitivity",
   model.scope = "overall",
   test.specs = overall.test.specs,
-  adjust = adj.method
+  adjust = adj.method,
+  cores = overall.lrt.cores
 )
 
 overall.precision.fit <- run.confusion.lrt(
@@ -98,7 +101,8 @@ overall.precision.fit <- run.confusion.lrt(
   metric = "precision",
   model.scope = "overall",
   test.specs = overall.test.specs,
-  adjust = adj.method
+  adjust = adj.method,
+  cores = overall.lrt.cores
 )
 
 bin.sens.fit <- run.confusion.lrt(
@@ -106,7 +110,8 @@ bin.sens.fit <- run.confusion.lrt(
   metric = "sensitivity",
   model.scope = "bin",
   test.specs = bin.test.specs,
-  adjust = adj.method
+  adjust = adj.method,
+  cores = bin.lrt.cores
 )
 
 bin.precision.fit <- run.confusion.lrt(
@@ -114,7 +119,8 @@ bin.precision.fit <- run.confusion.lrt(
   metric = "precision",
   model.scope = "bin",
   test.specs = bin.test.specs,
-  adjust = adj.method
+  adjust = adj.method,
+  cores = bin.lrt.cores
 )
 
 overall.sens.model <- overall.sens.fit$full.model
