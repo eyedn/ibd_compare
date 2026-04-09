@@ -19,6 +19,7 @@ run.bin.effects.confusion.analysis <- function(
 ) {
   # fit binomial glmm with bin as the main fixed effect of interest
   log.msg("fitting model")
+  long.data <- long.data %>% rename(bin = threshold)
   model <- lme4::glmer(
     cbind(successes, failures) ~ bin + method + map + filter + population +
       (1 | replicate),
