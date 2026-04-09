@@ -77,6 +77,7 @@ run.overall.confusion.analysis <- function(
         )
     ) %>%
     dplyr::rename(
+      log.odds.rato = estimate,
       ci.lo.logit = `2.5 %`,
       ci.hi.logit = `97.5 %`
     ) %>%
@@ -84,7 +85,7 @@ run.overall.confusion.analysis <- function(
       ci.lo.or = exp(ci.lo.logit),
       ci.hi.or = exp(ci.hi.logit)
     ) %>%
-    dplyr::select(term, odds.ratio, ci.lo.or, ci.hi.or)
+    dplyr::select(term, log.odds.rato, odds.ratio, ci.lo.or, ci.hi.or)
   
   # adjusted post hoc comparisons for any significant factor
   log.msg("generating methods emmeans")
@@ -95,7 +96,9 @@ run.overall.confusion.analysis <- function(
   )
   emm.method.pairs <- pairs(emm.method, adjust = adjust.method)
   summary.emm.method.pairs <- summary(emm.method.pairs)
-  
+  summary.emm.method.pairs <- summary.emm.method.pairs %>% 
+    mutate(log.odds.ratio = log(odds.ratio))
+    
   log.msg("generating maps emmeans")
   emm.map <- emmeans::emmeans(
     model,
@@ -104,6 +107,8 @@ run.overall.confusion.analysis <- function(
   )
   emm.map.pairs <- pairs(emm.map, adjust = adjust.method)
   summary.emm.map.pairs <- summary(emm.map.pairs)
+  summary.emm.map.pairs <- summary.emm.map.pairs %>% 
+    mutate(log.odds.ratio = log(odds.ratio))
   
   log.msg("generating filter emmeans")
   emm.filter <- emmeans::emmeans(
@@ -113,6 +118,8 @@ run.overall.confusion.analysis <- function(
   )
   emm.filter.pairs <- pairs(emm.filter, adjust = adjust.method)
   summary.emm.filter.pairs <- summary(emm.filter.pairs)
+  summary.emm.filter.pairs <- summary.emm.filter.pairs %>% 
+    mutate(log.odds.ratio = log(odds.ratio))
   
   log.msg("generating pop emmeans")
   emm.pop <- emmeans::emmeans(
@@ -122,19 +129,17 @@ run.overall.confusion.analysis <- function(
   )
   emm.pop.pairs <- pairs(emm.pop, adjust = adjust.method)
   summary.emm.pop.pairs <- summary(emm.pop.pairs)
+  summary.emm.pop.pairs <- summary.emm.pop.pairs %>% 
+    mutate(log.odds.ratio = log(odds.ratio))
   
   # return analysis results
   return(
     list(
       "lrt.tbl" = lrt.tbl,
       "or.tbl" = or.tbl,
-      "emm.method.pairs" = emm.method.pairs,
       "summary.emm.method.pairs" = summary.emm.method.pairs,
-      "emm.map.pairs" = emm.map.pairs,
       "summary.emm.map.pairs" = summary.emm.map.pairs,
-      "emm.filter.pairs" = emm.filter.pairs,
       "summary.emm.filter.pairs" = summary.emm.filter.pairs,
-      "emm.pop.pairs" = emm.pop.pairs,
       "summary.emm.pop.pairs" = summary.emm.pop.pairs
       )
     )

@@ -73,15 +73,22 @@ precision.long <- pivot.confusion.metric.long(
   thr.levels = thr.levels
 )
 
+sens.long.overall <- sens.long %>% filter(threshold == "overall")
+precision.long.overall <- precision.long %>% filter(threshold == "overall")
+
+sens.long.bins <- sens.long %>% filter(threshold != "overall")
+precision.long.bins <- precision.long %>% filter(threshold != "overall")
+
+
 # fit four primary glmm models and omnibus lrt tables ----
 # note: format of data from pivot.confusion.metric.long
 sens.analysis <- run.overall.confusion.analysis(
-  long.data = sens.long, 
+  long.data = sens.long.overall, 
   adjust.method = adj.method
   )
 
 precision.analysis <- run.overall.confusion.analysis(
-  long.data = precision.long, 
+  long.data = sens.long.bins, 
   adjust.method = adj.method
   )
 
