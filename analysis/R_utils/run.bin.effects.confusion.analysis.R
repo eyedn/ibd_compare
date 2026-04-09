@@ -19,10 +19,9 @@ run.bin.effects.confusion.analysis <- function(
 ) {
   # fit binomial glmm with bin as the main fixed effect of interest
   log.msg("fitting model")
-  long.data <- long.data %>% rename(bin = threshold)
   model <- lme4::glmer(
-    cbind(successes, failures) ~ bin + method + map + filter + population +
-      (1 | replicate),
+    cbind(successes, failures) ~ 
+      threshold + software.with.params + imap + filt + pop + (1 | replicate.id),
     data = long.data,
     family = binomial(),
     control = lme4::glmerControl(
@@ -33,15 +32,15 @@ run.bin.effects.confusion.analysis <- function(
 
   # test whether bin is significant after adjusting for covariates
   log.msg("running omnibus lrt for bin")
-  mod.no.bin <- update(model, . ~ . - bin)
+  mod.no.bin <- update(model, . ~ . - threshold)
   lrt.bin <- anova(mod.no.bin, model, test = "Chisq")
 
   # collect the omnibus lrt for bin
   log.msg("generating lrt table")
   lrt.tbl <- tibble::tibble(
-    term = "bin",
-    lrt.statistic = lrt.bin$Chisq[2],
-    p.value = lrt.bin$`Pr(>Chisq)`[2]
+    term = "threshold",
+    lrt.statistic = lrt.threshold$Chisq[2],
+    p.value = lrt.threshold$`Pr(>Chisq)`[2]
   ) %>%
     dplyr::mutate(
       adjusted.p.value = p.adjust(p.value, method = adjust.method)
@@ -76,7 +75,7 @@ run.bin.effects.confusion.analysis <- function(
   log.msg("generating bin emmeans")
   emm.bin <- emmeans::emmeans(
     model,
-    ~ bin,
+    ~ threshold,
     type = "response"
   )
   emm.bin.pairs <- pairs(emm.bin, adjust = adjust.method)
