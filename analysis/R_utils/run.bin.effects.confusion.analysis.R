@@ -20,7 +20,7 @@ run.bin.effects.confusion.analysis <- function(
   # fit binomial glmm with bin as the main fixed effect of interest
   log.msg("fitting model")
   model <- lme4::glmer(
-    cbind(TP, FN) ~ bin + method + map + filter + population +
+    cbind(successes, failures) ~ bin + method + map + filter + population +
       (1 | replicate),
     data = long.data,
     family = binomial(),
