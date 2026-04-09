@@ -26,6 +26,7 @@ source("R_utils/run.confusion.lrt.R")
 source("R_utils/tidy.confusion.emmeans.R")
 source("R_utils/tidy.confusion.odds.ratios.R")
 source("R_utils/run.overall.confusion.analysis.R")
+source("R_utils/run.bin.effects.confusion.analysis.R")
 
 # define constants ----
 adj.method <- "bonferroni"
@@ -88,7 +89,17 @@ sens.analysis <- run.overall.confusion.analysis(
   )
 
 precision.analysis <- run.overall.confusion.analysis(
-  long.data = sens.long.bins, 
+  long.data = precision.long.overall, 
+  adjust.method = adj.method
+  )
+
+sens.bin.analysis <- run.bin.effects.confusion.analysis(
+  long.data = sens.long.bins,
+  adjust.method = adj.method
+  )
+
+precision.bin.analysis <- run.bin.effects.confusion.analysis(
+  long.data = precision.long.bins,
   adjust.method = adj.method
   )
 
