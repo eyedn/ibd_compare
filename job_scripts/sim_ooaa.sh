@@ -56,7 +56,7 @@ m_af_eu="${20}"
 admixture_time="${21}"
 afr_prop="${22}"
 eur_prop="${23}"
-admix_initial_size="${24}"
+admix_founding_size="${24}"
 admix_growth_rate_1="${25}"
 admix_growth_rate_2="${26}"
 admix_growth_rate_2_change_time="${27}"
@@ -119,7 +119,7 @@ n_b=${n_b}
 n_eu0=${n_eu0}
 m_af_b=${m_af_b}
 m_af_eu=${m_af_eu}
-admix_initial_size=${admix_initial_size}
+admix_founding_size=${admix_founding_size}
 admix_growth_rate_1=${admix_growth_rate_1}
 admix_growth_rate_2=${admix_growth_rate_2}
 admix_growth_rate_2_change_time=${admix_growth_rate_2_change_time}
@@ -150,7 +150,7 @@ python /home1/karatas/ibd_compare/job_scripts/sim_ooaa.py \
     --admixture-time "$admixture_time" \
     --afr-proportion "$afr_prop" \
     --eur-proportion "$eur_prop" \
-    --admix-initial-size "$admix_initial_size" \
+    --admix-founding-size "$admix_founding_size" \
     --admix-growth-rate-1 "$admix_growth_rate_1" \
     --admix-growth-rate-2 "$admix_growth_rate_2" \
     --admix-growth-rate-2-change-time "$admix_growth_rate_2_change_time" \

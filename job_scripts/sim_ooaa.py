@@ -43,6 +43,7 @@ def main():
         admixture_time=args.admixture_time,
         afr_proportion=args.afr_proportion,
         eur_proportion=args.eur_proportion,
+        admix_founding_size=args.admix_founding_size,
         admix_initial_size=args.admix_initial_size,
         admix_growth_rate_1=args.admix_growth_rate_1,
         admix_growth_rate_2=args.admix_growth_rate_2,

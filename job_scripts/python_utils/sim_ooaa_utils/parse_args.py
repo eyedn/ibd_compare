@@ -35,24 +35,33 @@ def parse_args():
     parser.add_argument("--n-eu0", type=float, default=1032)
     parser.add_argument("--m-af-b", type=float, default=15e-5)
     parser.add_argument("--m-af-eu", type=float, default=2.5e-5)
-    parser.add_argument("--admixture-time", type=float, default=14.0)
-    parser.add_argument("--afr-proportion", type=float, default=0.75)
-    parser.add_argument("--eur-proportion", type=float, default=0.25)
-    parser.add_argument("--admix-initial-size", type=float, default=1000.0)
+    parser.add_argument("--admixture-time", type=float, default=15.0)
+    parser.add_argument("--afr-proportion", type=float, default=0.25)
+    parser.add_argument("--eur-proportion", type=float, default=0.75)
+    parser.add_argument(
+        "--admix-founding-size",
+        type=lambda value: None if value == "" else float(value),
+        default=650.0
+    )
+    parser.add_argument(
+        "--admix-initial-size",
+        type=lambda value: None if value == "" else float(value),
+        default=None
+    )
     parser.add_argument(
         "--admix-growth-rate-1",
         type=lambda value: None if value == "" else float(value),
-        default=0.03
+        default=0.033
     )
     parser.add_argument(
         "--admix-growth-rate-2",
         type=float,
-        default=0.01805
+        default=0.0189
     )
     parser.add_argument(
         "--admix-growth-rate-2-change-time",
         type=float,
-        default=7.0
+        default=6.0
     )
     parser.add_argument("--census-time-offset", type=float, default=1e-6)
     return parser.parse_args()

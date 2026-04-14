@@ -44,7 +44,7 @@ sim_jid=$(sbatch \
         "$N_A" "$N_AF1" "$N_B" "$N_EU0" \
         "$M_AF_B" "$M_AF_EU" \
         "$ADMIXTURE_TIME" "$AFR_PROP" "$EUR_PROP" \
-        "$ADMIX_INITIAL_SIZE" "$ADMIX_GROWTH_RATE_1" \
+        "$ADMIX_FOUNDING_SIZE" "$ADMIX_GROWTH_RATE_1" \
         "$ADMIX_GROWTH_RATE_2" "$ADMIX_GROWTH_RATE_2_CHANGE_TIME" \
         "$CENSUS_TIME_OFFSET" \
         "${TMAPS[@]}"

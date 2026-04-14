@@ -29,13 +29,14 @@ def build_ooaa_demography(
     n_eu0=1032,
     m_af_b=15e-5,
     m_af_eu=2.5e-5,
-    admixture_time=14.0,
-    afr_proportion=0.75,
-    eur_proportion=0.25,
-    admix_initial_size=1000.0,
-    admix_growth_rate_1=0.03,
-    admix_growth_rate_2=0.01805,
-    admix_growth_rate_2_change_time=7.0,
+    admixture_time=15.0,
+    afr_proportion=0.25,
+    eur_proportion=0.75,
+    admix_founding_size=650.0,
+    admix_initial_size=None,
+    admix_growth_rate_1=0.033,
+    admix_growth_rate_2=0.0189,
+    admix_growth_rate_2_change_time=6.0,
     census_time_offset=1e-6
 ):
     # validate user-specified admixture parameters
@@ -47,8 +48,19 @@ def build_ooaa_demography(
         raise ValueError("admix_growth_rate_2_change_time must be positive")
     if admix_growth_rate_2_change_time >= admixture_time:
         raise ValueError(
-            "admix_growth_rate_2_change_time must be less than "
-            "admixture_time"
+            "admix_growth_rate_2_change_time must be less than admixture_time"
+        )
+    if admix_founding_size is not None and admix_founding_size <= 0:
+        raise ValueError("admix_founding_size must be positive")
+    if admix_initial_size is not None and admix_initial_size <= 0:
+        raise ValueError("admix_initial_size must be positive")
+    if (
+        admix_founding_size is not None
+        and admix_initial_size is not None
+    ):
+        raise ValueError(
+            "admix_founding_size and admix_initial_size are mutually "
+            "exclusive"
         )
     if not math.isclose(
         afr_proportion + eur_proportion,
@@ -78,10 +90,32 @@ def build_ooaa_demography(
     # - admix_growth_rate_2 for the recent interval
     # - admix_growth_rate_1 for the older post-admixture interval
     #
-    # the size update keeps ADMIX continuous at the rate-change boundary
-    admix_size_at_growth_rate_2_change = admix_initial_size / math.exp(
-        -admix_growth_rate_2 * admix_growth_rate_2_change_time
-    )
+    # by default, the user-facing admix size is the founding cohort size at
+    # the admixture pulse. later effective sizes are derived forward in time.
+    if admix_founding_size is not None:
+        older_duration = (
+            admixture_time - admix_growth_rate_2_change_time
+        )
+        admix_size_at_growth_rate_2_change = (
+            admix_founding_size
+            * math.exp(admix_growth_rate_1 * older_duration)
+        )
+        admix_present_size = (
+            admix_size_at_growth_rate_2_change
+            * math.exp(
+                admix_growth_rate_2 * admix_growth_rate_2_change_time
+            )
+        )
+    else:
+        # this compatibility path retains the old present-day size behavior.
+        admix_present_size = admix_initial_size
+        admix_size_at_growth_rate_2_change = (
+            admix_present_size
+            / math.exp(
+                -admix_growth_rate_2
+                * admix_growth_rate_2_change_time
+            )
+        )
 
     # define the three extant populations at the present day
     demography = msprime.Demography()
@@ -100,7 +134,7 @@ def build_ooaa_demography(
     demography.add_population(
         name="ADMIX",
         description="African American admixed population",
-        initial_size=admix_initial_size,
+        initial_size=admix_present_size,
         growth_rate=admix_growth_rate_2
     )
 
@@ -178,6 +212,10 @@ def build_ooaa_demography(
         "id": "OutOfAfrica_AfricanAmericanSkeleton",
         "description": "Tennessen _ooa_2 skeleton with a recent AFR/EUR admixture event",
         "generation_time": generation_time,
-        "mutation_rate": mutation_rate
+        "mutation_rate": mutation_rate,
+        "admix_present_size": admix_present_size,
+        "admix_size_at_growth_rate_2_change": (
+            admix_size_at_growth_rate_2_change
+        )
     }
     return demography, model_metadata
