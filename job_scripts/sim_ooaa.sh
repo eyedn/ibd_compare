@@ -125,35 +125,35 @@ admix_growth_rate_2=${admix_growth_rate_2}
 admix_growth_rate_2_change_time=${admix_growth_rate_2_change_time}
 sample_spec=${sample_spec[*]}"
 
-python /home1/karatas/ibd_compare/job_scripts/sim_ooaa.py
-    --output "$out_ts"
-    --sample-size "$sample_size"
-    --seed "$seed"
-    --msprime-model "$msprime_model"
-    --chromosome "$chr"
-    --genetic-map "$gmap"
-    --generation-time "$generation_time"
-    --mutation-rate "$mutation_rate"
-    --t-af-years "$t_af_years"
-    --t-ooa-years "$t_ooa_years"
-    --t-eu0-years "$t_eu0_years"
-    --t-eg-years "$t_eg_years"
-    --r-eu0 "$r_eu0"
-    --r-eu "$r_eu"
-    --r-af "$r_af"
-    --n-a "$n_a"
-    --n-af1 "$n_af1"
-    --n-b "$n_b"
-    --n-eu0 "$n_eu0"
-    --m-af-b "$m_af_b"
-    --m-af-eu "$m_af_eu"
-    --admixture-time "$admixture_time"
-    --afr-proportion "$afr_prop"
-    --eur-proportion "$eur_prop"
-    --admix-initial-size "$admix_initial_size"
-    --admix-growth-rate-1 "$admix_growth_rate_1"
-    --admix-growth-rate-2 "$admix_growth_rate_2"
-    --admix-growth-rate-2-change-time "$admix_growth_rate_2_change_time"
+python /home1/karatas/ibd_compare/job_scripts/sim_ooaa.py \
+    --output "$out_ts" \
+    --sample-size "$sample_size" \
+    --seed "$seed" \
+    --msprime-model "$msprime_model" \
+    --chromosome "$chr" \
+    --genetic-map "$gmap" \
+    --generation-time "$generation_time" \
+    --mutation-rate "$mutation_rate" \
+    --t-af-years "$t_af_years" \
+    --t-ooa-years "$t_ooa_years" \
+    --t-eu0-years "$t_eu0_years" \
+    --t-eg-years "$t_eg_years" \
+    --r-eu0 "$r_eu0" \
+    --r-eu "$r_eu" \
+    --r-af "$r_af" \
+    --n-a "$n_a" \
+    --n-af1 "$n_af1" \
+    --n-b "$n_b" \
+    --n-eu0 "$n_eu0" \
+    --m-af-b "$m_af_b" \
+    --m-af-eu "$m_af_eu" \
+    --admixture-time "$admixture_time" \
+    --afr-proportion "$afr_prop" \
+    --eur-proportion "$eur_prop" \
+    --admix-initial-size "$admix_initial_size" \
+    --admix-growth-rate-1 "$admix_growth_rate_1" \
+    --admix-growth-rate-2 "$admix_growth_rate_2" \
+    --admix-growth-rate-2-change-time "$admix_growth_rate_2_change_time" \
     --census-time-offset "$census_time_offset"
 
 # compress tree sequence
