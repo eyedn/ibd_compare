@@ -7,7 +7,7 @@
 #           Department of Quantitative and Computational Biology 
 #           Mooney Lab
 #           ---
-#           get_het.sh
+#           get_ASWhet.sh
 ###############################################################################
 
 #SBATCH --job-name="ASWhet"
@@ -20,8 +20,8 @@
 #SBATCH --partition=qcb
 #SBATCH --account=jazlynmo_738
 #SBATCH --nodes=1
-#SBATCH --output=/home1/karatas/logs/hapFF.%A_%a.out
-#SBATCH --error=/home1/karatas/logs/hapFF.%A_%a.err
+#SBATCH --output=/home1/karatas/logs/ASWhet.%A_%a.out
+#SBATCH --error=/home1/karatas/logs/ASWhet.%A_%a.err
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=karatas@usc.edu
 
@@ -36,6 +36,7 @@ vcf_dir="${JMPROJ2}/DataRepository/Human/1000GenomeNYGC_hg38/vcfs_strictMask"
 intergenic_regions="/home1/karatas/references/GRCh38.p14/gencodeV49.canonicalIntergenic.bed"
 ASW_unrels="/home1/karatas/proj/1000GenomeNYGC_RmSamplesGarlic/unrels/ASW.keep"
 out_dir="/home1/karatas/proj/1000GenomeNYGC_hg38_karatas/ASW_het"
+: "${SLURM_ARRAY_TASK_ID:?ERROR: run as a Slurm array}"
 chrom="${SLURM_ARRAY_TASK_ID}"
 
 mkdir -p "${out_dir}"
