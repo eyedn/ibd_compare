@@ -10,6 +10,10 @@
 #           get_het.sh
 ###############################################################################
 
+#SBATCH --job-name="ASWhet"
+#SBATCH --chdir=/home1/karatas/ibd_compare
+#SBATCH --exclude=d11-05,d11-06,d11-07,b23-11,b23-13,b18-08
+#SBATCH --array=1-22
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=8G
 #SBATCH --time=1-00:00:00
@@ -20,10 +24,7 @@
 #SBATCH --error=/home1/karatas/logs/hapFF.%A_%a.err
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=karatas@usc.edu
-#SBATCH --array=1-22
-#SBATCH --exclude=d11-05,d11-06,d11-07,b23-11,b23-13,b18-08
-#SBATCH --chdir=/home1/karatas/ibd_compare
-#SBATCH --job-name="ASWhet"
+
 
 set -euo pipefail
 module purge
