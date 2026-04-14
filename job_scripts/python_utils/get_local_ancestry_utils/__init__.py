@@ -20,5 +20,5 @@ __all__ = [
     "get_pop_ancestry_table",
     "load_ts",
     "subset_ancestry_table",
-    "write_local_ancestry",
+    "write_local_ancestry"
 ]

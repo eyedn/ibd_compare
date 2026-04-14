@@ -18,5 +18,5 @@ def get_contig(species, chromosome, genetic_map):
     except TypeError:
         return species.get_contig(
             contig_name,
-            genetic_map=species.get_genetic_map(genetic_map),
+            genetic_map=species.get_genetic_map(genetic_map)
         )

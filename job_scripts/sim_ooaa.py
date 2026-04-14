@@ -15,7 +15,7 @@ from python_utils.sim_ooaa_utils import (
     build_sample_sets,
     get_contig,
     parse_args,
-    simulate_ooaa,
+    simulate_ooaa
 )
 
 
@@ -49,7 +49,7 @@ def main():
         admix_growth_rate_2_change_time=(
             args.admix_growth_rate_2_change_time
         ),
-        census_time_offset=args.census_time_offset,
+        census_time_offset=args.census_time_offset
     )
     sample_sets = build_sample_sets(args.sample_size)
     ts = simulate_ooaa(
@@ -57,7 +57,7 @@ def main():
         demography=demography,
         contig=contig,
         msprime_model=args.msprime_model,
-        seed=args.seed,
+        seed=args.seed
     )
     ts.dump(args.output)
 

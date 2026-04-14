@@ -36,7 +36,7 @@ def build_ooaa_demography(
     admix_growth_rate_1=0.03,
     admix_growth_rate_2=0.01805,
     admix_growth_rate_2_change_time=7.0,
-    census_time_offset=1e-6,
+    census_time_offset=1e-6
 ):
     # validate user-specified admixture parameters
     if admixture_time <= 0:
@@ -54,7 +54,7 @@ def build_ooaa_demography(
         afr_proportion + eur_proportion,
         1.0,
         rel_tol=0,
-        abs_tol=1e-9,
+        abs_tol=1e-9
     ):
         raise ValueError("afr_proportion and eur_proportion must sum to 1")
 
@@ -89,19 +89,19 @@ def build_ooaa_demography(
         name="AFR",
         description="African population from the Tennessen _ooa_2 skeleton",
         initial_size=n_af,
-        growth_rate=r_af,
+        growth_rate=r_af
     )
     demography.add_population(
         name="EUR",
         description="European population from the Tennessen _ooa_2 skeleton",
         initial_size=n_eu,
-        growth_rate=r_eu,
+        growth_rate=r_eu
     )
     demography.add_population(
         name="ADMIX",
         description="African American admixed population",
         initial_size=admix_initial_size,
-        growth_rate=admix_growth_rate_2,
+        growth_rate=admix_growth_rate_2
     )
 
     # allow recent symmetric migration between AFR and EUR
@@ -115,7 +115,7 @@ def build_ooaa_demography(
         time=admix_growth_rate_2_change_time,
         population="ADMIX",
         initial_size=admix_size_at_growth_rate_2_change,
-        growth_rate=admix_growth_rate_1,
+        growth_rate=admix_growth_rate_1
     )
 
     # create ADMIX by mixing ancestry from AFR and EUR
@@ -123,46 +123,46 @@ def build_ooaa_demography(
         time=admixture_time,
         derived="ADMIX",
         ancestral=["AFR", "EUR"],
-        proportions=[afr_proportion, eur_proportion],
+        proportions=[afr_proportion, eur_proportion]
     )
 
     # Tennessen/Fu recent growth epoch boundary
     demography.add_symmetric_migration_rate_change(
         time=t_eg,
         populations=["AFR", "EUR"],
-        rate=m_af_eu,
+        rate=m_af_eu
     )
     demography.add_population_parameters_change(
         time=t_eg,
         population="EUR",
         growth_rate=r_eu0,
-        initial_size=n_eu1,
+        initial_size=n_eu1
     )
     demography.add_population_parameters_change(
         time=t_eg,
         population="AFR",
         growth_rate=0,
-        initial_size=n_af1,
+        initial_size=n_af1
     )
 
     # older AFR/EUR migration regime and pre-growth EUR size
     demography.add_symmetric_migration_rate_change(
         time=t_eu0,
         populations=["AFR", "EUR"],
-        rate=m_af_b,
+        rate=m_af_b
     )
     demography.add_population_parameters_change(
         time=t_eu0,
         population="EUR",
         initial_size=n_b,
-        growth_rate=0,
+        growth_rate=0
     )
 
     # out-of-Africa split
     demography.add_population_split(
         time=t_ooa,
         derived=["EUR"],
-        ancestral="AFR",
+        ancestral="AFR"
     )
     demography.add_migration_rate_change(time=t_ooa, rate=0)
 
@@ -170,7 +170,7 @@ def build_ooaa_demography(
     demography.add_population_parameters_change(
         time=t_af,
         population="AFR",
-        initial_size=n_a,
+        initial_size=n_a
     )
     demography.sort_events()
 
@@ -178,6 +178,6 @@ def build_ooaa_demography(
         "id": "OutOfAfrica_AfricanAmericanSkeleton",
         "description": "Tennessen _ooa_2 skeleton with a recent AFR/EUR admixture event",
         "generation_time": generation_time,
-        "mutation_rate": mutation_rate,
+        "mutation_rate": mutation_rate
     }
     return demography, model_metadata

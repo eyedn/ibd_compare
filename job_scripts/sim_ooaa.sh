@@ -10,6 +10,16 @@
 #           sim_ooaa.sh
 ###############################################################################
 
+#SBATCH --time=1-00:00:00
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=8G
+#SBATCH --partition=qcb
+#SBATCH --account=jazlynmo_738
+#SBATCH --nodes=1
+#SBATCH --output=/home1/karatas/logs/sim.%A_%a.%x.out
+#SBATCH --error=/home1/karatas/logs/sim.%A_%a.%x.err
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=karatas@usc.edu
 
 set -euo pipefail
 module purge
@@ -115,8 +125,7 @@ admix_growth_rate_2=${admix_growth_rate_2}
 admix_growth_rate_2_change_time=${admix_growth_rate_2_change_time}
 sample_spec=${sample_spec[*]}"
 
-sim_cmd=(
-    python /home1/karatas/ibd_compare/job_scripts/sim_ooaa.py
+python /home1/karatas/ibd_compare/job_scripts/sim_ooaa.py
     --output "$out_ts"
     --sample-size "$sample_size"
     --seed "$seed"
@@ -144,11 +153,8 @@ sim_cmd=(
     --admix-initial-size "$admix_initial_size"
     --admix-growth-rate-1 "$admix_growth_rate_1"
     --admix-growth-rate-2 "$admix_growth_rate_2"
-    --admix-growth-rate-2-change-time \
-        "$admix_growth_rate_2_change_time"
+    --admix-growth-rate-2-change-time "$admix_growth_rate_2_change_time"
     --census-time-offset "$census_time_offset"
-)
-"${sim_cmd[@]}"
 
 # compress tree sequence
 log_msg "compress tree sequence"

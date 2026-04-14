@@ -42,17 +42,17 @@ def parse_args():
     parser.add_argument(
         "--admix-growth-rate-1",
         type=lambda value: None if value == "" else float(value),
-        default=0.03,
+        default=0.03
     )
     parser.add_argument(
         "--admix-growth-rate-2",
         type=float,
-        default=0.01805,
+        default=0.01805
     )
     parser.add_argument(
         "--admix-growth-rate-2-change-time",
         type=float,
-        default=7.0,
+        default=7.0
     )
     parser.add_argument("--census-time-offset", type=float, default=1e-6)
     return parser.parse_args()

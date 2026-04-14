@@ -10,6 +10,17 @@
 #           true_vs_rapid.sh
 ###############################################################################
 
+#SBATCH -p qcb
+#SBATCH -A jazlynmo_738
+#SBATCH -N 1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=4G
+#SBATCH --time=1-00:00:00
+#SBATCH --output=/home1/karatas/logs/tvRap.%A_%a.%x.out
+#SBATCH --error=/home1/karatas/logs/tvRap.%A_%a.%x.err
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=karatas@usc.edu
 
 set -euo pipefail
 source /home1/karatas/ibd_compare/other_scripts/log_msg.sh

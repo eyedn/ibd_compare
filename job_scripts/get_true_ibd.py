@@ -15,7 +15,7 @@ from python_utils import log_msg
 from python_utils.get_true_ibd_utils import (
     extend_haplotypes,
     load_and_subset_ts,
-    write_ibd_segments,
+    write_ibd_segments
 )
 
 

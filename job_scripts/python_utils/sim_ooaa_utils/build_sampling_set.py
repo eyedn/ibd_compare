@@ -16,5 +16,5 @@ def build_sample_sets(sample_size):
     return [
         msprime.SampleSet(sample_size, population="AFR", time=0, ploidy=2),
         msprime.SampleSet(sample_size, population="EUR", time=0, ploidy=2),
-        msprime.SampleSet(sample_size, population="ADMIX", time=0, ploidy=2),
+        msprime.SampleSet(sample_size, population="ADMIX", time=0, ploidy=2)
     ]

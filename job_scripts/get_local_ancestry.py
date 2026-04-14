@@ -17,7 +17,7 @@ from python_utils.get_local_ancestry_utils import (
     get_pop_ancestry_table,
     load_ts,
     subset_ancestry_table,
-    write_local_ancestry,
+    write_local_ancestry
 )
 
 

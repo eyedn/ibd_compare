@@ -28,12 +28,12 @@ def simulate_ooaa(
         sequence_length=contig.length,
         ploidy=2,
         random_seed=seed,
-        model=msprime_model,
+        model=msprime_model
     )
     ts = msprime.sim_mutations(
         ts,
         rate=contig.mutation_rate,
-        random_seed=seed + 1,
+        random_seed=seed + 1
     )
     if not isinstance(ts, tskit.TreeSequence):
         raise TypeError("Expected a tskit.TreeSequence result")

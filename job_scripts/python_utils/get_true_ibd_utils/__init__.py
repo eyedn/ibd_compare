@@ -18,5 +18,5 @@ __all__ = [
     "extend_haplotypes",
     "load_and_subset_ts",
     "phase_of_node",
-    "write_ibd_segments",
+    "write_ibd_segments"
 ]

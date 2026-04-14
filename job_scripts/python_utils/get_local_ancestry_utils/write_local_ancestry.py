@@ -39,7 +39,7 @@ def write_local_ancestry(ancestry_table, sample_node_rows, out_tsv, chr_used):
         "hap",
         "population_name",
         "population",
-        "ancestor",
+        "ancestor"
     ]
     ]
     ancestry_table.to_csv(out_tsv, sep="\t", header=False, index=False)

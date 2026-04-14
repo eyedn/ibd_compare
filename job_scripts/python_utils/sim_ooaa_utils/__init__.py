@@ -20,5 +20,5 @@ __all__ = [
     "build_sample_sets",
     "get_contig",
     "parse_args",
-    "simulate_ooaa",
+    "simulate_ooaa"
 ]

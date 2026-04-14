@@ -10,6 +10,16 @@
 #           demo_inf_GONE2.sh
 ###############################################################################
 
+#SBATCH --time=1-00:00:00
+#SBATCH --cpus-per-task=16
+#SBATCH --mem=32G
+#SBATCH --partition=qcb
+#SBATCH --account=jazlynmo_738
+#SBATCH --nodes=1
+#SBATCH --output=/home1/karatas/logs/gone2.%A_%a.%x.out
+#SBATCH --error=/home1/karatas/logs/gone2.%A_%a.%x.err
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=karatas@usc.edu
 
 set -euo pipefail
 source /home1/karatas/ibd_compare/other_scripts/log_msg.sh

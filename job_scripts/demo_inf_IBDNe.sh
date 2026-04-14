@@ -10,6 +10,16 @@
 #           demo_inf_IBDNe.sh
 ###############################################################################
 
+#SBATCH --time=1-00:00:00
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=64G
+#SBATCH --partition=qcb
+#SBATCH --account=jazlynmo_738
+#SBATCH --nodes=1
+#SBATCH --output=/home1/karatas/logs/ibdne.%A_%a.%x.out
+#SBATCH --error=/home1/karatas/logs/ibdne.%A_%a.%x.err
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=karatas@usc.edu
 
 set -euo pipefail
 ml purge

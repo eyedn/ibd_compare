@@ -10,6 +10,16 @@
 #           filter_format_true.sh
 ###############################################################################
 
+#SBATCH --cpus-per-task=1
+#SBATCH --mem-per-cpu=8G
+#SBATCH --time=1-00:00:00
+#SBATCH --partition=qcb
+#SBATCH --account=jazlynmo_738
+#SBATCH --nodes=1
+#SBATCH --output=/home1/karatas/logs/trueFF.%A_%a.out
+#SBATCH --error=/home1/karatas/logs/trueFF.%A_%a.err
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=karatas@usc.edu
 
 set -euo pipefail
 module purge
