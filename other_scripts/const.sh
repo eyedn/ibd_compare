@@ -37,9 +37,9 @@ TMAPS=(
     "HapMapII_GRCh38"
 )
 POPS=(AFR EUR ADMIX)
-NUM_REPS=1
+NUM_REPS=50
 CHR=18
-SAMPLE_SIZE=10
+SAMPLE_SIZE=300
 MSPRIME_MODEL="dtwf"
 
 # Tennessen 2012 model specifications adpated from Fu 2013

@@ -11,6 +11,7 @@
 
 library(tidyverse)
 
+# ASW calculation ----
 # read in heterozygosity results
 het.dir <- "~/proj/1000GenomeNYGC_hg38_karatas/ASW_het"
 het.tbl <- map_dfr(
@@ -73,3 +74,52 @@ ggplot(exp.het, aes(x = `O(HET)`)) +
   theme_bw()
 
 
+# single ADMIX sim rep calculation ----
+sim.het.tbl <- read_tsv(
+  "~/scratch/stdpopsim_runs_chr18_admix2/vcfs/hetTest.het", col_names = TRUE, 
+  show_col_types = FALSE
+  )
+
+chr18.len <- auto.lens$X2[18]
+sim.mut.rate <- 2.36e-8
+
+sim.exp.het <-  sim.het.tbl %>%
+  group_by(INDV) %>%
+  summarise_at(.vars = c("N_SITES","O(HOM)"), .funs = sum) %>%
+  ungroup() %>%
+  mutate(`O(HET)`=((N_SITES-`O(HOM)`)/chr18.len))
+summary(sim.exp.het$`O(HET)`)
+shapiro.test(sim.exp.het$`O(HET)`)
+
+# plot mean and median heterozygotisties and Ne
+sim.mean.Ohet <- mean(sim.exp.het$`O(HET)`)
+sim.med.Ohet <- median(sim.exp.het$`O(HET)`)
+
+sim.mean.Ne <- sim.mean.Ohet / (4 * sim.mut.rate)
+sim.med.Ne <- sim.med.Ohet / (4 * sim.mut.rate)
+
+ggplot(sim.exp.het, aes(x = `O(HET)`)) +
+  geom_histogram() +
+  geom_vline(xintercept = sim.mean.Ohet, color = "#D81B60") +
+  geom_vline(xintercept = sim.med.Ohet, color = "#1E88E5") +
+  annotate(
+    geom = "text",
+    x = sim.mean.Ohet,
+    y = Inf,
+    label = paste0("mean Ne = ", round(sim.mean.Ne, 2)),
+    color = "#D81B60",
+    angle = 90,
+    vjust = -0.5,
+    hjust = 1.1
+  ) +
+  annotate(
+    geom = "text",
+    x = sim.med.Ohet,
+    y = Inf,
+    label = paste0("median Ne = ", round(sim.med.Ne, 2)),
+    color = "#1E88E5",
+    angle = 90,
+    vjust = -0.5,
+    hjust = 1.1
+  ) +
+  theme_bw()
