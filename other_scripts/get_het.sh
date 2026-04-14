@@ -18,7 +18,7 @@ source /home1/karatas/ibd_compare/other_scripts/log_msg.sh
 
 # vcftools command to get files (the --bed is a bed file with intergenic regions)
 vcf_dir="${JMPROJ2}/DataRepository/Human/1000GenomeNYGC_hg38/vcfs_strictMask"
-intergenic_regions="/home1/karatas/references/GRCh38.p14/gencodeV49.canonicalIntergenic.bed"
+intergenic_regions="~/references/GRCh38.p14/gencodeV49.canonicalIntergenic.bed"
 ASW_unrels="~/proj/1000GenomeNYGC_RmSamplesGarlic/unrels/ASW.keep"
 out_dir="~/proj/1000GenomeNYGC_hg38_karatas/het"
 
