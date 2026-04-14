@@ -123,7 +123,8 @@ def build_ooaa_demography(
         name="AFR",
         description="African population from the Tennessen _ooa_2 skeleton",
         initial_size=n_af,
-        growth_rate=r_af
+        growth_rate=r_af,
+        initially_active=True
     )
     demography.add_population(
         name="EUR",
