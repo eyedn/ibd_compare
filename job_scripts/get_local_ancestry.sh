@@ -69,11 +69,28 @@ gmap="${maps[$map_idx]}"
 seed="${rep_id}"
 
 in_ts="${tree_dir}/${gmap}_${seed}_all.ts"
+temp_root="${TMPDIR:-/tmp}"
+temp_dir="$(mktemp -d \
+    "${temp_root}/local_anc.${gmap}_${seed}_${SLURM_JOB_ID}_${SLURM_ARRAY_TASK_ID}.XXXXXX")"
+temp_ts="${temp_dir}/${gmap}_${seed}_all.ts"
+cleanup() {
+    rm -rf "${temp_dir}"
+}
+trap cleanup EXIT
+
 if [[ -s "${in_ts}.tsz" ]]; then
-    log_msg "found compressed ts (${in_ts}.tsz); unzipping"
-    tsunzip "${in_ts}.tsz"
+    temp_tsz="${temp_dir}/${gmap}_${seed}_all.ts.tsz"
+    cp "${in_ts}.tsz" "${temp_tsz}"
+    log_msg "staging compressed ts
+canonical_input=${in_ts}.tsz
+temp_input=${temp_tsz}
+temp_output=${temp_ts}"
+    tsunzip "${temp_tsz}"
 elif [[ -s "${in_ts}" ]]; then
-    log_msg "found uncompressed ts (${in_ts})"
+    log_msg "staging uncompressed ts
+canonical_input=${in_ts}
+temp_output=${temp_ts}"
+    cp "${in_ts}" "${temp_ts}"
 else
     echo "ERROR: missing input tree sequence (${in_ts} or ${in_ts}.tsz)" >&2
     exit 1
@@ -86,6 +103,8 @@ gmap=${gmap}
 seed=${seed}
 chr=${chr}
 sample_size=${sample_size}
+canonical_ts=${in_ts}
+work_ts=${temp_ts}
 pops=${pops[*]}"
 
 for idx in "${!pops[@]}"; do
@@ -95,7 +114,7 @@ for idx in "${!pops[@]}"; do
     out_tsv="${anc_dir}/${gmap}_${seed}_${pop}.tsv"
 
     python /home1/karatas/ibd_compare/job_scripts/get_local_ancestry.py \
-        "${in_ts}" \
+        "${temp_ts}" \
         "${out_tsv}" \
         "${chr}" \
         "${pop}" \
@@ -104,9 +123,5 @@ for idx in "${!pops[@]}"; do
         "${admixture_time}" \
         "${census_time_offset}"
 done
-
-log_msg "rezipping input tree sequence to ${in_ts}.tsz"
-tszip "${in_ts}"
-rm -f "${in_ts}"
 
 log_msg "done with local ancestry for ${gmap} seed=${seed}"

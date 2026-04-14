@@ -14,9 +14,9 @@
 REF_DIR="${HOME}/references"
 
 # dirds under #SCRATCH
-OUTDIR="${SCRATCH}/stdpopsim_runs_chr18_admix" 
-COMMON_FF_DIR="${SCRATCH}/ibd_compare_chr18_admix" 
-DEMO_DIR="${SCRATCH}/demo_inf_chr18_admix"
+OUTDIR="${SCRATCH}/stdpopsim_runs_chr18_admix2" 
+COMMON_FF_DIR="${SCRATCH}/ibd_compare_chr18_admix2" 
+DEMO_DIR="${SCRATCH}/demo_inf_chr18_admix2"
 
 # dirs under $OUTDIR
 TREE_DIR="${OUTDIR}/trees"
@@ -37,9 +37,9 @@ TMAPS=(
     "HapMapII_GRCh38"
 )
 POPS=(AFR EUR ADMIX)
-NUM_REPS=50
+NUM_REPS=1
 CHR=18
-SAMPLE_SIZE=300 
+SAMPLE_SIZE=10
 MSPRIME_MODEL="dtwf"
 
 # Tennessen 2012 model specifications adpated from Fu 2013
@@ -61,8 +61,8 @@ M_AF_EU="2.5e-5"
 
 # admixture specifications
 ADMIXTURE_TIME=15
-AFR_PROP=0.25
-EUR_PROP=0.75
+AFR_PROP=0.75
+EUR_PROP=0.25
 ADMIX_FOUNDING_SIZE=650
 ADMIX_GROWTH_RATE_1=0.033
 ADMIX_GROWTH_RATE_2="0.0189"
