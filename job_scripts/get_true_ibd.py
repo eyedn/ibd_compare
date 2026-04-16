@@ -29,13 +29,16 @@ def main():
     end_ind = int(argv[7])
 
     log_msg("loading ts")
-    ts = load_and_subset_ts(ts_path, start_ind, end_ind)
+    ts, new_node_to_original_node, new_node_to_original_individual = load_and_subset_ts(ts_path, start_ind, end_ind)
 
     log_msg("extending haplotypes")
     ts = extend_haplotypes(ts)
 
     log_msg(f"writing IBD to {tsv_path}")
-    write_ibd_segments(ts, tsv_path, chr_used, min_span_arg, max_time_arg)
+    write_ibd_segments(
+        ts, tsv_path, chr_used, min_span_arg, max_time_arg, 
+        new_node_to_original_node, new_node_to_original_individual
+        )
     log_msg("done")
 
 if __name__ == "__main__":

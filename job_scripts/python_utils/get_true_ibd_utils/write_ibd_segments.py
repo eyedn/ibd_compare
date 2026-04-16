@@ -13,7 +13,10 @@ import numpy as np
 from .phase_of_node import phase_of_node
 
 
-def write_ibd_segments(ts, tsv_path, chr_used, min_span_arg, max_time_arg):
+def write_ibd_segments(
+    ts, tsv_path, chr_used, min_span_arg, max_time_arg, 
+    new_node_to_original_node, new_node_to_original_individual
+    ):
     if max_time_arg > 0:
         ibd_segments = ts.ibd_segments(
             min_span=min_span_arg, max_time=max_time_arg, store_segments=True
@@ -21,6 +24,13 @@ def write_ibd_segments(ts, tsv_path, chr_used, min_span_arg, max_time_arg):
     else:
         ibd_segments = ts.ibd_segments(
             min_span=min_span_arg, store_segments=True
+        )
+
+    if len(new_node_to_original_node) != ts.num_nodes:
+        raise ValueError("new_node_to_original_node length does not match ts")
+    if len(new_node_to_original_individual) != ts.num_nodes:
+        raise ValueError(
+            "new_node_to_original_individual length does not match ts"
         )
 
     node_to_individual = np.array(ts.tables.nodes.individual)
@@ -35,16 +45,16 @@ def write_ibd_segments(ts, tsv_path, chr_used, min_span_arg, max_time_arg):
 
     with open(tsv_path, "w") as f:
         for (n1, n2), seg_list in ibd_segments.items():
-            ind1 = int(node_to_individual[n1])
-            ind2 = int(node_to_individual[n2])
+            ind1 = int(new_node_to_original_individual[n1])
+            ind2 = int(new_node_to_original_individual[n2])
             hap1 = phase_of_node(n1, node_to_individual, ind_to_samples)
             hap2 = phase_of_node(n2, node_to_individual, ind_to_samples)
             for seg in seg_list:
                 left = int(seg.left)
                 right = int(seg.right)
-                node_mrca = int(seg.node)
+                node_mrca = int(new_node_to_original_node[seg.node])
                 seg_len = right - left
-                time_mrca = float(node_times[node_mrca])
+                time_mrca = float(node_times[seg.node])
                 f.write(
                     f"chr{chr_used}\t{left}\t{right}\t"
                     f"tsk_{ind1}\t{hap1}\t"
