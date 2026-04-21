@@ -32,7 +32,7 @@ ml gcc/13.3.0 vcftools/0.1.16
 source /home1/karatas/ibd_compare/other_scripts/log_msg.sh
 
 # vcftools command to get files (the --bed is a bed file with intergenic regions)
-data_dir="/home1/karatas/scratch/stdpopsim_runs_chr18_admix2"
+data_dir="/home1/karatas/scratch/stdpopsim_runs_chr18_admix3"
 vcf_dir="${data_dir}/vcfs"
 pop_info_dir="${data_dir}/pop_info"
 out_dir="${data_dir}/ADMIX_het"

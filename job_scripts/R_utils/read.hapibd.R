@@ -10,7 +10,7 @@
 
 
 library(tidyverse)
-source("job_scripts/R_utils/interp.cm.R")
+source("job_scripts/R_utils/interp.cM.R")
 
 read.hapibd.bed <- function(fname, min.bp.len = 0, min.cM.len = 0, gmap) {
   # read in ibd calls
