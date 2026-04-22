@@ -54,7 +54,6 @@ read.pop.ibd.kinship <- function(focal.pop, dir.paths.map, cores,
       ) %>%
       unnest(file) %>%
       filter(!is.na(file)) %>%
-      filter(!str_detect(file, "ibdendshot")) %>%
       filter(str_detect(basename(file), paste0("^", which, "_"))) %>%
       filter(str_detect(basename(file), paste0("_(?:", focal.pop, ")_")))
   }

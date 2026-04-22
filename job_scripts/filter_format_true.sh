@@ -97,6 +97,7 @@ for pop in "${pops[@]}"; do
         "$gmap_file" \
         "$ff_out" \
         "-1" \
-        "TRUE"
+        "TRUE" \
+        "FALSE"
     gzip -f "$ff_out"
 done

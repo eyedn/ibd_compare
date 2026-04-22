@@ -123,6 +123,9 @@ for pop in "${pops[@]}"; do
     rapid_nonbed_hapibdformat="${rapid_nonbed_dir}/results.max.hapibdformat.gz"
     rapid_ibdends_prefix="${rapid_dir}/${pop}_chr${chr}_seed${seed}.ibdends"
     rapid_ibdends_ibd="${rapid_ibdends_prefix}_ibd.ibdends.bed.gz"
+    rapid_hot_hapibdformat="${rapid_nonbed_dir}/results.max.hot.hapibdformat.gz"
+    rapid_hot_ibdends_prefix="${rapid_dir}/${pop}_chr${chr}_seed${seed}.hot.ibdends"
+    rapid_hot_ibdends_ibd="${rapid_hot_ibdends_prefix}_ibd.ibdends.bed.gz"
 
     # (your existing bed made elsewhere)
     rapid_ibd="${rapid_dir}/${pop}_chr${chr}_seed${seed}_ibd.bed.gz"
@@ -135,6 +138,7 @@ for pop in "${pops[@]}"; do
     rapid_out="${rapid_ff_dir}/rapid_${tmap_label}_${imap_label}_${pop}_${seed}.bed"
     rapid_hot_out="${rapid_ff_dir}/rapid_${tmap_label}_${imap_label}_${pop}_${seed}.hot.bed"
     rapid_ibdends_out="${rapid_ff_dir}/rapid_${tmap_label}_${imap_label}_${pop}_${seed}.ibdends.bed"
+    rapid_hotibdends_out="${rapid_ff_dir}/rapid_${tmap_label}_${imap_label}_${pop}_${seed}.hotibdends.bed"
     rapid_ibdendshot_out="${rapid_ff_dir}/rapid_${tmap_label}_${imap_label}_${pop}_${seed}.ibdendshot.bed"
 
     [[ -s "$vcf" ]] || { echo "ERROR: missing vcf: $vcf" >&2; exit 1; }
@@ -175,16 +179,51 @@ for pop in "${pops[@]}"; do
         "$min_bp_len" "$min_cm_len" "$hot_bin_size" "$hot_bin_sd" \
         "$rapid_ibd" "$rapid_gmap" \
         "$rapid_out" "$rapid_hot_out" \
-        "FALSE"
-    gzip -f "$rapid_out" "$rapid_hot_out"
+        "FALSE" "TRUE"
+
+    log_msg "rapid: converting hot-filtered calls to hapibd format"
+    Rscript "/home1/karatas/ibd_compare/job_scripts/convert_std_bed_to_hapibd.R" \
+        "$rapid_hot_out" "$rapid_hot_hapibdformat"
 
     log_msg "rapid: format+filter ibd-ends adjusted calls (hapibd-style map here)"
     Rscript "/home1/karatas/ibd_compare/job_scripts/filter_and_format.R" \
         "$min_bp_len" "$min_cm_len" "$hot_bin_size" "$hot_bin_sd" \
         "$rapid_ibdends_ibd" "$hapibd_gmap" \
         "$rapid_ibdends_out" "$rapid_ibdendshot_out" \
-        "TRUE"
-    gzip -f "$rapid_ibdends_out" "$rapid_ibdendshot_out"
+        "TRUE" "TRUE"
+
+    module purge
+    ml legacy/CentOS7 jdk/17.0.5
+
+    log_msg "rapid: filtering hot-filtered segments using ibd-ends"
+    java -Xmx46G -jar ~/software/ibd-ends/ibd-ends.jar \
+        gt="$vcf" \
+        ibd="$rapid_hot_hapibdformat" \
+        map="$hapibd_gmap" \
+        nthreads="${SLURM_CPUS_PER_TASK:-1}" \
+        out="$rapid_hot_ibdends_prefix"
+
+    log_msg "rapid: generating ${rapid_hot_ibdends_ibd} from ${rapid_hot_ibdends_prefix}.ibd.gz"
+    zcat "${rapid_hot_ibdends_prefix}.ibd.gz" | \
+        awk 'BEGIN{OFS="\t"} NR>1 {print $5,$10,$11,$1,$2,$3,$4,$12}' | \
+        gzip -c > "$rapid_hot_ibdends_ibd"
+
+    module purge
+    ml rstats/4.5.1
+
+    log_msg "rapid: formatting hot-filtered ibd-ends adjusted calls"
+    Rscript "/home1/karatas/ibd_compare/job_scripts/filter_and_format.R" \
+        "$min_bp_len" "$min_cm_len" "$hot_bin_size" "$hot_bin_sd" \
+        "$rapid_hot_ibdends_ibd" "$hapibd_gmap" \
+        "$rapid_hotibdends_out" "/tmp/rapid_hotibdends_unused.bed" \
+        "TRUE" "FALSE"
+
+    gzip -f \
+        "$rapid_out" \
+        "$rapid_hot_out" \
+        "$rapid_ibdends_out" \
+        "$rapid_hotibdends_out" \
+        "$rapid_ibdendshot_out"
 done
 
 log_msg "rapid pipeline done"

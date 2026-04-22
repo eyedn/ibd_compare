@@ -18,7 +18,7 @@ source("job_scripts/R_utils/read.true.R")
 source("job_scripts/R_utils/filter.ibd.by.hot.bins.R")
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) != 9) {
+if (length(args) != 10) {
   stop("incorrect number of parameters")
 }
 
@@ -32,10 +32,15 @@ gmap.file <- args[6]
 ff.out <- args[7]
 ff.hot.out <- args[8]
 is.hapibd.format <- tolower(args[9])
+do.hot.filter <- tolower(args[10])
 if (!is.hapibd.format %in% c("true", "false")) {
   stop("is.hapibd.format must be TRUE/true or FALSE/false; got: ", args[9])
 }
 is.hapibd.format <- is.hapibd.format == "true"
+if (!do.hot.filter %in% c("true", "false")) {
+  stop("do.hot.filter must be TRUE/true or FALSE/false; got: ", args[10])
+}
+do.hot.filter <- do.hot.filter == "true"
 
 print("inputs:")
 print(paste("min.bp.size = ", min.bp.size))
@@ -45,6 +50,7 @@ print(paste("gmap.file = ", gmap.file))
 print(paste("ff.out = ", ff.out))
 print(paste("ff.hot.out = ", ff.hot.out))
 print(paste("is.hapibd.format = ", is.hapibd.format))
+print(paste("do.hot.filter = ", do.hot.filter))
 
 # read in ibd calls ----
 if (grepl("true_ibd", ibd.file, ignore.case = TRUE)) {
@@ -70,12 +76,14 @@ if (grepl("true_ibd", ibd.file, ignore.case = TRUE)) {
 # print ibd segments in BED format ----
 readr::write_tsv(calls, ff.out, col_names = TRUE)
 
-# filter out hot bins (bins with too great of a number of segemnts) ----
-chr.len.cm <- max(as.numeric(gmap$cM), na.rm = TRUE)
-hot.all <- filter.ibd.by.hot.bins(
-  calls = calls, chr.len.cm = chr.len.cm, bin.size.cM = hot.bin.size, 
-  sd.thresh = hot.bin.sd, trim.frac = 0.03
-  )
-
-# print ibd segments filter by hot bins in BED format ----
-readr::write_tsv(hot.all$calls.filtered, ff.hot.out, col_names = TRUE)
+if (do.hot.filter) {
+  # filter out hot bins (bins with too great of a number of segemnts) ----
+  chr.len.cm <- max(as.numeric(gmap$cM), na.rm = TRUE)
+  hot.all <- filter.ibd.by.hot.bins(
+    calls = calls, chr.len.cm = chr.len.cm, bin.size.cM = hot.bin.size, 
+    sd.thresh = hot.bin.sd, trim.frac = 0.03
+    )
+  
+  # print ibd segments filter by hot bins in BED format ----
+  readr::write_tsv(hot.all$calls.filtered, ff.hot.out, col_names = TRUE)
+}

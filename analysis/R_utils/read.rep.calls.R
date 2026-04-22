@@ -24,13 +24,12 @@ read.rep.calls <- function(rep.idx, dir.paths.map, unrels.tbl, cores) {
         full.names = TRUE,
         pattern = paste0(
           "_", rep.idx,
-          "(\\.(hot|ibdends|ibdendshot))?\\.bed\\.gz$"
+          "(\\.(hot|ibdends|hotibdends|ibdendshot))?\\.bed\\.gz$"
         )
       ))
     ) %>%
     unnest(file) %>%
-    filter(!is.na(file)) %>%
-    filter(!grepl("\\.ibdendshot\\.bed\\.gz$", file))
+    filter(!is.na(file))
   
   
   # parallel read of choosen rep ibd segements 
@@ -61,7 +60,10 @@ read.rep.calls <- function(rep.idx, dir.paths.map, unrels.tbl, cores) {
         pop <- parts[length(parts) - 1]
         
         filt <- sub(
-          paste0(".*_", rep.idx, "(?:\\.(hot|ibdends))?\\.bed\\.gz$"),
+          paste0(
+            ".*_", rep.idx,
+            "(?:\\.(hot|ibdends|hotibdends|ibdendshot))?\\.bed\\.gz$"
+          ),
           "\\1",
           fname
         )

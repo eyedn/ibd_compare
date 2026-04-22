@@ -30,8 +30,7 @@ read.rep.ibd.kinship <- function(rep.idx, dir.paths.map, cores,
       ))
     ) %>%
     unnest(file) %>%
-    filter(!is.na(file)) %>%
-    filter(!str_detect(basename(file), "ibdendshot"))  
+    filter(!is.na(file))
   
   plan(multisession, workers = cores)
   

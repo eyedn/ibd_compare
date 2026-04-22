@@ -78,12 +78,14 @@ ks.res <- imap.all.calls %>%
 
 ks.res <- ks.res %>%
   group_by(pop) %>%
-  filter(filt != "ibdendshot") %>%
   mutate(
     p.adj = p.adjust(p.value, method = "BH"),
     log.p.adj = log10(p.adj),
     is.sig = p.adj <= 0.05,
-    filt = factor(filt, levels = c("none", "hot", "ibdends")),
+    filt = factor(
+      filt,
+      levels = c("none", "hot", "ibdends", "hotibdends", "ibdendshot")
+    ),
     imap = factor(imap, levels = c("hapmap", "decode", "1Mb1cM")),
     software.code = factor(software.code),
     param.code = factor(param.code),
@@ -321,12 +323,14 @@ ks.res.aftcen <- imap.all.calls %>%
 
 ks.res.aftcen <- ks.res.aftcen %>%
   group_by(pop) %>%
-  filter(filt != "ibdendshot") %>%
   mutate(
     p.adj = p.adjust(p.value, method = "BH"),
     log.p.adj = log10(p.adj),
     is.sig = p.adj <= 0.05,
-    filt = factor(filt, levels = c("none", "hot", "ibdends")),
+    filt = factor(
+      filt,
+      levels = c("none", "hot", "ibdends", "hotibdends", "ibdendshot")
+    ),
     imap = factor(imap, levels = c("hapmap", "decode", "1Mb1cM")),
     software.code = factor(software.code),
     param.code = factor(param.code),

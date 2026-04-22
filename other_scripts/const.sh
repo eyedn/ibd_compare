@@ -14,9 +14,9 @@
 REF_DIR="${HOME}/references"
 
 # dirs under #SCRATCH
-OUTDIR="${SCRATCH}/stdpopsim_runs_chr18_admix2" 
-COMMON_FF_DIR="${SCRATCH}/ibd_compare_chr18_admix2" 
-DEMO_DIR="${SCRATCH}/demo_inf_chr18_admix2"
+OUTDIR="${SCRATCH}/stdpopsim_runs_chr18_admix3" 
+COMMON_FF_DIR="${SCRATCH}/ibd_compare_chr18_admix3" 
+DEMO_DIR="${SCRATCH}/demo_inf_chr18_admix3"
 
 # dirs under $OUTDIR
 TREE_DIR="${OUTDIR}/trees"
@@ -89,6 +89,7 @@ FILTERING=(
     "none"
     "hot" 
     "ibdends" 
+    "hotibdends"
     "ibdendshot"
     )
 HOT_BIN_SIZE="0.25"

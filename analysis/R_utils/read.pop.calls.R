@@ -21,15 +21,13 @@ read.pop.calls <- function(focal.pop, dir.paths.map, unrels.tbl, cores) {
     mutate(
       file = map(dir, ~ list.files(
         .x, full.names = TRUE,
-        pattern = "_\\d+(\\.(hot|ibdends|ibdendshot))?\\.bed\\.gz$"
+        pattern = "_\\d+(\\.(hot|ibdends|hotibdends|ibdendshot))?\\.bed\\.gz$"
       ))
     ) %>%
     unnest(file) %>%
     filter(!is.na(file))
   file.tbl <- file.tbl %>%
-    filter(
-      !grepl("\\.ibdendshot\\.bed\\.gz$", file),
-      str_detect(file, focal.pop))
+    filter(str_detect(file, focal.pop))
   
   # parallel read + annotate per file
   plan(multisession, workers = cores)
@@ -58,7 +56,7 @@ read.pop.calls <- function(focal.pop, dir.paths.map, unrels.tbl, cores) {
         pop <- parts[length(parts) - 1]
         rep <- as.integer(sub("(\\d+).*", "\\1", parts[length(parts)]))
         filt <- sub(
-          ".*_\\d+(?:\\.(hot|ibdends))?\\.bed\\.gz$",
+          ".*_\\d+(?:\\.(hot|ibdends|hotibdends|ibdendshot))?\\.bed\\.gz$",
           "\\1",
           fname
         )

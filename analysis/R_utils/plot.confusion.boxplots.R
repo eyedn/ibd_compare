@@ -16,8 +16,7 @@ plot.confusion.boxplots <- function(
   df2plot <- data.long %>%
     filter(
       pop == focal.pop,
-      imap == focal.imap,
-      filt != "ibdendshot"
+      imap == focal.imap
     )
   
   ggplot(df2plot, aes(x = threshold, y = estimate)) +
