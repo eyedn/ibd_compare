@@ -127,7 +127,7 @@ for pop in "${pops[@]}"; do
     rapid_hot_ibdends_prefix="${rapid_dir}/${pop}_chr${chr}_seed${seed}.hot.ibdends"
     rapid_hot_ibdends_ibd="${rapid_hot_ibdends_prefix}_ibd.ibdends.bed.gz"
 
-    # (your existing bed made elsewhere)
+    # bed made from previous step
     rapid_ibd="${rapid_dir}/${pop}_chr${chr}_seed${seed}_ibd.bed.gz"
 
     # rapid map for cM interpolation during formatting

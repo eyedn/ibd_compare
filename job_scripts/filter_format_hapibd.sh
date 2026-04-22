@@ -126,7 +126,7 @@ for pop in "${pops[@]}"; do
     hapibd_hot_ibdends_prefix="${hapibd_dir}/${pop}_chr${chr}_seed${seed}.hot.ibdends"
     hapibd_hot_ibdends_ibd="${hapibd_hot_ibdends_prefix}_ibd.ibdends.bed.gz"
 
-    # (your existing bed made elsewhere)
+    # bed made from previous step
     hapibd_ibd="${hapibd_dir}/${pop}_chr${chr}_seed${seed}_ibd.bed.gz"
 
     hapibd_ff_dir="${common_ff_dir}/${hapibd_dir_base}"
