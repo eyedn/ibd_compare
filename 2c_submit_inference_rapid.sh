@@ -19,6 +19,7 @@ source /home1/karatas/ibd_compare/other_scripts/log_msg.sh
 log_msg "Detected rapid params
 sim_chr=${CHR}
 outdir=${OUTDIR}
+rapid_map_dir=${RAPID_MAP_DIR}
 min_len=${RAP_MIN_LEN} 
 window_size=${RAP_WINDOW_SIZE}
 num_runs=${RAP_NUM_RUNS}
@@ -34,8 +35,9 @@ sbatch \
     "$RAP_WINDOW_SIZE" \
     "$RAP_NUM_RUNS" \
     "$RAP_NUM_SUCCESSES" \
-    "$OUTDIR" \
     "$VCF_DIR" \
+    "$RAPID_MAP_DIR" \
+    "$OUTDIR" \
     "$NUM_REPS" \
     "$CHR" \
     "${TMAPS[@]}" \

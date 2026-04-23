@@ -66,6 +66,21 @@ fi
 gmap="${maps[$map_idx]}"
 seed="${rep_id}"
 
+all_outputs_exist=true
+for pop in "${pops[@]}"; do
+  unrel_ids="${pop_info_dir}/${gmap}_${seed}_${pop}_unrel_samples.txt"
+  unrel_vcf="${vcf_dir}/${gmap}_${seed}_${pop}_unrels.vcf.gz"
+  if [[ ! -s "${unrel_ids}" || ! -s "${unrel_vcf}" ]]; then
+    all_outputs_exist=false
+    break
+  fi
+done
+
+if [[ "${all_outputs_exist}" == "true" ]]; then
+  log_msg "all unrel outputs exist for ${gmap} seed=${seed}; skipping"
+  exit 0
+fi
+
 # for each pop, use its pop-specific vcf to find unrelated individuals
 plink_out_dir="${pop_info_dir}/plink2_king_out"
 mkdir -p "${plink_out_dir}"

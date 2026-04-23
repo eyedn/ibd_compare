@@ -68,6 +68,20 @@ fi
 gmap="${maps[$map_idx]}"
 seed="${rep_id}"
 
+all_outputs_exist=true
+for pop in "${pops[@]}"; do
+    out_tsv="${anc_dir}/${gmap}_${seed}_${pop}.tsv"
+    if [[ ! -s "${out_tsv}" ]]; then
+        all_outputs_exist=false
+        break
+    fi
+done
+
+if [[ "${all_outputs_exist}" == "true" ]]; then
+    log_msg "all local ancestry outputs exist for ${gmap} seed=${seed}; skipping"
+    exit 0
+fi
+
 in_ts="${tree_dir}/${gmap}_${seed}_all.ts"
 temp_root="${TMPDIR:-/tmp}"
 temp_dir="$(mktemp -d \
@@ -112,6 +126,11 @@ for idx in "${!pops[@]}"; do
     start=$(( idx * sample_size ))
     end=$(( (idx + 1) * sample_size - 1 ))
     out_tsv="${anc_dir}/${gmap}_${seed}_${pop}.tsv"
+
+    if [[ -s "${out_tsv}" ]]; then
+        log_msg "local ancestry exists (${out_tsv}); skipping ${pop}"
+        continue
+    fi
 
     python /home1/karatas/ibd_compare/job_scripts/get_local_ancestry.py \
         "${temp_ts}" \

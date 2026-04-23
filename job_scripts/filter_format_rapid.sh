@@ -29,21 +29,22 @@ source /home1/karatas/ibd_compare/other_scripts/log_msg.sh
 # inputs
 outdir="$1"
 vcf_dir="$2"
-common_ff_dir="$3"
-ref_dir="$4"
-chr="$5"
-min_bp_len="$6"
-min_cm_len="$7"
-hot_bin_size="$8"
-hot_bin_sd="$9"
-num_reps="${10}"
+rapid_map_dir="$3"
+common_ff_dir="$4"
+ref_dir="$5"
+chr="$6"
+min_bp_len="$7"
+min_cm_len="$8"
+hot_bin_size="$9"
+hot_bin_sd="${10}"
+num_reps="${11}"
 
 # rapid params (from submit script)
-rap_min_len="${11}"
-rap_window_size="${12}"
-rap_num_runs="${13}"
-rap_num_successes="${14}"
-shift 14
+rap_min_len="${12}"
+rap_window_size="${13}"
+rap_num_runs="${14}"
+rap_num_successes="${15}"
+shift 15
 
 # read TMAPs until "--", then imaps until "--", then pops
 tmaps=()
@@ -137,8 +138,7 @@ rapid_hot_ibdends_ibd="${rapid_hot_ibdends_prefix}_ibd.ibdends.bed.gz"
 rapid_ibd="${rapid_dir}/${pop}_chr${chr}_seed${seed}_ibd.bed.gz"
 
 # rapid map for cM interpolation during formatting
-rapid_gmap_dir="${rapid_dir}/maps"
-rapid_gmap="${rapid_gmap_dir}/chr${chr}.${pop}.${seed}.RaPIDfinal.map"
+rapid_gmap="${rapid_map_dir}/${tmap}/seed${seed}/${pop}/imap${imap}/chr${chr}.RaPIDfinal.map"
 
 rapid_ff_dir="${common_ff_dir}/${rapid_dir_base}"
 rapid_out="${rapid_ff_dir}/rapid_${tmap_label}_${imap_label}_${pop}_${seed}.bed"

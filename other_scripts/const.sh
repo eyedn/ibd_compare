@@ -21,9 +21,12 @@ DEMO_DIR="${SCRATCH}/demo_inf_chr18_admix3"
 # dirs under $OUTDIR
 TREE_DIR="${OUTDIR}/trees"
 VCF_DIR="${OUTDIR}/vcfs"
+PED_DIR="${OUTDIR}/peds"
 TRUE_DIR="${OUTDIR}/true_ibd"
 ANC_DIR="${OUTDIR}/local_ancestry"
 POP_INFO_DIR="${OUTDIR}/pop_info"
+RAPID_MAP_DIR="${OUTDIR}/rapid_maps"
+ILASH_MAP_DIR="${OUTDIR}/ilash_maps"
 
 # dirs under $COMMON_FF_DIR
 TVI_DIR="${COMMON_FF_DIR}/true_vs_inference"
@@ -84,7 +87,8 @@ IMAPS=(
 SOFTWARE=(
     "hapibd" 
     "rapid"
-    )
+    "ilash"
+)
 FILTERING=(
     "none"
     "hot" 
@@ -109,6 +113,21 @@ RAP_MIN_LEN=2
 RAP_WINDOW_SIZE=300
 RAP_NUM_RUNS=10
 RAP_NUM_SUCCESSES=2
+
+# ilash params
+ILASH_AUTO_SLICE=1
+ILASH_SLICE_SIZE=350
+ILASH_STEP_SIZE=350
+ILASH_PERM_COUNT=20
+ILASH_SHINGLE_SIZE=15
+ILASH_SHINGLE_OVERLAP=0
+ILASH_BUCKET_COUNT=5
+ILASH_MATCH_THRESHOLD=0.99
+ILASH_INTEREST_THRESHOLD=0.70
+ILASH_MINHASH_THRESHOLD=55
+ILASH_MIN_LENGTH=2.0
+ILASH_SLICE_LENGTH=2.0
+ILASH_CM_OVERLAP=1.5
 
 # demography inference specifications
 # gone2 demography inference

@@ -27,6 +27,7 @@ rap_min_len=${RAP_MIN_LEN}
 rap_window_size=${RAP_WINDOW_SIZE} 
 rap_num_runs=${RAP_NUM_RUNS} 
 rap_num_successes=${RAP_NUM_SUCCESSES}
+rapid_map_dir=${RAPID_MAP_DIR}
 chr=${CHR}"
 
 total_tasks=$(( NUM_REPS * ${#TMAPS[@]} * ${#IMAPS[@]} * ${#POPS[@]} ))
@@ -38,6 +39,7 @@ sbatch \
     /home1/karatas/ibd_compare/job_scripts/filter_format_rapid.sh \
         "$OUTDIR" \
         "$VCF_DIR" \
+        "$RAPID_MAP_DIR" \
         "$COMMON_FF_DIR" \
         "$REF_DIR" \
         "$CHR" \
