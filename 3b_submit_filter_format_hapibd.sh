@@ -16,6 +16,7 @@ source /home1/karatas/ibd_compare/other_scripts/const.sh
 source /home1/karatas/ibd_compare/other_scripts/log_msg.sh
 
 log_msg "Submitting hapibd filter+format
+array dimensions: tmap x imap x seed x pop (one pop per task)
 min_bp_len=${MIN_BP_LEN}
 min_cm_len=${MIN_CM_LEN}
 hot_bin_size=${HOT_BIN_SIZE}
@@ -30,7 +31,7 @@ hap_min_markers=${HAP_MIN_MARKERS}
 hap_min_mac=${HAP_MIN_MAC}
 chr=${CHR}"
 
-total_tasks=$(( NUM_REPS * ${#TMAPS[@]} * ${#IMAPS[@]} ))
+total_tasks=$(( NUM_REPS * ${#TMAPS[@]} * ${#IMAPS[@]} * ${#POPS[@]} ))
 
 sbatch \
     --chdir=/home1/karatas/ibd_compare \
