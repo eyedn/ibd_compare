@@ -128,13 +128,12 @@ ped_map="${ped_dir}/${tmap}_${seed}_${pop}.map"
 [[ -s "${vcf}" ]] || { echo "ERROR: missing VCF ${vcf}" >&2; exit 1; }
 [[ -s "${ped_map}" ]] || { echo "ERROR: missing PED map ${ped_map}" >&2; exit 1; }
 
-rapid_dir="${rapid_map_dir}/${tmap}/seed${seed}/${pop}/imap${imap}"
-ilash_dir="${ilash_map_dir}/${tmap}/seed${seed}/${pop}/imap${imap}"
-mkdir -p "${rapid_dir}" "${ilash_dir}"
+mkdir -p "${rapid_map_dir}" "${ilash_map_dir}"
 
-rapid_filtered_map="${rapid_dir}/chr${chr}.RaPIDfiltered.map"
-rapid_final_map="${rapid_dir}/chr${chr}.RaPIDfinal.map"
-ilash_output_map="${ilash_dir}/chr${chr}.ilash.map"
+map_prefix="pop${pop}_chr${chr}_seed${seed}_tmap${tmap}_imap${imap}"
+rapid_filtered_map="${rapid_map_dir}/${map_prefix}.filteredIntermediate"
+rapid_final_map="${rapid_map_dir}/${map_prefix}.map"
+ilash_output_map="${ilash_map_dir}/${map_prefix}.map"
 
 need_rapid=true
 need_ilash=true

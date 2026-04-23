@@ -94,7 +94,7 @@ for pop in "${pops[@]}"; do
         vcf="${vcf_dir}/${tmap}_${seed}_${pop}.vcf.gz"
         [[ -s "$vcf" ]] || { log_msg "vcf not found: $vcf"; exit 1; }
 
-        genetic_map="${rapid_map_dir}/${tmap}/seed${seed}/${pop}/imap${imap}/chr${chr}.RaPIDfinal.map"
+        genetic_map="${rapid_map_dir}/pop${pop}_chr${chr}_seed${seed}_tmap${tmap}_imap${imap}.map"
         [[ -s "${genetic_map}" ]] || {
                 log_msg "cached rapid map missing: ${genetic_map}"
                 exit 1

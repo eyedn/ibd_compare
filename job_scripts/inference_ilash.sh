@@ -105,7 +105,7 @@ log_msg "ibd_dir defined as ${ibd_dir}"
 
 for pop in "${pops[@]}"; do
     ped="${ped_dir}/${tmap}_${seed}_${pop}.ped"
-    ilash_map="${ilash_map_dir}/${tmap}/seed${seed}/${pop}/imap${imap}/chr${chr}.ilash.map"
+    ilash_map="${ilash_map_dir}/pop${pop}_chr${chr}_seed${seed}_tmap${tmap}_imap${imap}.map"
     [[ -s "${ped}" ]] || { log_msg "ped missing/empty: ${ped}"; exit 1; }
     [[ -s "${ilash_map}" ]] || {
         log_msg "ilash map missing/empty: ${ilash_map}"
