@@ -40,6 +40,20 @@ infer.software.with.params <- function(software.base, software.dir.base) {
     }
     }
 
+    # ilash directory example:
+    # ilash_sim_tmapHapMapII_GRCh38_imapHapMapII_GRCh38_auto1_min2.0_slice2.0_overlap1.5
+    if (software.base == "ilash") {
+    m <- stringr::str_match(
+        software.dir.base,
+        "auto[^_]+_min[^_]+_slice[^_]+_overlap[^_]+"
+    )
+    if (!is.na(m[1, 1])) {
+        return(paste0("ilash_", m[1, 1]))
+    } else {
+        return("ilash")
+    }
+    }
+
     # fallback for any future software
     software.base
 }
