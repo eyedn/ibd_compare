@@ -62,9 +62,9 @@ param.map <- c(
   "rapid_d2_w100_r10_s2" = "r1",
   "rapid_d2_w200_r10_s2" = "r2",
   "rapid_d2_w300_r10_s2" = "r3",
-  "ilash_auto1_min2.0_slice2.0_overlap1.5" = "i1",
-  "ilash_auto1_min2.0_slice2.0_overlap1.0" = "i2",
-  "ilash_auto1_min2.0_slice2.0_overlap0.5" = "i3",
+  "ilash_auto1_min2.0_slice2.0_overlap0.5" = "i1",
+  "ilash_auto1_min2.0_slice2.0_overlap1.5" = "i2",
+  "ilash_auto1_min2.0_slice2.0_overlap1.5" = "i3",
   "true" = "true"
 )
 

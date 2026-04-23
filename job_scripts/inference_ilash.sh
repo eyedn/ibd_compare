@@ -11,7 +11,7 @@
 ###############################################################################
 
 #SBATCH --cpus-per-task=4
-#SBATCH --mem-per-cpu=8G
+#SBATCH --mem-per-cpu=4G
 #SBATCH --time=1-00:00:00
 #SBATCH --partition=qcb
 #SBATCH --account=jazlynmo_738
@@ -179,7 +179,13 @@ EOF
     tmp_bed="${ibd_bed}.tmp"
 
     zcat "${ilash_ibd_gz}" | \
-    awk -F'\t' 'BEGIN{OFS="\t"} {print $5,$6,$7,$1,$2,$3,$4,$8}' | \
+    awk -F'\t' 'BEGIN{OFS="\t"} {
+        chr = $5
+        if (chr !~ /^chr/) {
+            chr = "chr" chr
+        }
+        print chr, $6, $7, $1, $2, $3, $4, $8
+    }' | \
     sort -k1,1 -k2,2n -k3,3n -T "${tmpdir}" -S 2G | \
     gzip > "${tmp_bed}"
 
