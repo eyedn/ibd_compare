@@ -31,33 +31,94 @@ hap_min_markers=${HAP_MIN_MARKERS}
 hap_min_mac=${HAP_MIN_MAC}
 chr=${CHR}"
 
-total_tasks=$(( NUM_REPS * ${#TMAPS[@]} * ${#IMAPS[@]} * ${#POPS[@]} ))
+standard_pops=()
+admix_pops=()
+for pop in "${POPS[@]}"; do
+    if [[ "$pop" == "ADMIX" ]]; then
+        admix_pops+=( "$pop" )
+    else
+        standard_pops+=( "$pop" )
+    fi
+done
 
-sbatch \
-    --chdir=/home1/karatas/ibd_compare \
-    --job-name=hapFF \
-    --array="1-${total_tasks}%${MAX_JOBS}" \
-    /home1/karatas/ibd_compare/job_scripts/filter_format_hapibd.sh \
-        "$OUTDIR" \
-        "$VCF_DIR" \
-        "$COMMON_FF_DIR" \
-        "$REF_DIR" \
-        "$CHR" \
-        "$MIN_BP_LEN" \
-        "$MIN_CM_LEN" \
-        "$HOT_BIN_SIZE" \
-        "$HOT_BIN_SD" \
-        "$NUM_REPS" \
-        "$HAP_MIN_SEED" \
-        "$HAP_MAX_GAP" \
-        "$HAP_MIN_EXTEND" \
-        "$HAP_MIN_OUTPUT" \
-        "$HAP_MIN_MARKERS" \
-        "$HAP_MIN_MAC" \
-        "${TMAPS[@]}" \
-        -- \
-        "${IMAPS[@]}" \
-        -- \
-        "${POPS[@]}"
+if [[ ${#standard_pops[@]} -gt 0 ]]; then
+    total_tasks=$(( NUM_REPS * ${#TMAPS[@]} * ${#IMAPS[@]} * ${#standard_pops[@]} ))
+    log_msg "Submitting hapibd standard-tier jobs
+populations=${standard_pops[*]}
+cpus_per_task=4
+mem=32G
+ibdends_threads=4
+ibdends_xmx=20G
+total_tasks=${total_tasks}"
 
-log_msg "submitted hapibd filter+format jobs; total_tasks=${total_tasks}"
+    sbatch \
+        --chdir=/home1/karatas/ibd_compare \
+        --job-name=hapFFstd \
+        --cpus-per-task=4 \
+        --mem=32G \
+        --export=ALL,IBDENDS_XMX=20G,IBDENDS_THREADS=4 \
+        --array="1-${total_tasks}%${MAX_JOBS}" \
+        /home1/karatas/ibd_compare/job_scripts/filter_format_hapibd.sh \
+            "$OUTDIR" \
+            "$VCF_DIR" \
+            "$COMMON_FF_DIR" \
+            "$REF_DIR" \
+            "$CHR" \
+            "$MIN_BP_LEN" \
+            "$MIN_CM_LEN" \
+            "$HOT_BIN_SIZE" \
+            "$HOT_BIN_SD" \
+            "$NUM_REPS" \
+            "$HAP_MIN_SEED" \
+            "$HAP_MAX_GAP" \
+            "$HAP_MIN_EXTEND" \
+            "$HAP_MIN_OUTPUT" \
+            "$HAP_MIN_MARKERS" \
+            "$HAP_MIN_MAC" \
+            "${TMAPS[@]}" \
+            -- \
+            "${IMAPS[@]}" \
+            -- \
+            "${standard_pops[@]}"
+fi
+
+if [[ ${#admix_pops[@]} -gt 0 ]]; then
+    total_tasks=$(( NUM_REPS * ${#TMAPS[@]} * ${#IMAPS[@]} * ${#admix_pops[@]} ))
+    log_msg "Submitting hapibd ADMIX-tier jobs
+populations=${admix_pops[*]}
+cpus_per_task=4
+mem=128G
+ibdends_threads=4
+ibdends_xmx=96G
+total_tasks=${total_tasks}"
+
+    sbatch \
+        --chdir=/home1/karatas/ibd_compare \
+        --job-name=hapFFadx \
+        --cpus-per-task=4 \
+        --mem=128G \
+        --export=ALL,IBDENDS_XMX=96G,IBDENDS_THREADS=4 \
+        --array="1-${total_tasks}%${MAX_JOBS}" \
+        /home1/karatas/ibd_compare/job_scripts/filter_format_hapibd.sh \
+            "$OUTDIR" \
+            "$VCF_DIR" \
+            "$COMMON_FF_DIR" \
+            "$REF_DIR" \
+            "$CHR" \
+            "$MIN_BP_LEN" \
+            "$MIN_CM_LEN" \
+            "$HOT_BIN_SIZE" \
+            "$HOT_BIN_SD" \
+            "$NUM_REPS" \
+            "$HAP_MIN_SEED" \
+            "$HAP_MAX_GAP" \
+            "$HAP_MIN_EXTEND" \
+            "$HAP_MIN_OUTPUT" \
+            "$HAP_MIN_MARKERS" \
+            "$HAP_MIN_MAC" \
+            "${TMAPS[@]}" \
+            -- \
+            "${IMAPS[@]}" \
+            -- \
+            "${admix_pops[@]}"
+fi

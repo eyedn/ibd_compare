@@ -28,7 +28,9 @@ ped_dir=${PED_DIR}
 rapid_map_dir=${RAPID_MAP_DIR}
 ilash_map_dir=${ILASH_MAP_DIR}
 chr=${CHR}
-total_tasks=${total_tasks} (per job array)"
+prep_total_tasks=$(( NUM_REPS * ${#TMAPS[@]} * ${#IMAPS[@]} * ${#POPS[@]} ))
+total_tasks=${total_tasks} (per job array)
+prep_map_tasks=${prep_total_tasks} (combined rapid+ilash map tasks)"
 
 # submit sims
 total_tasks=$(( NUM_REPS * ${#TMAPS[@]} ))
@@ -98,39 +100,19 @@ prep_inputs_jid=$(sbatch \
 )
 log_msg "prep vcfs+peds array for each pop and map; jid=${prep_inputs_jid}; dep on ${sim_jid}"
 
-# prepare rapid maps for each tmap x imap x seed x pop
+# prepare rapid+ilash maps for each tmap x imap x seed x pop
 total_map_tasks=$(( NUM_REPS * ${#TMAPS[@]} * ${#IMAPS[@]} * ${#POPS[@]} ))
-rapid_map_jid=$(sbatch \
+prep_map_jid=$(sbatch \
     --parsable \
     --chdir=/home1/karatas/ibd_compare \
     --exclude=d11-05,d11-06,d11-07,b23-11,b23-13,b18-08 \
     --dependency=afterok:${prep_inputs_jid} \
-    --job-name="prepRap" \
+    --job-name="prepRIL" \
     --array="1-${total_map_tasks}%${MAX_JOBS}" \
-    "job_scripts/prepare_rapid_maps.sh" \
+    "job_scripts/prepare_rapid_ilash_maps.sh" \
         "$VCF_DIR" \
-        "$RAPID_MAP_DIR" \
-        "$REF_DIR" \
-        "$CHR" \
-        "$NUM_REPS" \
-        "${TMAPS[@]}" \
-        -- \
-        "${IMAPS[@]}" \
-        -- \
-        "${POPS[@]}"
-)
-log_msg "prep rapid maps array; jid=${rapid_map_jid}; dep on ${prep_inputs_jid}"
-
-# prepare ilash maps for each tmap x imap x seed x pop
-ilash_map_jid=$(sbatch \
-    --parsable \
-    --chdir=/home1/karatas/ibd_compare \
-    --exclude=d11-05,d11-06,d11-07,b23-11,b23-13,b18-08 \
-    --dependency=afterok:${prep_inputs_jid} \
-    --job-name="prepILA" \
-    --array="1-${total_map_tasks}%${MAX_JOBS}" \
-    "job_scripts/prepare_ilash_maps.sh" \
         "$PED_DIR" \
+        "$RAPID_MAP_DIR" \
         "$ILASH_MAP_DIR" \
         "$REF_DIR" \
         "$CHR" \
@@ -141,7 +123,7 @@ ilash_map_jid=$(sbatch \
         -- \
         "${POPS[@]}"
 )
-log_msg "prep ilash maps array; jid=${ilash_map_jid}; dep on ${prep_inputs_jid}"
+log_msg "prep rapid+ilash maps array; jid=${prep_map_jid}; dep on ${prep_inputs_jid}"
 
 # get unrelated individuals from subsetted vcf files
 unrel_jid=$(sbatch \

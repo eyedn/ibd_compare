@@ -7,7 +7,7 @@
 #           Department of Quantitative and Computational Biology 
 #           Mooney Lab
 #           ---
-#           prepare_rapid_maps.sh
+#           prepare_rapid_ilash_maps.sh
 ###############################################################################
 
 #SBATCH --cpus-per-task=1
@@ -33,11 +33,13 @@ source /home1/karatas/ibd_compare/other_scripts/log_msg.sh
 
 # inputs
 vcf_dir="$1"
-rapid_map_dir="$2"
-ref_dir="$3"
-chr="$4"
-num_reps="$5"
-shift 5
+ped_dir="$2"
+rapid_map_dir="$3"
+ilash_map_dir="$4"
+ref_dir="$5"
+chr="$6"
+num_reps="$7"
+shift 7
 
 tmaps=()
 while [[ $# -gt 0 && "$1" != "--" ]]; do
@@ -99,57 +101,96 @@ seed="${seed_id}"
 pop="${pops[$pop_idx]}"
 
 if [[ "$imap" == "HapMapII_GRCh38" ]]; then
-    int_genetic_map="${ref_dir}/RaPID_format_maps/HapMapII_GRCh38/plink.chr${chr}.GRCh38.UCSC.reformated.map"
+    rapid_int_map="${ref_dir}/RaPID_format_maps/HapMapII_GRCh38/plink.chr${chr}.GRCh38.UCSC.reformated.map"
+    ilash_reference_map="${ref_dir}/HapMapII_GRCh38/plink.chr${chr}.GRCh38.UCSC.format.map"
 elif [[ "$imap" == "DeCodeSexAveraged_GRCh38" ]]; then
-    int_genetic_map="${ref_dir}/RaPID_format_maps/deCODE/chr${chr}.reformated.map"
+    rapid_int_map="${ref_dir}/RaPID_format_maps/deCODE/chr${chr}.reformated.map"
+    ilash_reference_map="${ref_dir}/deCODE/addendum/sex-averaged_gmaps/sex_av_chr${chr}_hg38.gmap"
 elif [[ "$imap" == "Flat1Mb1cM" ]]; then
-    int_genetic_map="${ref_dir}/RaPID_format_maps/1Mb1cM/chr${chr}.reformated.map"
+    rapid_int_map="${ref_dir}/RaPID_format_maps/1Mb1cM/chr${chr}.reformated.map"
+    ilash_reference_map="${ref_dir}/GRCh38.p14/recomb_maps_1Mb1cM/chr${chr}.map"
 else
     echo "ERROR: unknown imap=${imap}" >&2
     exit 1
 fi
 
-[[ -s "${int_genetic_map}" ]] || {
-    echo "ERROR: missing intermediate rapid map ${int_genetic_map}" >&2
+[[ -s "${rapid_int_map}" ]] || {
+    echo "ERROR: missing intermediate rapid map ${rapid_int_map}" >&2
+    exit 1
+}
+[[ -s "${ilash_reference_map}" ]] || {
+    echo "ERROR: missing ilash reference map ${ilash_reference_map}" >&2
     exit 1
 }
 
 vcf="${vcf_dir}/${tmap}_${seed}_${pop}.vcf.gz"
+ped_map="${ped_dir}/${tmap}_${seed}_${pop}.map"
 [[ -s "${vcf}" ]] || { echo "ERROR: missing VCF ${vcf}" >&2; exit 1; }
+[[ -s "${ped_map}" ]] || { echo "ERROR: missing PED map ${ped_map}" >&2; exit 1; }
 
-map_dir="${rapid_map_dir}/${tmap}/seed${seed}/${pop}/imap${imap}"
-mkdir -p "${map_dir}"
+rapid_dir="${rapid_map_dir}/${tmap}/seed${seed}/${pop}/imap${imap}"
+ilash_dir="${ilash_map_dir}/${tmap}/seed${seed}/${pop}/imap${imap}"
+mkdir -p "${rapid_dir}" "${ilash_dir}"
 
-filtered_map="${map_dir}/chr${chr}.RaPIDfiltered.map"
-final_map="${map_dir}/chr${chr}.RaPIDfinal.map"
+rapid_filtered_map="${rapid_dir}/chr${chr}.RaPIDfiltered.map"
+rapid_final_map="${rapid_dir}/chr${chr}.RaPIDfinal.map"
+ilash_output_map="${ilash_dir}/chr${chr}.ilash.map"
 
-if [[ -s "${final_map}" ]]; then
-    log_msg "rapid final map exists (${final_map}); skipping"
+need_rapid=true
+need_ilash=true
+
+if [[ -s "${rapid_final_map}" ]]; then
+    need_rapid=false
+fi
+if [[ -s "${ilash_output_map}" ]]; then
+    need_ilash=false
+fi
+
+if [[ "${need_rapid}" == "false" && "${need_ilash}" == "false" ]]; then
+    log_msg "rapid and ilash maps exist for ${tmap} seed=${seed} ${pop} ${imap}; skipping"
     exit 0
 fi
 
-log_msg "prepare rapid maps
+log_msg "prepare rapid+ilash maps
 task_id=${tid}
 tmap=${tmap}
 imap=${imap}
 seed=${seed}
 pop=${pop}
 vcf=${vcf}
-int_genetic_map=${int_genetic_map}
-filtered_map=${filtered_map}
-final_map=${final_map}"
+ped_map=${ped_map}
+rapid_int_map=${rapid_int_map}
+rapid_final_map=${rapid_final_map}
+ilash_reference_map=${ilash_reference_map}
+ilash_output_map=${ilash_output_map}"
 
-python ~/software/RaPID/filter_mapping_file.py \
-    "${int_genetic_map}" \
-    "${filtered_map}"
-python ~/software/RaPID/interpolate_loci.py \
-    "${filtered_map}" \
-    "${vcf}" \
-    "${final_map}"
+if [[ "${need_rapid}" == "true" ]]; then
+    python ~/software/RaPID/filter_mapping_file.py \
+        "${rapid_int_map}" \
+        "${rapid_filtered_map}"
+    python ~/software/RaPID/interpolate_loci.py \
+        "${rapid_filtered_map}" \
+        "${vcf}" \
+        "${rapid_final_map}"
+    [[ -s "${rapid_final_map}" ]] || {
+        echo "ERROR: expected rapid final map missing: ${rapid_final_map}" >&2
+        exit 1
+    }
+    log_msg "prepared rapid map ${rapid_final_map}"
+else
+    log_msg "rapid map reused (${rapid_final_map})"
+fi
 
-[[ -s "${final_map}" ]] || {
-    echo "ERROR: expected rapid final map missing: ${final_map}" >&2
-    exit 1
-}
-
-log_msg "prepared rapid map ${final_map}"
+if [[ "${need_ilash}" == "true" ]]; then
+    python /home1/karatas/ibd_compare/job_scripts/build_ilash_map.py \
+        "${ilash_reference_map}" \
+        "${ped_map}" \
+        "${ilash_output_map}"
+    [[ -s "${ilash_output_map}" ]] || {
+        echo "ERROR: expected ilash map missing: ${ilash_output_map}" >&2
+        exit 1
+    }
+    log_msg "prepared ilash map ${ilash_output_map}"
+else
+    log_msg "ilash map reused (${ilash_output_map})"
+fi

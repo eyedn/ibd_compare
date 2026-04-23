@@ -30,32 +30,92 @@ rap_num_successes=${RAP_NUM_SUCCESSES}
 rapid_map_dir=${RAPID_MAP_DIR}
 chr=${CHR}"
 
-total_tasks=$(( NUM_REPS * ${#TMAPS[@]} * ${#IMAPS[@]} * ${#POPS[@]} ))
+standard_pops=()
+admix_pops=()
+for pop in "${POPS[@]}"; do
+    if [[ "$pop" == "ADMIX" ]]; then
+        admix_pops+=( "$pop" )
+    else
+        standard_pops+=( "$pop" )
+    fi
+done
 
-sbatch \
-    --chdir=/home1/karatas/ibd_compare \
-    --job-name=rapFF \
-    --array="1-${total_tasks}%${MAX_JOBS}" \
-    /home1/karatas/ibd_compare/job_scripts/filter_format_rapid.sh \
-        "$OUTDIR" \
-        "$VCF_DIR" \
-        "$RAPID_MAP_DIR" \
-        "$COMMON_FF_DIR" \
-        "$REF_DIR" \
-        "$CHR" \
-        "$MIN_BP_LEN" \
-        "$MIN_CM_LEN" \
-        "$HOT_BIN_SIZE" \
-        "$HOT_BIN_SD" \
-        "$NUM_REPS" \
-        "$RAP_MIN_LEN" \
-        "$RAP_WINDOW_SIZE" \
-        "$RAP_NUM_RUNS" \
-        "$RAP_NUM_SUCCESSES" \
-        "${TMAPS[@]}" \
-        -- \
-        "${IMAPS[@]}" \
-        -- \
-        "${POPS[@]}"
+if [[ ${#standard_pops[@]} -gt 0 ]]; then
+    total_tasks=$(( NUM_REPS * ${#TMAPS[@]} * ${#IMAPS[@]} * ${#standard_pops[@]} ))
+    log_msg "Submitting rapid standard-tier jobs
+populations=${standard_pops[*]}
+cpus_per_task=4
+mem=32G
+ibdends_threads=4
+ibdends_xmx=20G
+total_tasks=${total_tasks}"
 
-log_msg "submitted rapid filter+format jobs; total_tasks=${total_tasks}"
+    sbatch \
+        --chdir=/home1/karatas/ibd_compare \
+        --job-name=rapFFstd \
+        --cpus-per-task=4 \
+        --mem=32G \
+        --export=ALL,IBDENDS_XMX=20G,IBDENDS_THREADS=4 \
+        --array="1-${total_tasks}%${MAX_JOBS}" \
+        /home1/karatas/ibd_compare/job_scripts/filter_format_rapid.sh \
+            "$OUTDIR" \
+            "$VCF_DIR" \
+            "$RAPID_MAP_DIR" \
+            "$COMMON_FF_DIR" \
+            "$REF_DIR" \
+            "$CHR" \
+            "$MIN_BP_LEN" \
+            "$MIN_CM_LEN" \
+            "$HOT_BIN_SIZE" \
+            "$HOT_BIN_SD" \
+            "$NUM_REPS" \
+            "$RAP_MIN_LEN" \
+            "$RAP_WINDOW_SIZE" \
+            "$RAP_NUM_RUNS" \
+            "$RAP_NUM_SUCCESSES" \
+            "${TMAPS[@]}" \
+            -- \
+            "${IMAPS[@]}" \
+            -- \
+            "${standard_pops[@]}"
+fi
+
+if [[ ${#admix_pops[@]} -gt 0 ]]; then
+    total_tasks=$(( NUM_REPS * ${#TMAPS[@]} * ${#IMAPS[@]} * ${#admix_pops[@]} ))
+    log_msg "Submitting rapid ADMIX-tier jobs
+populations=${admix_pops[*]}
+cpus_per_task=4
+mem=128G
+ibdends_threads=4
+ibdends_xmx=96G
+total_tasks=${total_tasks}"
+
+    sbatch \
+        --chdir=/home1/karatas/ibd_compare \
+        --job-name=rapFFadx \
+        --cpus-per-task=4 \
+        --mem=128G \
+        --export=ALL,IBDENDS_XMX=96G,IBDENDS_THREADS=4 \
+        --array="1-${total_tasks}%${MAX_JOBS}" \
+        /home1/karatas/ibd_compare/job_scripts/filter_format_rapid.sh \
+            "$OUTDIR" \
+            "$VCF_DIR" \
+            "$RAPID_MAP_DIR" \
+            "$COMMON_FF_DIR" \
+            "$REF_DIR" \
+            "$CHR" \
+            "$MIN_BP_LEN" \
+            "$MIN_CM_LEN" \
+            "$HOT_BIN_SIZE" \
+            "$HOT_BIN_SD" \
+            "$NUM_REPS" \
+            "$RAP_MIN_LEN" \
+            "$RAP_WINDOW_SIZE" \
+            "$RAP_NUM_RUNS" \
+            "$RAP_NUM_SUCCESSES" \
+            "${TMAPS[@]}" \
+            -- \
+            "${IMAPS[@]}" \
+            -- \
+            "${admix_pops[@]}"
+fi
