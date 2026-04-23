@@ -10,8 +10,6 @@
 #           filter_format_hapibd.sh
 ###############################################################################
 
-#SBATCH --cpus-per-task=6
-#SBATCH --mem-per-cpu=8G
 #SBATCH --time=1-00:00:00
 #SBATCH --partition=qcb
 #SBATCH --account=jazlynmo_738
@@ -23,6 +21,12 @@
 
 set -euo pipefail
 source /home1/karatas/ibd_compare/other_scripts/log_msg.sh
+
+: "${IBDENDS_XMX:?ERROR: IBDENDS_XMX must be set by submit wrapper}"
+: "${IBDENDS_THREADS:?ERROR: IBDENDS_THREADS must be set by submit wrapper}"
+
+ibdends_xmx="${IBDENDS_XMX}"
+ibdends_threads="${IBDENDS_THREADS}"
 
 : "${SLURM_ARRAY_TASK_ID:?ERROR: run as a Slurm array}"
 
@@ -152,12 +156,15 @@ mkdir -p "$hapibd_ff_dir"
 # hapibd -> ibd-ends
 module purge
 ml legacy/CentOS7 jdk/17.0.5
+log_msg "hapibd: ibd-ends runtime
+ibdends_xmx=${ibdends_xmx}
+ibdends_threads=${ibdends_threads}"
 log_msg "hapibd: filtering segments using ibd-ends (pop=${pop} seed=${seed} tmap=${tmap_label} imap=${imap_label})"
-java -Xmx46G -jar ~/software/ibd-ends/ibd-ends.jar \
+java -Xmx"${ibdends_xmx}" -jar ~/software/ibd-ends/ibd-ends.jar \
     gt="$vcf" \
     ibd="$hapibd_nonbed" \
     map="$hapibd_gmap" \
-    nthreads="${SLURM_CPUS_PER_TASK:-1}" \
+    nthreads="${ibdends_threads}" \
     out="$hapibd_ibdends_prefix"
 
 log_msg "hapibd: generating ${hapibd_ibdends_ibd} from ${hapibd_ibdends_prefix}.ibd.gz"
@@ -184,11 +191,11 @@ module purge
 ml legacy/CentOS7 jdk/17.0.5
 
 log_msg "hapibd: filtering hot-filtered segments using ibd-ends"
-java -Xmx46G -jar ~/software/ibd-ends/ibd-ends.jar \
+java -Xmx"${ibdends_xmx}" -jar ~/software/ibd-ends/ibd-ends.jar \
     gt="$vcf" \
     ibd="$hapibd_hot_hapibdformat" \
     map="$hapibd_gmap" \
-    nthreads="${SLURM_CPUS_PER_TASK:-1}" \
+    nthreads="${ibdends_threads}" \
     out="$hapibd_hot_ibdends_prefix"
 
 log_msg "hapibd: generating ${hapibd_hot_ibdends_ibd} from ${hapibd_hot_ibdends_prefix}.ibd.gz"

@@ -10,8 +10,6 @@
 #           filter_format_rapid.sh
 ###############################################################################
 
-#SBATCH --cpus-per-task=4
-#SBATCH --mem-per-cpu=16G
 #SBATCH --time=1-00:00:00
 #SBATCH --partition=qcb
 #SBATCH --account=jazlynmo_738
@@ -23,6 +21,12 @@
 
 set -euo pipefail
 source /home1/karatas/ibd_compare/other_scripts/log_msg.sh
+
+: "${IBDENDS_XMX:?ERROR: IBDENDS_XMX must be set by submit wrapper}"
+: "${IBDENDS_THREADS:?ERROR: IBDENDS_THREADS must be set by submit wrapper}"
+
+ibdends_xmx="${IBDENDS_XMX}"
+ibdends_threads="${IBDENDS_THREADS}"
 
 : "${SLURM_ARRAY_TASK_ID:?ERROR: run as a Slurm array}"
 
@@ -138,7 +142,7 @@ rapid_hot_ibdends_ibd="${rapid_hot_ibdends_prefix}_ibd.ibdends.bed.gz"
 rapid_ibd="${rapid_dir}/${pop}_chr${chr}_seed${seed}_ibd.bed.gz"
 
 # rapid map for cM interpolation during formatting
-rapid_gmap="${rapid_map_dir}/${tmap}/seed${seed}/${pop}/imap${imap}/chr${chr}.RaPIDfinal.map"
+rapid_gmap="${rapid_map_dir}/pop${pop}_chr${chr}_seed${seed}_tmap${tmap}_imap${imap}.map"
 
 rapid_ff_dir="${common_ff_dir}/${rapid_dir_base}"
 rapid_out="${rapid_ff_dir}/rapid_${tmap_label}_${imap_label}_${pop}_${seed}.bed"
@@ -157,6 +161,9 @@ mkdir -p "$rapid_ff_dir"
 # rapid -> ibd-ends (convert to hapibd-like format first)
 module purge
 ml legacy/CentOS7 jdk/17.0.5
+log_msg "rapid: ibd-ends runtime
+ibdends_xmx=${ibdends_xmx}
+ibdends_threads=${ibdends_threads}"
 
 log_msg "rapid: generating ${rapid_nonbed_hapibdformat} from ${rapid_nonbed}"
 zcat "$rapid_nonbed" | \
@@ -164,11 +171,11 @@ zcat "$rapid_nonbed" | \
     gzip -c > "$rapid_nonbed_hapibdformat"
 
 log_msg "rapid: filtering segments using ibd-ends (pop=${pop} seed=${seed} tmap=${tmap_label} imap=${imap_label})"
-java -Xmx48G -jar ~/software/ibd-ends/ibd-ends.jar \
+java -Xmx"${ibdends_xmx}" -jar ~/software/ibd-ends/ibd-ends.jar \
     gt="$vcf" \
     ibd="$rapid_nonbed_hapibdformat" \
     map="$hapibd_gmap" \
-    nthreads="4" \
+    nthreads="${ibdends_threads}" \
     out="$rapid_ibdends_prefix"
 
 log_msg "rapid: generating ${rapid_ibdends_ibd} from ${rapid_ibdends_prefix}.ibd.gz"
@@ -202,11 +209,11 @@ module purge
 ml legacy/CentOS7 jdk/17.0.5
 
 log_msg "rapid: filtering hot-filtered segments using ibd-ends"
-java -Xmx48G -jar ~/software/ibd-ends/ibd-ends.jar \
+java -Xmx"${ibdends_xmx}" -jar ~/software/ibd-ends/ibd-ends.jar \
     gt="$vcf" \
     ibd="$rapid_hot_hapibdformat" \
     map="$hapibd_gmap" \
-    nthreads="4" \
+    nthreads="${ibdends_threads}" \
     out="$rapid_hot_ibdends_prefix"
 
 log_msg "rapid: generating ${rapid_hot_ibdends_ibd} from ${rapid_hot_ibdends_prefix}.ibd.gz"

@@ -29,11 +29,21 @@ slice_length=${ILASH_SLICE_LENGTH}
 cm_overlap=${ILASH_CM_OVERLAP}
 chr=${CHR}"
 
-total_tasks=$(( NUM_REPS * ${#TMAPS[@]} * ${#IMAPS[@]} * ${#POPS[@]} ))
+total_tasks=$(( NUM_REPS * ${#TMAPS[@]} * ${#IMAPS[@]} * ${#NONADMIXED_POP_LABELS[@]} ))
+log_msg "Submitting ilash nonadmixed-tier jobs
+populations=${NONADMIXED_POP_LABELS[*]}
+cpus_per_task=${NONADMIXED_CPUS_PER_TASK}
+mem=${NONADMIXED_MEM}
+ibdends_threads=${NONADMIXED_IBDENDS_THREADS}
+ibdends_xmx=${NONADMIXED_IBDENDS_XMX}
+total_tasks=${total_tasks}"
 
 sbatch \
     --chdir=/home1/karatas/ibd_compare \
-    --job-name=ilaFF \
+    --job-name=ilaFFnAdx \
+    --cpus-per-task="${NONADMIXED_CPUS_PER_TASK}" \
+    --mem="${NONADMIXED_MEM}" \
+    --export=ALL,IBDENDS_XMX="${NONADMIXED_IBDENDS_XMX}",IBDENDS_THREADS="${NONADMIXED_IBDENDS_THREADS}" \
     --array="1-${total_tasks}%${MAX_JOBS}" \
     /home1/karatas/ibd_compare/job_scripts/filter_format_ilash.sh \
         "$OUTDIR" \
@@ -54,6 +64,41 @@ sbatch \
         -- \
         "${IMAPS[@]}" \
         -- \
-        "${POPS[@]}"
+        "${NONADMIXED_POP_LABELS[@]}"
 
-log_msg "submitted ilash filter+format jobs; total_tasks=${total_tasks}"
+total_tasks=$(( NUM_REPS * ${#TMAPS[@]} * ${#IMAPS[@]} ))
+log_msg "Submitting ilash ADMIX-tier jobs
+populations=${ADMIXED_POP_LABEL}
+cpus_per_task=${ADMIXED_CPUS_PER_TASK}
+mem=${ADMIXED_MEM}
+ibdends_threads=${ADMIXED_IBDENDS_THREADS}
+ibdends_xmx=${ADMIXED_IBDENDS_XMX}
+total_tasks=${total_tasks}"
+
+sbatch \
+    --chdir=/home1/karatas/ibd_compare \
+    --job-name=ilaFFAdx \
+    --cpus-per-task="${ADMIXED_CPUS_PER_TASK}" \
+    --mem="${ADMIXED_MEM}" \
+    --export=ALL,IBDENDS_XMX="${ADMIXED_IBDENDS_XMX}",IBDENDS_THREADS="${ADMIXED_IBDENDS_THREADS}" \
+    --array="1-${total_tasks}%${MAX_JOBS}" \
+    /home1/karatas/ibd_compare/job_scripts/filter_format_ilash.sh \
+        "$OUTDIR" \
+        "$VCF_DIR" \
+        "$ILASH_MAP_DIR" \
+        "$COMMON_FF_DIR" \
+        "$CHR" \
+        "$MIN_BP_LEN" \
+        "$MIN_CM_LEN" \
+        "$HOT_BIN_SIZE" \
+        "$HOT_BIN_SD" \
+        "$NUM_REPS" \
+        "$ILASH_AUTO_SLICE" \
+        "$ILASH_MIN_LENGTH" \
+        "$ILASH_SLICE_LENGTH" \
+        "$ILASH_CM_OVERLAP" \
+        "${TMAPS[@]}" \
+        -- \
+        "${IMAPS[@]}" \
+        -- \
+        "$ADMIXED_POP_LABEL"

@@ -10,8 +10,6 @@
 #           filter_format_ilash.sh
 ###############################################################################
 
-#SBATCH --cpus-per-task=4
-#SBATCH --mem-per-cpu=8G
 #SBATCH --time=1-00:00:00
 #SBATCH --partition=qcb
 #SBATCH --account=jazlynmo_738
@@ -23,6 +21,12 @@
 
 set -euo pipefail
 source /home1/karatas/ibd_compare/other_scripts/log_msg.sh
+
+: "${IBDENDS_XMX:?ERROR: IBDENDS_XMX must be set by submit wrapper}"
+: "${IBDENDS_THREADS:?ERROR: IBDENDS_THREADS must be set by submit wrapper}"
+
+ibdends_xmx="${IBDENDS_XMX}"
+ibdends_threads="${IBDENDS_THREADS}"
 
 : "${SLURM_ARRAY_TASK_ID:?ERROR: run as a Slurm array}"
 
@@ -111,7 +115,7 @@ ilash_dir_base="ilash_sim_tmap${tmap}_imap${imap}_auto${ilash_auto_slice}_min${i
 ilash_dir="${outdir}/${ilash_dir_base}"
 
 vcf="${vcf_dir}/${tmap}_${seed}_${pop}.vcf.gz"
-ilash_gmap="${ilash_map_dir}/${tmap}/seed${seed}/${pop}/imap${imap}/chr${chr}.ilash.map"
+ilash_gmap="${ilash_map_dir}/pop${pop}_chr${chr}_seed${seed}_tmap${tmap}_imap${imap}.map"
 ilash_nonbed="${ilash_dir}/${pop}_chr${chr}_seed${seed}.ibd.gz"
 ilash_ibd="${ilash_dir}/${pop}_chr${chr}_seed${seed}_ibd.bed.gz"
 ilash_ibdends_prefix="${ilash_dir}/${pop}_chr${chr}_seed${seed}.ibdends"
@@ -136,12 +140,15 @@ mkdir -p "${ilash_ff_dir}"
 
 module purge
 ml legacy/CentOS7 jdk/17.0.5
+log_msg "ilash: ibd-ends runtime
+ibdends_xmx=${ibdends_xmx}
+ibdends_threads=${ibdends_threads}"
 log_msg "ilash: filtering segments using ibd-ends (pop=${pop} seed=${seed} tmap=${tmap_label} imap=${imap_label})"
-java -Xmx46G -jar ~/software/ibd-ends/ibd-ends.jar \
+java -Xmx"${ibdends_xmx}" -jar ~/software/ibd-ends/ibd-ends.jar \
     gt="${vcf}" \
     ibd="${ilash_nonbed}" \
     map="${ilash_gmap}" \
-    nthreads="${SLURM_CPUS_PER_TASK:-1}" \
+    nthreads="${ibdends_threads}" \
     out="${ilash_ibdends_prefix}"
 
 log_msg "ilash: generating ${ilash_ibdends_ibd} from ${ilash_ibdends_prefix}.ibd.gz"
@@ -167,11 +174,11 @@ module purge
 ml legacy/CentOS7 jdk/17.0.5
 
 log_msg "ilash: filtering hot-filtered segments using ibd-ends"
-java -Xmx46G -jar ~/software/ibd-ends/ibd-ends.jar \
+java -Xmx"${ibdends_xmx}" -jar ~/software/ibd-ends/ibd-ends.jar \
     gt="${vcf}" \
     ibd="${ilash_hot_hapibdformat}" \
     map="${ilash_gmap}" \
-    nthreads="${SLURM_CPUS_PER_TASK:-1}" \
+    nthreads="${ibdends_threads}" \
     out="${ilash_hot_ibdends_prefix}"
 
 log_msg "ilash: generating ${ilash_hot_ibdends_ibd} from ${ilash_hot_ibdends_prefix}.ibd.gz"
