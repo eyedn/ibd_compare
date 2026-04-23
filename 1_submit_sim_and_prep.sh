@@ -17,6 +17,7 @@ source /home1/karatas/ibd_compare/other_scripts/log_msg.sh
 
 # NOTE:  sim. specs in /home1/karatas/ibd_compare/const.sh
 total_tasks=$(( NUM_REPS * ${#TMAPS[@]} ))
+prep_total_tasks=$(( NUM_REPS * ${#TMAPS[@]} * ${#IMAPS[@]} * ${#POPS[@]} ))
 log_msg "Detected sim+prep specifications
 outdir=${OUTDIR}
 num_reps=${NUM_REPS}
@@ -28,12 +29,10 @@ ped_dir=${PED_DIR}
 rapid_map_dir=${RAPID_MAP_DIR}
 ilash_map_dir=${ILASH_MAP_DIR}
 chr=${CHR}
-prep_total_tasks=$(( NUM_REPS * ${#TMAPS[@]} * ${#IMAPS[@]} * ${#POPS[@]} ))
 total_tasks=${total_tasks} (per job array)
 prep_map_tasks=${prep_total_tasks} (combined rapid+ilash map tasks)"
 
 # submit sims
-total_tasks=$(( NUM_REPS * ${#TMAPS[@]} ))
 sim_jid=$(sbatch \
     --parsable \
     --chdir=/home1/karatas/ibd_compare \
@@ -78,7 +77,6 @@ anc_jid=$(sbatch \
 log_msg "local ancestry array for each pop and map; jid=${anc_jid}; dep on ${sim_jid}"
 
 # prepare population-wise vcfs and peds
-total_tasks=$(( NUM_REPS * ${#TMAPS[@]} ))
 prep_inputs_jid=$(sbatch \
     --parsable \
     --chdir=/home1/karatas/ibd_compare \
@@ -101,14 +99,13 @@ prep_inputs_jid=$(sbatch \
 log_msg "prep vcfs+peds array for each pop and map; jid=${prep_inputs_jid}; dep on ${sim_jid}"
 
 # prepare rapid+ilash maps for each tmap x imap x seed x pop
-total_map_tasks=$(( NUM_REPS * ${#TMAPS[@]} * ${#IMAPS[@]} * ${#POPS[@]} ))
 prep_map_jid=$(sbatch \
     --parsable \
     --chdir=/home1/karatas/ibd_compare \
     --exclude=d11-05,d11-06,d11-07,b23-11,b23-13,b18-08 \
     --dependency=afterok:${prep_inputs_jid} \
     --job-name="prepRIL" \
-    --array="1-${total_map_tasks}%${MAX_JOBS}" \
+    --array="1-${prep_total_tasks}%${MAX_JOBS}" \
     "job_scripts/prepare_rapid_ilash_maps.sh" \
         "$VCF_DIR" \
         "$PED_DIR" \
