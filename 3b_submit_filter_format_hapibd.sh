@@ -38,6 +38,7 @@ cpus_per_task=${NONADMIXED_CPUS_PER_TASK}
 mem=${NONADMIXED_MEM}
 ibdends_threads=${NONADMIXED_IBDENDS_THREADS}
 ibdends_xmx=${NONADMIXED_IBDENDS_XMX}
+ibdends_min_maf=${IBDENDS_MIN_MAF}
 total_tasks=${total_tasks}"
 
 sbatch \
@@ -45,7 +46,7 @@ sbatch \
     --job-name=hapFFnAdx \
     --cpus-per-task="${NONADMIXED_CPUS_PER_TASK}" \
     --mem="${NONADMIXED_MEM}" \
-    --export=ALL,IBDENDS_XMX="${NONADMIXED_IBDENDS_XMX}",IBDENDS_THREADS="${NONADMIXED_IBDENDS_THREADS}" \
+    --export=ALL,IBDENDS_XMX="${NONADMIXED_IBDENDS_XMX}",IBDENDS_THREADS="${NONADMIXED_IBDENDS_THREADS}",IBDENDS_MIN_MAF="${IBDENDS_MIN_MAF}" \
     --array="1-${total_tasks}%${MAX_JOBS}" \
     /home1/karatas/ibd_compare/job_scripts/filter_format_hapibd.sh \
         "$OUTDIR" \
@@ -77,6 +78,7 @@ cpus_per_task=${ADMIXED_CPUS_PER_TASK}
 mem=${ADMIXED_MEM}
 ibdends_threads=${ADMIXED_IBDENDS_THREADS}
 ibdends_xmx=${ADMIXED_IBDENDS_XMX}
+ibdends_min_maf=${IBDENDS_MIN_MAF}
 total_tasks=${total_tasks}"
 
 sbatch \
@@ -84,7 +86,7 @@ sbatch \
     --job-name=hapFFAdx \
     --cpus-per-task="${ADMIXED_CPUS_PER_TASK}" \
     --mem="${ADMIXED_MEM}" \
-    --export=ALL,IBDENDS_XMX="${ADMIXED_IBDENDS_XMX}",IBDENDS_THREADS="${ADMIXED_IBDENDS_THREADS}" \
+    --export=ALL,IBDENDS_XMX="${ADMIXED_IBDENDS_XMX}",IBDENDS_THREADS="${ADMIXED_IBDENDS_THREADS}",IBDENDS_MIN_MAF="${IBDENDS_MIN_MAF}" \
     --array="1-${total_tasks}%${MAX_JOBS}" \
     /home1/karatas/ibd_compare/job_scripts/filter_format_hapibd.sh \
         "$OUTDIR" \

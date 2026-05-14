@@ -29,6 +29,7 @@ cpus_per_task=${NONADMIXED_CPUS_PER_TASK}
 mem=${NONADMIXED_MEM}
 ibdends_threads=${NONADMIXED_IBDENDS_THREADS}
 ibdends_xmx=${NONADMIXED_IBDENDS_XMX}
+ibdends_min_maf=${IBDENDS_MIN_MAF}
 min_bp_len=${MIN_BP_LEN}
 min_cm_len=${MIN_CM_LEN}
 hot_bin_size=${HOT_BIN_SIZE}
@@ -45,7 +46,7 @@ sbatch \
     --job-name="1kGhapFF" \
     --cpus-per-task="${NONADMIXED_CPUS_PER_TASK}" \
     --mem="${NONADMIXED_MEM}" \
-    --export=ALL,IBDENDS_XMX="${NONADMIXED_IBDENDS_XMX}",IBDENDS_THREADS="${NONADMIXED_IBDENDS_THREADS}" \
+    --export=ALL,IBDENDS_XMX="${NONADMIXED_IBDENDS_XMX}",IBDENDS_THREADS="${NONADMIXED_IBDENDS_THREADS}",IBDENDS_MIN_MAF="${IBDENDS_MIN_MAF}" \
     --array="1-${total_tasks}%${MAX_JOBS}" \
     --exclude=d11-05,d11-06,d11-07,b23-11,b23-13,b18-08 \
     job_scripts/filter_format_1kG_hapibd.sh \

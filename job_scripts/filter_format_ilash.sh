@@ -24,9 +24,11 @@ source /home1/karatas/ibd_compare/other_scripts/log_msg.sh
 
 : "${IBDENDS_XMX:?ERROR: IBDENDS_XMX must be set by submit wrapper}"
 : "${IBDENDS_THREADS:?ERROR: IBDENDS_THREADS must be set by submit wrapper}"
+: "${IBDENDS_MIN_MAF:?ERROR: IBDENDS_MIN_MAF must be set by submit wrapper}"
 
 ibdends_xmx="${IBDENDS_XMX}"
 ibdends_threads="${IBDENDS_THREADS}"
+ibdends_min_maf="${IBDENDS_MIN_MAF}"
 
 : "${SLURM_ARRAY_TASK_ID:?ERROR: run as a Slurm array}"
 
@@ -148,6 +150,7 @@ java -Xmx"${ibdends_xmx}" -jar ~/software/ibd-ends/ibd-ends.jar \
     gt="${vcf}" \
     ibd="${ilash_nonbed}" \
     map="${ilash_gmap}" \
+    min-maf="${ibdends_min_maf}" \
     nthreads="${ibdends_threads}" \
     out="${ilash_ibdends_prefix}"
 
@@ -178,6 +181,7 @@ java -Xmx"${ibdends_xmx}" -jar ~/software/ibd-ends/ibd-ends.jar \
     gt="${vcf}" \
     ibd="${ilash_hot_hapibdformat}" \
     map="${ilash_gmap}" \
+    min-maf="${ibdends_min_maf}" \
     nthreads="${ibdends_threads}" \
     out="${ilash_hot_ibdends_prefix}"
 
