@@ -74,7 +74,11 @@ read.rep.calls <- function(rep.idx, dir.paths.map, unrels.tbl, cores) {
           col_names = TRUE,
           show_col_types = FALSE,
           progress = FALSE
-        )
+        ) %>%
+          mutate(
+            sam1 = as.character(sam1),
+            sam2 = as.character(sam2)
+          )
         
         tmp$pop <- pop
         tmp$imap <- imap
@@ -90,6 +94,7 @@ read.rep.calls <- function(rep.idx, dir.paths.map, unrels.tbl, cores) {
         )
         
         ids <- unrels.tbl$ids[unrels.tbl$rep == rep.idx & unrels.tbl$pop == pop][[1]]
+        ids <- as.character(ids)
         tmp$is.unrel <- if (is.null(ids)) FALSE else (tmp$sam1 %in% ids & tmp$sam2 %in% ids)
         
         tmp

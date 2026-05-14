@@ -66,7 +66,11 @@ read.pop.calls <- function(focal.pop, dir.paths.map, unrels.tbl, cores) {
           col_names = TRUE,
           show_col_types = FALSE,
           progress = FALSE
-        )
+        ) %>%
+          mutate(
+            sam1 = as.character(sam1),
+            sam2 = as.character(sam2)
+          )
         
         tmp$pop <- pop
         tmp$imap <- imap
@@ -77,6 +81,7 @@ read.pop.calls <- function(focal.pop, dir.paths.map, unrels.tbl, cores) {
         sc <- tmp$software.code[1]
         tmp$param.code <- if (sc == "true") "true" else paste0(substr(sc, 1, 1), stringr::str_extract(sc, "\\d+$"))
         ids <- unrels.tbl$ids[unrels.tbl$rep == rep & unrels.tbl$pop == pop][[1]]
+        ids <- as.character(ids)
         tmp$is.unrel <- if (is.null(ids)) FALSE else (tmp$sam1 %in% ids & tmp$sam2 %in% ids)
         
         tmp

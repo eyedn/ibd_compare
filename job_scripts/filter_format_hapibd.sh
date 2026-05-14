@@ -154,7 +154,7 @@ mkdir -p "$hapibd_ff_dir"
 
 # hapibd -> ibd-ends
 module purge
-ml legacy/CentOS7 jdk/17.0.5
+ml openjdk/25.0.2
 log_msg "hapibd: ibd-ends runtime
 ibdends_xmx=${ibdends_xmx}
 ibdends_threads=${ibdends_threads}"
@@ -187,7 +187,7 @@ Rscript "/home1/karatas/ibd_compare/job_scripts/convert_std_bed_to_hapibd.R" \
     "$hapibd_hot_out" "$hapibd_hot_hapibdformat"
 
 module purge
-ml legacy/CentOS7 jdk/17.0.5
+ml openjdk/25.0.2
 
 log_msg "hapibd: filtering hot-filtered segments using ibd-ends"
 java -Xmx"${ibdends_xmx}" -jar ~/software/ibd-ends/ibd-ends.jar \

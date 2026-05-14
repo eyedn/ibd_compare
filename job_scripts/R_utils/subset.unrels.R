@@ -11,7 +11,9 @@
 
 library(tidyverse)
 
-subset.unrels <- function(unrel.fname, ibd.calls) {
+subset.unrels <- function(unrel.fname, ibd.calls,
+                          sample.id.mode = c("simulation", "empirical")) {
+  sample.id.mode <- match.arg(sample.id.mode)
   message("filtering ibd calls for unrelated in ", unrel.fname)
   
   # read in unrelateds
@@ -21,7 +23,18 @@ subset.unrels <- function(unrel.fname, ibd.calls) {
   )
   unrels <- unrels %>%
     rename(indiv.id = X1) %>%
-    mutate(indiv.id = as.integer(str_extract(indiv.id, "\\d+$")),)
+    mutate(indiv.id = as.character(indiv.id))
+
+  if (sample.id.mode == "simulation") {
+    unrels <- unrels %>%
+      mutate(indiv.id = str_extract(indiv.id, "\\d+$"))
+  }
+
+  ibd.calls <- ibd.calls %>%
+    mutate(
+      sam1 = as.character(sam1),
+      sam2 = as.character(sam2)
+    )
   
   # subset for unrels
   ibd.calls <- ibd.calls %>% filter(

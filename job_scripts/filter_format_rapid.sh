@@ -159,7 +159,7 @@ mkdir -p "$rapid_ff_dir"
 
 # rapid -> ibd-ends (convert to hapibd-like format first)
 module purge
-ml legacy/CentOS7 jdk/17.0.5
+ml openjdk/25.0.2
 log_msg "rapid: ibd-ends runtime
 ibdends_xmx=${ibdends_xmx}
 ibdends_threads=${ibdends_threads}"
@@ -205,7 +205,7 @@ Rscript "/home1/karatas/ibd_compare/job_scripts/filter_and_format.R" \
     "TRUE" "TRUE"
 
 module purge
-ml legacy/CentOS7 jdk/17.0.5
+ml openjdk/25.0.2
 
 log_msg "rapid: filtering hot-filtered segments using ibd-ends"
 java -Xmx"${ibdends_xmx}" -jar ~/software/ibd-ends/ibd-ends.jar \

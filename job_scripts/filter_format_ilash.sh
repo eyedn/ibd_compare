@@ -139,7 +139,7 @@ ilash_ibdendshot_out="${ilash_ff_dir}/ilash_${tmap_label}_${imap_label}_${pop}_$
 mkdir -p "${ilash_ff_dir}"
 
 module purge
-ml legacy/CentOS7 jdk/17.0.5
+ml openjdk/25.0.2
 log_msg "ilash: ibd-ends runtime
 ibdends_xmx=${ibdends_xmx}
 ibdends_threads=${ibdends_threads}"
@@ -171,7 +171,7 @@ Rscript "/home1/karatas/ibd_compare/job_scripts/convert_std_bed_to_hapibd.R" \
     "${ilash_hot_out}" "${ilash_hot_hapibdformat}"
 
 module purge
-ml legacy/CentOS7 jdk/17.0.5
+ml openjdk/25.0.2
 
 log_msg "ilash: filtering hot-filtered segments using ibd-ends"
 java -Xmx"${ibdends_xmx}" -jar ~/software/ibd-ends/ibd-ends.jar \

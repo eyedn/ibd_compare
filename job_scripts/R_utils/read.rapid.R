@@ -10,8 +10,12 @@
 
 
 library(tidyverse)
+source("job_scripts/R_utils/parse.sample.ids.R")
 
-read.rapid.bed <- function(fname, min.bp.len = 0, min.cM.len = 0, gmap) {
+read.rapid.bed <- function(fname, min.bp.len = 0, min.cM.len = 0, gmap,
+                           sample.id.mode = c("simulation", "empirical")) {
+  sample.id.mode <- match.arg(sample.id.mode)
+
   # read in ibd calls
   rapid.calls <- readr::read_tsv(
     file = fname, col_names = FALSE, show_col_types = FALSE
@@ -32,9 +36,17 @@ read.rapid.bed <- function(fname, min.bp.len = 0, min.cM.len = 0, gmap) {
     mutate(
       bp.str = as.integer(bp.str),
       bp.end = as.integer(bp.end),
-      sam1 = as.integer(str_extract(sam1, "\\d+$")),
+      sam1 = parse.sample.ids(
+        sam1,
+        sample.id.mode,
+        "RaPID simulation input contains non-integer sample IDs"
+      ),
       hap1 = as.integer(hap1) + 1,
-      sam2 = as.integer(str_extract(sam2, "\\d+$")),
+      sam2 = parse.sample.ids(
+        sam2,
+        sample.id.mode,
+        "RaPID simulation input contains non-integer sample IDs"
+      ),
       hap2 = as.integer(hap2) + 1,
       cM.len = as.numeric(cM.len),
       bp.len = bp.end - bp.str,

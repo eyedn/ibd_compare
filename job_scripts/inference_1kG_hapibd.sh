@@ -25,7 +25,7 @@
 
 set -euo pipefail
 module purge
-ml legacy/CentOS7 jdk/17.0.5
+ml openjdk/25.0.2
 source /home1/karatas/ibd_compare/other_scripts/log_msg.sh
 
 : "${SLURM_ARRAY_TASK_ID:?ERROR: run as a Slurm array}"

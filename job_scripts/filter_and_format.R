@@ -18,7 +18,7 @@ source("job_scripts/R_utils/read.true.R")
 source("job_scripts/R_utils/filter.ibd.by.hot.bins.R")
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) != 10) {
+if (!length(args) %in% c(10, 11)) {
   stop("incorrect number of parameters")
 }
 
@@ -33,6 +33,7 @@ ff.out <- args[7]
 ff.hot.out <- args[8]
 is.hapibd.format <- tolower(args[9])
 do.hot.filter <- tolower(args[10])
+sample.id.mode <- if (length(args) == 11) tolower(args[11]) else "simulation"
 if (!is.hapibd.format %in% c("true", "false")) {
   stop("is.hapibd.format must be TRUE/true or FALSE/false; got: ", args[9])
 }
@@ -41,6 +42,12 @@ if (!do.hot.filter %in% c("true", "false")) {
   stop("do.hot.filter must be TRUE/true or FALSE/false; got: ", args[10])
 }
 do.hot.filter <- do.hot.filter == "true"
+if (!sample.id.mode %in% c("simulation", "empirical")) {
+  stop(
+    "sample.id.mode must be simulation or empirical; got: ",
+    sample.id.mode
+  )
+}
 
 print("inputs:")
 print(paste("min.bp.size = ", min.bp.size))
@@ -51,6 +58,7 @@ print(paste("ff.out = ", ff.out))
 print(paste("ff.hot.out = ", ff.hot.out))
 print(paste("is.hapibd.format = ", is.hapibd.format))
 print(paste("do.hot.filter = ", do.hot.filter))
+print(paste("sample.id.mode = ", sample.id.mode))
 
 # read in ibd calls ----
 if (grepl("true_ibd", ibd.file, ignore.case = TRUE)) {
@@ -60,13 +68,25 @@ if (grepl("true_ibd", ibd.file, ignore.case = TRUE)) {
   readr::write_tsv(segs, ff.out, col_names = TRUE)
   quit(status = 0)
 } else if (is.hapibd.format) {
-  calls <- read.hapibd.bed(ibd.file, min.bp.size, min.cm.size, gmap.file)
+  calls <- read.hapibd.bed(
+    ibd.file,
+    min.bp.size,
+    min.cm.size,
+    gmap.file,
+    sample.id.mode = sample.id.mode
+  )
   gmap <- readr::read_table(
     file = gmap.file, col_names = FALSE, show_col_types = FALSE
   ) %>%
     rename(chr = X1, snp = X2, cM = X3, bp = X4)
 } else {
-  calls <- read.rapid.bed(ibd.file, min.bp.size, min.cm.size, gmap.file)
+  calls <- read.rapid.bed(
+    ibd.file,
+    min.bp.size,
+    min.cm.size,
+    gmap.file,
+    sample.id.mode = sample.id.mode
+  )
   gmap <- readr::read_table(
     file = gmap.file, col_names = FALSE, show_col_types = FALSE
   ) %>%

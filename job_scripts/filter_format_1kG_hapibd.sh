@@ -157,7 +157,7 @@ for pop in "${pops[@]}"; do
     }
 
     module purge
-    ml legacy/CentOS7 jdk/17.0.5
+    ml openjdk/25.0.2
 
     log_msg "hapibd: filtering segments using ibd-ends
 pop=${pop}
@@ -186,17 +186,17 @@ imap=${imap_label}"
         "$min_bp_len" "$min_cm_len" "$hot_bin_size" "$hot_bin_sd" \
         "$hapibd_ibd" "$hapibd_gmap" \
         "$hapibd_out" "$hapibd_hot_out" \
-        "TRUE" "TRUE"
+        "TRUE" "TRUE" "empirical"
 
     log_msg "hapibd: converting hot-filtered calls to hapibd format
 pop=${pop}
 chr=${chr}
 imap=${imap_label}"
     Rscript "/home1/karatas/ibd_compare/job_scripts/convert_std_bed_to_hapibd.R" \
-        "$hapibd_hot_out" "$hapibd_hot_hapibdformat"
+        "$hapibd_hot_out" "$hapibd_hot_hapibdformat" "empirical"
 
     module purge
-    ml legacy/CentOS7 jdk/17.0.5
+    ml openjdk/25.0.2
 
     log_msg "hapibd: filtering hot-filtered segments using ibd-ends
 pop=${pop}
@@ -225,7 +225,7 @@ imap=${imap_label}"
         "$min_bp_len" "$min_cm_len" "$hot_bin_size" "$hot_bin_sd" \
         "$hapibd_ibdends_ibd" "$hapibd_gmap" \
         "$hapibd_ibdends_out" "$hapibd_ibdendshot_out" \
-        "TRUE" "TRUE"
+        "TRUE" "TRUE" "empirical"
 
     log_msg "hapibd: formatting hot-filtered ibd-ends adjusted calls
 pop=${pop}
@@ -235,7 +235,7 @@ imap=${imap_label}"
         "$min_bp_len" "$min_cm_len" "$hot_bin_size" "$hot_bin_sd" \
         "$hapibd_hot_ibdends_ibd" "$hapibd_gmap" \
         "$hapibd_hotibdends_out" "/tmp/hapibd_hotibdends_unused.bed" \
-        "TRUE" "FALSE"
+        "TRUE" "FALSE" "empirical"
 
     gzip -f \
         "$hapibd_out" \
