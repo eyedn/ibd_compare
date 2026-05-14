@@ -17,7 +17,7 @@ REF_DIR="${HOME}/references"
 OUTDIR="${SCRATCH}/stdpopsim_runs_chr18_admix3" 
 COMMON_FF_DIR="${SCRATCH}/ibd_compare_chr18_admix3" 
 DEMO_DIR="${SCRATCH}/demo_inf_chr18_admix3"
-ONEKG_IBD_COMPARE_DIR="${SCRATCH}/1kG_ibd_compare_ASW_CEU_YRI"
+ONEKG_IBD_INIT_INFERENCE_DIR="${SCRATCH}/1kG_ibd_init_inference_ASW_CEU_YRI"
 
 # dirs under $OUTDIR
 TREE_DIR="${OUTDIR}/trees"
@@ -152,9 +152,9 @@ FLAT_RATE=1
 
 # ibdne demography inference
 
-# dirs under $ONEKG_IBD_COMPARE_DIR
-ONEKG_VCF_DIR="${ONEKG_IBD_COMPARE_DIR}/vcfs"
-ONEKG_RAPID_MAP_DIR="${ONEKG_IBD_COMPARE_DIR}/rapid_maps"
+# dirs under $ONEKG_IBD_INIT_INFERENCE_DIR
+ONEKG_VCF_DIR="${ONEKG_IBD_INIT_INFERENCE_DIR}/vcfs"
+ONEKG_RAPID_MAP_DIR="${ONEKG_IBD_INIT_INFERENCE_DIR}/rapid_maps"
 
 # 1kG data settings
 ONEKG_POPS=(ASW CEU YRI)

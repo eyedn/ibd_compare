@@ -18,7 +18,7 @@ source /home1/karatas/ibd_compare/other_scripts/log_msg.sh
 total_tasks=$(( ${#ONEKG_CHRS[@]} * ${#IMAPS[@]} ))
 
 log_msg "Submitting 1kG rapid inference
-onekg_ibd_compare_dir=${ONEKG_IBD_COMPARE_DIR}
+onekg_ibd_init_inference_dir=${ONEKG_IBD_INIT_INFERENCE_DIR}
 onekg_vcf_dir=${ONEKG_VCF_DIR}
 onekg_rapid_map_dir=${ONEKG_RAPID_MAP_DIR}
 populations=${ONEKG_POPS[*]}
@@ -42,7 +42,7 @@ sbatch \
         "$RAP_NUM_SUCCESSES" \
         "$ONEKG_VCF_DIR" \
         "$ONEKG_RAPID_MAP_DIR" \
-        "$ONEKG_IBD_COMPARE_DIR" \
+        "$ONEKG_IBD_INIT_INFERENCE_DIR" \
         "${ONEKG_CHRS[@]}" \
         -- \
         "${IMAPS[@]}" \

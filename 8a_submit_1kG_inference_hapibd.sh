@@ -18,7 +18,7 @@ source /home1/karatas/ibd_compare/other_scripts/log_msg.sh
 total_tasks=$(( ${#ONEKG_CHRS[@]} * ${#IMAPS[@]} ))
 
 log_msg "Submitting 1kG hapibd inference
-onekg_ibd_compare_dir=${ONEKG_IBD_COMPARE_DIR}
+onekg_ibd_init_inference_dir=${ONEKG_IBD_INIT_INFERENCE_DIR}
 onekg_vcf_dir=${ONEKG_VCF_DIR}
 populations=${ONEKG_POPS[*]}
 chromosomes=${ONEKG_CHRS[*]}
@@ -43,7 +43,7 @@ sbatch \
         "$HAP_MIN_OUTPUT" \
         "$HAP_MIN_MARKERS" \
         "$HAP_MIN_MAC" \
-        "$ONEKG_IBD_COMPARE_DIR" \
+        "$ONEKG_IBD_INIT_INFERENCE_DIR" \
         "$ONEKG_VCF_DIR" \
         "$REF_DIR" \
         "${ONEKG_CHRS[@]}" \

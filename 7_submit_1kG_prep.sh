@@ -20,7 +20,7 @@ vcf_tasks="${#ONEKG_CHRS[@]}"
 rapid_map_tasks=$(( ${#ONEKG_CHRS[@]} * ${#IMAPS[@]} * ${#ONEKG_POPS[@]} ))
 
 log_msg "Submitting 1kG prep
-onekg_ibd_compare_dir=${ONEKG_IBD_COMPARE_DIR}
+onekg_ibd_init_inference_dir=${ONEKG_IBD_INIT_INFERENCE_DIR}
 onekg_source_vcf_dir=${ONEKG_SOURCE_VCF_DIR}
 onekg_allsamps_dir=${ONEKG_ALLSAMPS_DIR}
 onekg_vcf_dir=${ONEKG_VCF_DIR}
