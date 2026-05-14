@@ -209,6 +209,14 @@ r.2 <- 1.506e-02 # from summary
 g.switch <- 9 # at 1850, 
 g.tot <- 15 # 15 generations from 2000 is 1925. approx start time of admix pop
 
+# generation-scale timings ----
+gen.time <- 25
+admix.start.year <- 1625
+epoch.switch.year <- 1850
+present.year <- 2000
+g.switch.gen <- (epoch.switch.year - admix.start.year) / gen.time
+g.tot.gen <- (present.year - admix.start.year) / gen.time
+
 # pop size estimates ----
 N.0 <- AA.pop.1$pop.beginning.no.prev.imports[2]
 N.1 <- N.0 * exp(g.switch * r.1)
@@ -342,3 +350,183 @@ ggplot() +
   ) +
   theme_bw()
 
+# generation-scale fits ----
+AA.pop.1.gen <- AA.pop.1.all %>%
+  mutate(
+    start.year = as.numeric(sub("-.*", "", period)),
+    imported.prev = dplyr::lag(imported),
+    pop.beginning.no.prev.imports = pop.end - imported.prev,
+    std.gen = (start.year - admix.start.year) / gen.time
+  ) %>%
+  filter(
+    !is.na(pop.beginning.no.prev.imports),
+    start.year >= admix.start.year,
+    start.year <= epoch.switch.year
+  ) %>%
+  select(start.year, std.gen, pop.beginning.no.prev.imports)
+
+AA.pop.2.gen <- AA.pop.2 %>%
+  transmute(
+    year = year,
+    std.gen = (year - epoch.switch.year) / gen.time,
+    size = size
+  )
+
+# generation-scale rate 1 ----
+log.lm.model.1.gen <- lm(
+  log(AA.pop.1.gen$pop.beginning.no.prev.imports) ~ AA.pop.1.gen$std.gen
+)
+summary(log.lm.model.1.gen)
+r0.1.gen <- coef(log.lm.model.1.gen)[2]
+i0.1.gen <- exp(coef(log.lm.model.1.gen)[1])
+
+log.nls.model.1.gen <- nls(
+  data = AA.pop.1.gen,
+  pop.beginning.no.prev.imports ~ a * exp(b * std.gen),
+  start = list(a = i0.1.gen, b = r0.1.gen)
+)
+summary(log.nls.model.1.gen)
+i.1.gen <- coef(log.nls.model.1.gen)[["a"]]
+r.1.gen <- coef(log.nls.model.1.gen)[["b"]]
+
+# generation-scale rate 2 ----
+log.lm.model.2.gen <- lm(log(AA.pop.2.gen$size) ~ AA.pop.2.gen$std.gen)
+summary(log.lm.model.2.gen)
+r0.2.gen <- coef(log.lm.model.2.gen)[2]
+i0.2.gen <- exp(coef(log.lm.model.2.gen)[1])
+
+log.nls.model.2.gen <- nls(
+  data = AA.pop.2.gen,
+  size ~ a * exp(b * std.gen),
+  start = list(a = i0.2.gen, b = r0.2.gen)
+)
+summary(log.nls.model.2.gen)
+i.2.gen <- coef(log.nls.model.2.gen)[["a"]]
+r.2.gen <- coef(log.nls.model.2.gen)[["b"]]
+
+# generation-scale pop size estimates ----
+N.0.gen <- 435
+N.1.gen <- N.0.gen * exp(g.switch.gen * r.1.gen)
+N.2.gen <- N.1.gen * exp((g.tot.gen - g.switch.gen) * r.2.gen)
+
+# console comparison output ----
+cat(
+  paste0(
+    "\nYear vs generation growth-rate comparison\n",
+    "Epoch 1 yearly r: ", round(r.1, 8),
+    " | Epoch 1 generational r: ", round(r.1.gen, 8), "\n",
+    "Epoch 2 yearly r: ", round(r.2, 8),
+    " | Epoch 2 generational r: ", round(r.2.gen, 8), "\n",
+    "g.switch.gen: ", g.switch.gen,
+    " | g.tot.gen: ", g.tot.gen, "\n\n"
+  )
+)
+
+# generation-scale census curves ----
+AA.pop.plot.fit.1.gen <- tibble(
+  year = seq(min(AA.pop.1.gen$start.year), max(AA.pop.1.gen$start.year), by = 1)
+) %>%
+  mutate(
+    std.gen = (year - admix.start.year) / gen.time,
+    size = i.1.gen * exp(r.1.gen * std.gen),
+    epoch = "Epoch 1 fit gen"
+  )
+
+AA.pop.plot.fit.2.gen <- tibble(
+  year = seq(min(AA.pop.2.gen$year), max(AA.pop.2.gen$year), by = 1)
+) %>%
+  mutate(
+    std.gen = (year - epoch.switch.year) / gen.time,
+    size = i.2.gen * exp(r.2.gen * std.gen),
+    epoch = "Epoch 2 fit gen"
+  )
+
+AA.pop.plot.fit.gen <- bind_rows(AA.pop.plot.fit.1.gen, AA.pop.plot.fit.2.gen)
+
+# plot generation-scale census fits ----
+ggplot() +
+  geom_point(
+    data = AA.pop.plot.obs,
+    aes(x = year, y = size, color = epoch),
+    size = 2,
+    alpha = 0.8
+  ) +
+  geom_line(
+    data = AA.pop.plot.fit.gen,
+    aes(x = year, y = size, color = epoch),
+    linewidth = 1.1
+  ) +
+  scale_y_continuous(labels = scales::comma) +
+  scale_color_manual(
+    values = c(
+      "Epoch 1: 1625-1850" = "#1b9e77",
+      "Epoch 2: 1850-2000" = "#d95f02",
+      "Epoch 1: 1620-1850" = "#1b9e77",
+      "Epoch 1 fit gen" = "#1b9e77",
+      "Epoch 2 fit gen" = "#d95f02"
+    )
+  ) +
+  labs(
+    x = "Year",
+    y = "Population size",
+    color = NULL,
+    title = "African American population size across two growth epochs",
+    subtitle = paste0(
+      "Epoch 1: r/gen = ", round(r.1.gen, 5),
+      " | Epoch 2: r/gen = ", round(r.2.gen, 5)
+    )
+  ) +
+  theme_bw()
+
+# generation-scale plausable Ne curves ----
+AA.pop.plot.fitNe.1.gen <- tibble(
+  year = seq(min(AA.pop.1.gen$start.year), max(AA.pop.1.gen$start.year), by = 1)
+) %>%
+  mutate(
+    std.gen = (year - admix.start.year) / gen.time,
+    size = N.0.gen * exp(r.1.gen * std.gen),
+    epoch = "Epoch 1 fit gen"
+  )
+
+AA.pop.plot.fitNe.2.gen <- tibble(
+  year = seq(min(AA.pop.2.gen$year), max(AA.pop.2.gen$year), by = 1)
+) %>%
+  mutate(
+    std.gen = (year - epoch.switch.year) / gen.time,
+    size = N.1.gen * exp(r.2.gen * std.gen),
+    epoch = "Epoch 2 fit gen"
+  )
+
+AA.pop.plot.fitNe.gen <- bind_rows(
+  AA.pop.plot.fitNe.1.gen,
+  AA.pop.plot.fitNe.2.gen
+)
+
+# plot generation-scale Ne ----
+ggplot() +
+  geom_line(
+    data = AA.pop.plot.fitNe.gen,
+    aes(x = year, y = size, color = epoch),
+    linewidth = 1.1
+  ) +
+  scale_y_continuous(labels = scales::comma) +
+  scale_color_manual(
+    values = c(
+      "Epoch 1 fit gen" = "#1b9e77",
+      "Epoch 2 fit gen" = "#d95f02"
+    )
+  ) +
+  labs(
+    x = "Year",
+    y = "Population size",
+    color = NULL,
+    title = "Generation-scale African American Ne across two growth epochs",
+    subtitle = paste0(
+      "Ne(1625) = ", round(N.0.gen, 1),
+      ", r.1/gen = ", round(r.1.gen, 5),
+      " | Ne(1850) = ", round(N.1.gen, 1),
+      ", r.2/gen = ", round(r.2.gen, 5),
+      ", Ne(2000) = ", round(N.2.gen, 1)
+    )
+  ) +
+  theme_bw()
