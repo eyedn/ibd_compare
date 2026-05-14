@@ -15,12 +15,20 @@ kinship.mat2tbl <- function(mat, rep.idx, pop.name){
   
   # grab upper triangle only (no diagonal)
   idx <- which(upper.tri(mat), arr.ind = TRUE)
+
+  if (!is.null(rownames(mat)) && !is.null(colnames(mat))) {
+    sam1 <- rownames(mat)[idx[, 1]]
+    sam2 <- colnames(mat)[idx[, 2]]
+  } else {
+    sam1 <- idx[, 1] - 1
+    sam2 <- idx[, 2] - 1
+  }
   
   tbl <- tibble(
     rep = rep.idx,
     pop = pop.name,
-    sam1 = idx[,1] - 1,   # back to 0-index
-    sam2 = idx[,2] - 1,
+    sam1 = sam1,
+    sam2 = sam2,
     kinship = mat[idx]
   )
   

@@ -200,14 +200,14 @@ imap=${imap_label}"
         "$min_bp_len" "$min_cm_len" "$hot_bin_size" "$hot_bin_sd" \
         "$rapid_ibd" "$rapid_gmap" \
         "$rapid_out" "$rapid_hot_out" \
-        "FALSE" "TRUE"
+        "FALSE" "TRUE" "empirical"
 
     log_msg "rapid: converting hot-filtered calls to hapibd format
 pop=${pop}
 chr=${chr}
 imap=${imap_label}"
     Rscript "/home1/karatas/ibd_compare/job_scripts/convert_std_bed_to_hapibd.R" \
-        "$rapid_hot_out" "$rapid_hot_hapibdformat"
+        "$rapid_hot_out" "$rapid_hot_hapibdformat" "empirical"
 
     log_msg "rapid: format+filter ibd-ends adjusted calls
 pop=${pop}
@@ -217,7 +217,7 @@ imap=${imap_label}"
         "$min_bp_len" "$min_cm_len" "$hot_bin_size" "$hot_bin_sd" \
         "$rapid_ibdends_ibd" "$hapibd_gmap" \
         "$rapid_ibdends_out" "$rapid_ibdendshot_out" \
-        "TRUE" "TRUE"
+        "TRUE" "TRUE" "empirical"
 
     module purge
     ml legacy/CentOS7 jdk/17.0.5
@@ -249,7 +249,7 @@ imap=${imap_label}"
         "$min_bp_len" "$min_cm_len" "$hot_bin_size" "$hot_bin_sd" \
         "$rapid_hot_ibdends_ibd" "$hapibd_gmap" \
         "$rapid_hotibdends_out" "/tmp/rapid_hotibdends_unused.bed" \
-        "TRUE" "FALSE"
+        "TRUE" "FALSE" "empirical"
 
     gzip -f \
         "$rapid_out" \
