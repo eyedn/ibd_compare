@@ -285,3 +285,60 @@ ggplot() +
   ) +
   theme_bw()
 
+# plausable Ne curves ----
+# build fitted curves for plotting ----
+AA.pop.plot.fitNe.1 <- tibble(
+  year = seq(min(AA.pop.1$start.year), max(AA.pop.1$start.year), by = 1)
+) %>%
+  mutate(
+    std.year = year - 1620,
+    size = 435 * exp(r.1 * std.year),
+    epoch = "Epoch 1 fit"
+  )
+
+AA.pop.plot.fitNe.2 <- tibble(
+  year = seq(min(AA.pop.2$year), max(AA.pop.2$year), by = 1)
+) %>%
+  mutate(
+    std.year = year - 1850,
+    size = as.numeric(AA.pop.plot.fitNe.1[nrow(AA.pop.plot.fitNe.1), "size"]) 
+    * exp(r.2 * std.year),
+    epoch = "Epoch 2 fit"
+  )
+
+AA.pop.plot.fitNe <- bind_rows(AA.pop.plot.fitNe.1, AA.pop.plot.fitNe.2)
+
+# plot Ne ----
+ggplot() +
+  geom_line(
+    data = AA.pop.plot.fitNe,
+    aes(x = year, y = size, color = epoch),
+    linewidth = 1.1
+  ) +
+  scale_y_continuous(labels = scales::comma) +
+  scale_color_manual(
+    values = c(
+      "Epoch 1: 1625-1850" = "#1b9e77",
+      "Epoch 2: 1850-2000" = "#d95f02",
+      "Epoch 1 fit" = "#1b9e77",
+      "Epoch 2 fit" = "#d95f02"
+    )
+  ) +
+  labs(
+    x = "Year",
+    y = "Population size",
+    color = NULL,
+    title = "African American population size across two growth epochs",
+    subtitle = paste0(
+      "Epoch 1: Ne(1620) = ", 
+      round(as.numeric(AA.pop.plot.fitNe[1, "size"]), 1), 
+      ", r = ", round(r.1, 5),
+      " | Epoch 2: Ne(1850) = ", 
+      round(as.numeric(AA.pop.plot.fitNe[nrow(AA.pop.plot.fitNe.1), "size"]), 1),
+      ", r = ", round(r.2, 5),
+      ", Ne(2000) = ",
+      round(as.numeric(AA.pop.plot.fitNe[nrow(AA.pop.plot.fitNe), "size"]), 1)
+    )
+  ) +
+  theme_bw()
+
