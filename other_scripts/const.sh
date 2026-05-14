@@ -18,6 +18,7 @@ OUTDIR="${SCRATCH}/stdpopsim_runs_chr18_admix3"
 COMMON_FF_DIR="${SCRATCH}/ibd_compare_chr18_admix3" 
 DEMO_DIR="${SCRATCH}/demo_inf_chr18_admix3"
 ONEKG_IBD_INIT_INFERENCE_DIR="${SCRATCH}/1kG_ibd_init_inference_ASW_CEU_YRI"
+ONEKG_IBD_COMPARE_DIR="${SCRATCH}/1kG_ibd_compare_ASW_CEU_YRI"
 
 # dirs under $OUTDIR
 TREE_DIR="${OUTDIR}/trees"
@@ -159,9 +160,8 @@ ONEKG_RAPID_MAP_DIR="${ONEKG_IBD_INIT_INFERENCE_DIR}/rapid_maps"
 # 1kG data settings
 ONEKG_POPS=(ASW CEU YRI)
 ONEKG_CHRS=(
-    1 2 3 4 5 6 7 8 9 10 11
-    12 13 14 15 16 17 18 19 20 21 22
-)
+    1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 
+    )
 
 # read-only 1kG input dirs
 ONEKG_SOURCE_VCF_DIR="/home1/karatas/proj/1000GenomeNYGC_hg38_mooney/vcfs_strictMask"

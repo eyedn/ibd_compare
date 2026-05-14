@@ -24,11 +24,10 @@ source /home1/karatas/ibd_compare/other_scripts/log_msg.sh
 
 : "${IBDENDS_XMX:?ERROR: IBDENDS_XMX must be set by submit wrapper}"
 : "${IBDENDS_THREADS:?ERROR: IBDENDS_THREADS must be set by submit wrapper}"
+: "${SLURM_ARRAY_TASK_ID:?ERROR: run as a Slurm array}"
 
 ibdends_xmx="${IBDENDS_XMX}"
 ibdends_threads="${IBDENDS_THREADS}"
-
-: "${SLURM_ARRAY_TASK_ID:?ERROR: run as a Slurm array}"
 
 # inputs
 outdir="$1"
