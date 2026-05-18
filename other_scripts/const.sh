@@ -10,15 +10,45 @@
 #           const.sh
 ###############################################################################
 
+# simulation specifications: 4B18 or 3T
+MODEL_SUFFIX="${MODEL_SUFFIX:-3T}"
+
+# TMAP exsamples: "HapMapII_GRCh38", "DeCodeSexAveraged_GRCh38", "DefaultUniform"
+TMAPS=(
+    "HapMapII_GRCh38"
+)
+NUM_REPS=50
+CHR=18
+SAMPLE_SIZE=300
+MSPRIME_MODEL="dtwf"
+STDPOPSIM_DEMOGRAPHY_ID="AmericanAdmixture_4B18"
+
+case "${MODEL_SUFFIX}" in
+    3T)
+        POPS=(AFR EUR ADMIX)
+        NONADMIXED_POP_LABELS=(AFR EUR)
+        ADMIXED_POP_LABEL="ADMIX"
+        ;;
+    4B18)
+        POPS=(AFR EUR ASIA ADMIX)
+        NONADMIXED_POP_LABELS=(AFR EUR ASIA)
+        ADMIXED_POP_LABEL="ADMIX"
+        ;;
+    *)
+        echo "ERROR: MODEL_SUFFIX must be 3T or 4B18" >&2
+        return 1 2>/dev/null || exit 1
+        ;;
+esac
+
 # dirs under $HOME
 REF_DIR="${HOME}/references"
 
 # dirs under #SCRATCH
-OUTDIR="${SCRATCH}/stdpopsim_runs_chr18_admix3" 
-COMMON_FF_DIR="${SCRATCH}/ibd_compare_chr18_admix3" 
-DEMO_DIR="${SCRATCH}/demo_inf_chr18_admix3"
-ONEKG_IBD_INIT_INFERENCE_DIR="${SCRATCH}/1kG_ibd_init_inference_ASW_CEU_YRI"
-ONEKG_IBD_COMPARE_DIR="${SCRATCH}/1kG_ibd_compare_ASW_CEU_YRI"
+OUTDIR="${SCRATCH}/stdpopsim_runs_chr${CHR}_admix_${MODEL_SUFFIX}"
+COMMON_FF_DIR="${SCRATCH}/ibd_compare_chr${CHR}_admix_${MODEL_SUFFIX}"
+DEMO_DIR="${SCRATCH}/demo_inf_chr${CHR}_admix_${MODEL_SUFFIX}"
+ONEKG_IBD_INIT_INFERENCE_DIR="${SCRATCH}/1kG_ibd_init_inference_1kG"
+ONEKG_IBD_COMPARE_DIR="${SCRATCH}/1kG_ibd_compare_1kG"
 
 # dirs under $OUTDIR
 TREE_DIR="${OUTDIR}/trees"
@@ -43,19 +73,6 @@ ADMIXED_CPUS_PER_TASK=4
 ADMIXED_MEM="128G"
 ADMIXED_IBDENDS_THREADS=4
 ADMIXED_IBDENDS_XMX="96G"
-
-# simulation specifications 
-# TMAP exsamples: "HapMapII_GRCh38", "DeCodeSexAveraged_GRCh38", "DefaultUniform"
-TMAPS=(
-    "HapMapII_GRCh38"
-)
-POPS=(AFR EUR ADMIX)
-NONADMIXED_POP_LABELS=(AFR EUR)
-ADMIXED_POP_LABEL="ADMIX"
-NUM_REPS=50
-CHR=18
-SAMPLE_SIZE=300
-MSPRIME_MODEL="dtwf"
 
 # Tennessen 2012 model specifications adpated from Fu 2013
 GENERATION_TIME=25

@@ -5,7 +5,7 @@
 #           Department of Quantitative and Computational Biology
 #           Mooney Lab
 #           ---
-#           simulate_ooaa.py
+#           simulate_3T.py
 ###############################################################################
 
 
@@ -13,7 +13,7 @@ import msprime
 import tskit
 
 
-def simulate_ooaa(
+def simulate_3T(
     *,
     sample_sets,
     demography,

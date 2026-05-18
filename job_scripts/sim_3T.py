@@ -5,17 +5,17 @@
 #           Department of Quantitative and Computational Biology
 #           Mooney Lab
 #           ---
-#           sim_ooaa.py
+#           sim_3T.py
 ###############################################################################
 
 
 import stdpopsim
-from python_utils.sim_ooaa_utils import (
-    build_ooaa_demography,
+from python_utils.sim_3T_utils import (
+    build_3T_demography,
     build_sample_sets,
     get_contig,
     parse_args,
-    simulate_ooaa
+    simulate_3T
 )
 
 
@@ -24,7 +24,7 @@ def main():
 
     species = stdpopsim.get_species("HomSap")
     contig = get_contig(species, args.chromosome, args.genetic_map)
-    demography, _ = build_ooaa_demography(
+    demography, _ = build_3T_demography(
         generation_time=args.generation_time,
         mutation_rate=args.mutation_rate,
         t_af_years=args.t_af_years,
@@ -53,7 +53,7 @@ def main():
         census_time_offset=args.census_time_offset
     )
     sample_sets = build_sample_sets(args.sample_size)
-    ts = simulate_ooaa(
+    ts = simulate_3T(
         sample_sets=sample_sets,
         demography=demography,
         contig=contig,

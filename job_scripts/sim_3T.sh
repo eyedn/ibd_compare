@@ -7,7 +7,7 @@
 #           Department of Quantitative and Computational Biology 
 #           Mooney Lab
 #           ---
-#           sim_ooaa.sh
+#           sim_3T.sh
 ###############################################################################
 
 #SBATCH --time=1-00:00:00
@@ -94,7 +94,7 @@ sample_spec=(
 
 mkdir -p "${tree_dir}"
 
-log_msg "stdpopsim sim (combined array)
+log_msg "3T sim (combined array)
 task_id=${tid}
 gmap=${gmap} (map_idx=${map_idx}/${#maps[@]})
 seed=${seed}
@@ -125,7 +125,7 @@ admix_growth_rate_2=${admix_growth_rate_2}
 admix_growth_rate_2_change_time=${admix_growth_rate_2_change_time}
 sample_spec=${sample_spec[*]}"
 
-python /home1/karatas/ibd_compare/job_scripts/sim_ooaa.py \
+python /home1/karatas/ibd_compare/job_scripts/sim_3T.py \
     --output "$out_ts" \
     --sample-size "$sample_size" \
     --seed "$seed" \

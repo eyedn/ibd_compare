@@ -5,7 +5,7 @@
 #           Department of Quantitative and Computational Biology
 #           Mooney Lab
 #           ---
-#           build_ooaa_demography.py
+#           build_3T_demography.py
 ###############################################################################
 
 
@@ -13,7 +13,7 @@ import math
 import msprime
 
 
-def build_ooaa_demography(
+def build_3T_demography(
     generation_time=25,
     mutation_rate=2.36e-8,
     t_af_years=148000,
