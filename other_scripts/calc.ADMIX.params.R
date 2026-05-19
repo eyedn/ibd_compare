@@ -530,3 +530,259 @@ ggplot() +
     )
   ) +
   theme_bw()
+
+# historical generation-level Ne calculator ----
+# Editable scenario inputs for the first historical Ne pass.
+hist.afr.founder.count <- 326
+hist.afr.female.proportion <- 0.5
+hist.eur.founder.count <- 109
+hist.eur.female.proportion <- 0.5
+hist.epoch.3.growth.rate <- r.2.gen
+
+# Stored for later msprime work. These proportions are not used below.
+AA.pop.hist.mixing.proportions <- tibble(
+  generation = 1:16,
+  afr.proportion = rep(0.75, 16),
+  eur.proportion = rep(0.25, 16)
+)
+
+calc.founder.ne <- function(founder.count, female.proportion) {
+  female.count <- founder.count * female.proportion
+  male.count <- founder.count - female.count
+
+  if (female.count <= 0 || male.count <= 0) {
+    return(0)
+  }
+
+  4 * female.count * male.count / (female.count + male.count)
+}
+
+AA.pop.hist.generation.map <- tibble(
+  generation = 1:10,
+  generation.start.year = c(
+    1610, 1630, 1660, 1700, 1750,
+    1800, 1810, 1820, 1830, 1840
+  ),
+  generation.end.year = c(
+    1630, 1660, 1700, 1750, 1800,
+    1810, 1820, 1830, 1840, 1850
+  ),
+  periods = list(
+    c("1610-1620", "1620-1630"),
+    c("1630-1640", "1640-1650", "1650-1660"),
+    c("1660-1670", "1670-1680", "1680-1690", "1690-1700"),
+    c("1700-1710", "1710-1720", "1720-1730", "1730-1740",
+      "1740-1750"),
+    c("1750-1760", "1760-1770", "1770-1780", "1780-1790",
+      "1790-1800"),
+    c("1800-1810"),
+    c("1810-1820"),
+    c("1820-1830"),
+    c("1830-1840"),
+    c("1840-1850")
+  )
+)
+
+AA.pop.hist.hacker <- AA.pop.1.all %>%
+  mutate(
+    start.year = as.numeric(sub("-.*", "", period)),
+    end.year = as.numeric(sub(".*-", "", period))
+  ) %>%
+  select(
+    period,
+    start.year,
+    end.year,
+    person.years.lived,
+    assumed.birth.rate,
+    imported,
+    births,
+    pop.end
+  )
+
+AA.pop.hist.agg <- AA.pop.hist.generation.map %>%
+  unnest(periods) %>%
+  left_join(AA.pop.hist.hacker, by = c("periods" = "period")) %>%
+  arrange(generation, start.year) %>%
+  group_by(generation, generation.start.year, generation.end.year) %>%
+  summarise(
+    periods = paste(periods, collapse = ", "),
+    imported = sum(imported, na.rm = TRUE),
+    births = sum(births, na.rm = TRUE),
+    birth.rate = weighted.mean(
+      assumed.birth.rate,
+      person.years.lived,
+      na.rm = TRUE
+    ),
+    pop.end = dplyr::last(pop.end),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    epoch = case_when(
+      generation == 1 ~ "G1 founders",
+      generation <= 5 ~ "G2-G5 imports plus births",
+      TRUE ~ "G6-G10 birth-rate Ne"
+    )
+  )
+
+AA.pop.hist.future <- tibble(
+  generation = 11:16,
+  generation.start.year = epoch.switch.year + ((generation - 11) * gen.time),
+  generation.end.year = epoch.switch.year + ((generation - 10) * gen.time),
+  periods = NA_character_,
+  imported = NA_real_,
+  births = NA_real_,
+  birth.rate = NA_real_,
+  pop.end = NA_real_,
+  epoch = "G11-G16 epoch-3 growth"
+)
+
+AA.pop.hist.ne <- bind_rows(AA.pop.hist.agg, AA.pop.hist.future) %>%
+  arrange(generation) %>%
+  mutate(
+    prev.births = dplyr::lag(births),
+    female.imported = if_else(
+      generation >= 2 & generation <= 5,
+      ceiling(imported / 3),
+      NA_real_
+    ),
+    male.imported = if_else(
+      generation >= 2 & generation <= 5,
+      floor(2 * imported / 3),
+      NA_real_
+    ),
+    female.potential = if_else(
+      generation >= 2 & generation <= 5,
+      0.5 * prev.births,
+      NA_real_
+    ),
+    male.potential = if_else(
+      generation >= 2 & generation <= 5,
+      0.5 * prev.births,
+      NA_real_
+    ),
+    female.total = female.imported + female.potential,
+    male.total = male.imported + male.potential,
+    adult.population = if_else(
+      generation >= 6 & generation <= 10,
+      pop.end - births,
+      NA_real_
+    ),
+    k = if_else(
+      generation >= 6 & generation <= 10,
+      gen.time * birth.rate / 1000,
+      NA_real_
+    )
+  )
+
+hist.ne.g1 <- calc.founder.ne(
+  hist.afr.founder.count,
+  hist.afr.female.proportion
+) +
+  calc.founder.ne(
+    hist.eur.founder.count,
+    hist.eur.female.proportion
+  )
+
+AA.pop.hist.ne <- AA.pop.hist.ne %>%
+  mutate(
+    ne = case_when(
+      generation == 1 ~ hist.ne.g1,
+      generation >= 2 & generation <= 5 ~
+        4 * female.total * male.total / (female.total + male.total),
+      generation >= 6 & generation <= 10 ~
+        (k * adult.population - 1) / k,
+      TRUE ~ NA_real_
+    )
+  )
+
+hist.ne.g10 <- AA.pop.hist.ne %>%
+  filter(generation == 10) %>%
+  pull(ne)
+
+AA.pop.hist.ne <- AA.pop.hist.ne %>%
+  mutate(
+    ne = if_else(
+      generation >= 11,
+      hist.ne.g10 * exp(hist.epoch.3.growth.rate * (generation - 10)),
+      ne
+    )
+  ) %>%
+  select(
+    generation,
+    generation.start.year,
+    generation.end.year,
+    periods,
+    epoch,
+    imported,
+    births,
+    birth.rate,
+    pop.end,
+    female.total,
+    male.total,
+    adult.population,
+    k,
+    ne
+  )
+
+stopifnot(
+  identical(sort(AA.pop.hist.ne$generation), 1:16),
+  all(!is.na(AA.pop.hist.ne$female.total[2:5])),
+  all(!is.na(AA.pop.hist.ne$male.total[2:5])),
+  all(!is.na(AA.pop.hist.ne$adult.population[6:10])),
+  all(!is.na(AA.pop.hist.ne$k[6:10])),
+  all(is.finite(AA.pop.hist.ne$ne)),
+  all(AA.pop.hist.ne$ne > 0)
+)
+
+cat("\nHistorical generation-level ADMIX Ne summary\n")
+print(
+  AA.pop.hist.ne %>%
+    filter(generation <= 10 | generation == 16) %>%
+    select(
+      generation,
+      generation.end.year,
+      epoch,
+      imported,
+      births,
+      birth.rate,
+      female.total,
+      male.total,
+      adult.population,
+      k,
+      ne
+    ),
+  n = Inf
+)
+
+cat(
+  paste0(
+    "\nHistorical present-day G16 Ne: ",
+    round(AA.pop.hist.ne$ne[AA.pop.hist.ne$generation == 16], 1),
+    "\n"
+  )
+)
+
+ggplot(
+  data = AA.pop.hist.ne,
+  aes(x = generation.end.year, y = ne)
+) +
+  geom_line(color = "#386cb0", linewidth = 1.1) +
+  geom_point(aes(shape = epoch), size = 2.5) +
+  scale_y_continuous(labels = scales::comma) +
+  scale_x_continuous(
+    breaks = AA.pop.hist.ne$generation.end.year,
+    labels = AA.pop.hist.ne$generation
+  ) +
+  labs(
+    x = "Generation",
+    y = "Effective population size",
+    shape = NULL,
+    title = "Historical generation-level African American Ne",
+    subtitle = paste0(
+      "G1 founder Ne = ", round(hist.ne.g1, 1),
+      " | G10 Ne = ", round(hist.ne.g10, 1),
+      " | G16 Ne = ",
+      round(AA.pop.hist.ne$ne[AA.pop.hist.ne$generation == 16], 1)
+    )
+  ) +
+  theme_bw()
