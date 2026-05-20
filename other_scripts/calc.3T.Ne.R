@@ -26,7 +26,7 @@ calc.founder.ne <- function(founder.count, female.proportion) {
   4 * female.count * male.count / (female.count + male.count)
 }
 
-# validate that a given value is a single positive whole generation.
+# validate that a given value is a single non-negative whole generation.
 # `value` is the candidate input and `name` is used in the error message.
 validate.whole.generation.count <- function(value, name) {
   if (
@@ -34,12 +34,22 @@ validate.whole.generation.count <- function(value, name) {
       is.na(value) ||
       !is.finite(value) ||
       value != as.integer(value) ||
-      value <= 0
+      value < 0
   ) {
-    stop(name, " must be a positive whole generation count", call. = FALSE)
+    stop(name, " must be a non-negative whole generation count", call. = FALSE)
   }
 
   as.integer(value)
+}
+
+# build a generation sequence that can be empty when the requested length is 0.
+# `start` is the first generation in the block and `len` is the block length.
+build.generation.block <- function(start, len) {
+  if (len == 0) {
+    return(integer(0))
+  }
+
+  seq.int(start, start + len - 1L)
 }
 
 # return an explicit argument when provided, otherwise pull the default.
@@ -55,15 +65,14 @@ resolve.default.param <- function(value, name, defaults.env) {
 
 # build the generation layout for the three epochs.
 # `epoch.*.len` are the epoch lengths, `gen.time` and `present.year` define the
-#  timeline, and `start.year`/`max.epoch.1.len` set constraints.
+#  timeline, and `start.year` sets the first generation boundary.
 calc.epoch.config <- function(
     epoch.1.len,
     epoch.2.len,
     epoch.3.len,
     gen.time,
     present.year,
-    start.year = 1600,
-    max.epoch.1.len = 8
+    start.year = 1600
 ) {
   epoch.1.len <- validate.whole.generation.count(
     epoch.1.len,
@@ -77,10 +86,6 @@ calc.epoch.config <- function(
     epoch.3.len,
     "epoch.3.len"
   )
-
-  if (epoch.1.len > max.epoch.1.len) {
-    stop("epoch.1.len must be <= ", max.epoch.1.len, call. = FALSE)
-  }
 
   year.span <- present.year - start.year
   total.generations <- year.span / gen.time
@@ -102,11 +107,32 @@ calc.epoch.config <- function(
     )
   }
 
-  epoch.1.generations <- seq_len(epoch.1.len)
-  epoch.2.generations <- seq.int(epoch.1.len + 1, epoch.1.len + epoch.2.len)
-  epoch.3.first.generation <- epoch.1.len + epoch.2.len + 1
-  epoch.3.generations <- seq.int(epoch.3.first.generation, total.generations)
-  epoch.3.anchor.generation <- max(epoch.2.generations)
+  epoch.1.generations <- build.generation.block(1L, epoch.1.len)
+  epoch.2.generations <- build.generation.block(epoch.1.len + 1L, epoch.2.len)
+  epoch.3.first.generation <- if (epoch.3.len == 0) {
+    NA_integer_
+  } else {
+    epoch.1.len + epoch.2.len + 1L
+  }
+  epoch.3.generations <- build.generation.block(
+    epoch.1.len + epoch.2.len + 1L,
+    epoch.3.len
+  )
+
+  epoch.3.anchor.generation <- NA_integer_
+
+  if (epoch.3.len > 0) {
+    if (epoch.2.len > 0) {
+      epoch.3.anchor.generation <- max(epoch.2.generations)
+    } else if (epoch.1.len > 0) {
+      epoch.3.anchor.generation <- max(epoch.1.generations)
+    } else {
+      stop(
+        "epoch 3 requires a prior non-empty epoch to provide an anchor",
+        call. = FALSE
+      )
+    }
+  }
 
   list(
     epoch.1.len = epoch.1.len,
@@ -117,6 +143,9 @@ calc.epoch.config <- function(
     epoch.1.generations = epoch.1.generations,
     epoch.1.sex.generations = epoch.1.generations[epoch.1.generations >= 2],
     epoch.2.generations = epoch.2.generations,
+    epoch.2.parental.generations = epoch.2.generations[
+      epoch.2.generations >= 2
+    ],
     epoch.3.generations = epoch.3.generations,
     epoch.3.first.generation = epoch.3.first.generation,
     epoch.3.anchor.generation = epoch.3.anchor.generation
@@ -211,27 +240,39 @@ calc.boundary.population <- function(year, hacker.tbl) {
 # `AA.ne` is the analysis table and `epoch.config` supplies the generation
 # ranges used to assign the three epoch labels.
 make.epoch.labels <- function(AA.ne, epoch.config) {
-  epoch.1.label <- paste0(
-    "Epoch 1: G",
-    min(epoch.config$epoch.1.generations),
-    "-G",
-    max(epoch.config$epoch.1.generations),
-    ", Import-influenced sex-ratio"
-  )
-  epoch.2.label <- paste0(
-    "Epoch 2: G",
-    min(epoch.config$epoch.2.generations),
-    "-G",
-    max(epoch.config$epoch.2.generations),
-    ", WF assumptions"
-  )
-  epoch.3.label <- paste0(
-    "Epoch 3: G",
-    min(epoch.config$epoch.3.generations),
-    "-G",
-    max(epoch.config$epoch.3.generations),
-    ", modern exponential growth"
-  )
+  epoch.1.label <- if (length(epoch.config$epoch.1.generations) > 0) {
+    paste0(
+      "Epoch 1: G",
+      min(epoch.config$epoch.1.generations),
+      "-G",
+      max(epoch.config$epoch.1.generations),
+      ", Import-influenced sex-ratio"
+    )
+  } else {
+    NA_character_
+  }
+  epoch.2.label <- if (length(epoch.config$epoch.2.generations) > 0) {
+    paste0(
+      "Epoch 2: G",
+      min(epoch.config$epoch.2.generations),
+      "-G",
+      max(epoch.config$epoch.2.generations),
+      ", WF assumptions"
+    )
+  } else {
+    NA_character_
+  }
+  epoch.3.label <- if (length(epoch.config$epoch.3.generations) > 0) {
+    paste0(
+      "Epoch 3: G",
+      min(epoch.config$epoch.3.generations),
+      "-G",
+      max(epoch.config$epoch.3.generations),
+      ", modern exponential growth"
+    )
+  } else {
+    NA_character_
+  }
 
   AA.ne %>%
     mutate(
@@ -269,7 +310,11 @@ validate.analysis.outputs <- function(
     all(AA.overlap$overlap.weight <= 1),
     all(!is.na(AA.ne$female.total[epoch.config$epoch.1.sex.generations])),
     all(!is.na(AA.ne$male.total[epoch.config$epoch.1.sex.generations])),
-    all(!is.na(AA.ne$parental.population[epoch.config$epoch.2.generations])),
+    all(
+      !is.na(
+        AA.ne$parental.population[epoch.config$epoch.2.parental.generations]
+      )
+    ),
     all(!is.na(AA.ne$k[epoch.config$epoch.2.generations])),
     all(
       grepl(
@@ -503,44 +548,8 @@ calc.aa.ne.results <- function(
         hacker.window.years < generation.window.years
     )
 
-  AA.parental.windows <- AA.generation.map %>%
-    transmute(
-      generation,
-      generation.start.year,
-      generation.end.year,
-      window.start.year = generation.start.year - gen.time,
-      window.end.year = generation.start.year
-    )
-
-  AA.parental.births <- calc.period.overlaps(
-    AA.parental.windows,
-    AA.hacker.tbl
-  ) %>%
-    select(
-      generation,
-      generation.start.year,
-      generation.end.year,
-      period,
-      start.year,
-      end.year,
-      overlap.start.year,
-      overlap.end.year,
-      overlap.years,
-      overlap.weight,
-      births
-    )
-
-  AA.parental.agg <- AA.parental.births %>%
-    group_by(generation) %>%
-    summarise(
-      previous.birth.periods = paste(period, collapse = ", "),
-      births.in.previous.25.years = sum(births * overlap.weight, na.rm = TRUE),
-      .groups = "drop"
-    )
-
   AA.ne <- AA.agg %>%
     arrange(generation) %>%
-    left_join(AA.parental.agg, by = "generation") %>%
     mutate(
       population.at.generation.start = map_dbl(
         generation.start.year,
@@ -548,6 +557,8 @@ calc.aa.ne.results <- function(
         hacker.tbl = AA.hacker.tbl
       ),
       prev.births = dplyr::lag(births),
+      previous.birth.periods = NA_character_,
+      births.in.previous.25.years = NA_real_,
       female.imported = if_else(
         generation %in% epoch.config$epoch.1.sex.generations,
         ceiling(imported / 3),
@@ -570,20 +581,16 @@ calc.aa.ne.results <- function(
       ),
       female.total = female.imported + female.potential,
       male.total = male.imported + male.potential,
-      adult.population.age25.proxy = if_else(
+      adult.population.age25.proxy = NA_real_,
+      parental.population = if_else(
         generation %in% epoch.config$epoch.2.generations,
-        population.at.generation.start - births.in.previous.25.years,
+        prev.births,
         NA_real_
       ),
-      parental.population = case_when(
-        !(generation %in% epoch.config$epoch.2.generations) ~ NA_real_,
-        adult.population.age25.proxy > 0 ~ adult.population.age25.proxy,
-        TRUE ~ population.at.generation.start
-      ),
-      parental.population.method = case_when(
-        !(generation %in% epoch.config$epoch.2.generations) ~ NA_character_,
-        adult.population.age25.proxy > 0 ~ "age-25 proxy",
-        TRUE ~ "generation-start population fallback"
+      parental.population.method = if_else(
+        generation %in% epoch.config$epoch.2.generations,
+        "previous-generation births",
+        NA_character_
       ),
       k = if_else(
         generation %in% epoch.config$epoch.2.generations,
@@ -613,9 +620,13 @@ calc.aa.ne.results <- function(
       )
     )
 
-  epoch.3.anchor.ne <- AA.ne %>%
-    filter(generation == epoch.config$epoch.3.anchor.generation) %>%
-    pull(ne)
+  epoch.3.anchor.ne <- if (length(epoch.config$epoch.3.generations) == 0) {
+    NA_real_
+  } else {
+    AA.ne %>%
+      filter(generation == epoch.config$epoch.3.anchor.generation) %>%
+      pull(ne)
+  }
 
   AA.ne <- AA.ne %>%
     mutate(
