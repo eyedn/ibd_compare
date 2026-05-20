@@ -915,21 +915,52 @@ if (interactive()) {
 
 
 # tennessen afr/eur ne trajectory ----
-tennessen.present.year <- present.year
-tennessen.time.years <- seq(1600, tennessen.present.year, by = 1)
-tennessen.time.bp <- tennessen.present.year - tennessen.time.years
+# constants from `other_scripts/const.sh` and `build_3T_demography.py`
+t.af.years <- 148000
+t.ooa.years <- 51000
+t.eu0.years <- 23000
+t.eg.years <- 5115
+r.eu0 <- 0.00307
+r.eu <- 0.0195
+r.afr <- 0.0166
+n.a <- 7310
+n.afr.1 <- 14474
+n.b <- 1861
+n.eu0 <- 1032
 
-# Recent Tennessen/Fu sizes reconstructed from the shared constants.
-tennessen.afr.present <- n_af1 / exp(-r_af * t_eg)
-tennessen.eur.present <- n_eu0 / exp(-r_eu0 * (t_eu0 - t_eg)) /
-  exp(-r_eu * t_eg)
+t.af <- t.af.years / gen.time
+t.ooa <- t.ooa.years / gen.time
+t.eu0 <- t.eu0.years / gen.time
+t.eg <- t.eg.years / gen.time
+n.eu1 <- n.eu0 / exp(-r.eu0 * (t.eu0 - t.eg))
+n.eu.present <- n.eu1 / exp(-r.eu * t.eg)
+n.afr.present <- n.afr.1 / exp(-r.afr * t.eg)
+
+tennessen.start.year <- min(AA.ne$generation.start.year)
+tennessen.end.year <- present.year
+tennessen.years <- seq(tennessen.start.year, tennessen.end.year, by = 1)
+tennessen.time.bp <- tennessen.end.year - tennessen.years
+tennessen.time.gen <- tennessen.time.bp / gen.time
 
 tennessen.ne <- tibble(
-  year = tennessen.time.years,
+  year = tennessen.years,
   time.bp = tennessen.time.bp,
-  afr = tennessen.afr.present * exp(-r_af * tennessen.time.bp),
-  eur = tennessen.eur.present * exp(-r_eu * tennessen.time.bp)
-)
+  time.gen = tennessen.time.gen
+) %>%
+  mutate(
+    afr = case_when(
+      time.gen <= t.eg ~ n.afr.present * exp(-r.afr * time.gen),
+      time.gen <= t.ooa ~ n.afr.1,
+      time.gen <= t.af ~ n.a,
+      TRUE ~ NA_real_
+    ),
+    eur = case_when(
+      time.gen <= t.eg ~ n.eu.present * exp(-r.eu * time.gen),
+      time.gen <= t.eu0 ~ n.eu1 * exp(-r.eu0 * (time.gen - t.eg)),
+      time.gen <= t.ooa ~ n.b,
+      TRUE ~ NA_real_
+    )
+  )
 
 tennessen.ne.long <- tennessen.ne %>%
   pivot_longer(
@@ -944,12 +975,19 @@ tennessen.ne.plot <- ggplot(
 ) +
   geom_line(linewidth = 1.1) +
   scale_y_continuous(labels = scales::comma) +
-  scale_x_continuous(breaks = seq(1600, 2000, by = 50)) +
+  scale_x_continuous(
+    breaks = seq(tennessen.start.year, tennessen.end.year, by = 50)
+  ) +
   labs(
     x = "Year",
     y = "Effective population size",
     color = NULL,
-    title = "Tennessen AFR/EUR effective population size, 1600-2000"
+    title = paste0(
+      "Tennessen AFR/EUR effective population size, ",
+      tennessen.start.year,
+      "-",
+      tennessen.end.year
+    )
   ) +
   theme_bw()
 

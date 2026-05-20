@@ -32,10 +32,10 @@ def build_3T_demography(
     admixture_time=15.0,
     afr_proportion=0.75,
     eur_proportion=0.25,
-    admix_founding_size=650.0,
+    admix_founding_size=435.0,
     admix_initial_size=None,
-    admix_growth_rate_1=0.033,
-    admix_growth_rate_2=0.0189,
+    admix_growth_rate_1=0.02531,
+    admix_growth_rate_2=0.01506,
     admix_growth_rate_2_change_time=6.0,
     census_time_offset=1e-6
 ):
