@@ -241,35 +241,17 @@ calc.boundary.population <- function(year, hacker.tbl) {
 # ranges used to assign the three epoch labels.
 make.epoch.labels <- function(AA.ne, epoch.config) {
   epoch.1.label <- if (length(epoch.config$epoch.1.generations) > 0) {
-    paste0(
-      "Epoch 1: G",
-      min(epoch.config$epoch.1.generations),
-      "-G",
-      max(epoch.config$epoch.1.generations),
-      ", Import-influenced sex-ratio"
-    )
+    "Epoch 1: Import-influenced sex proportions"
   } else {
     NA_character_
   }
   epoch.2.label <- if (length(epoch.config$epoch.2.generations) > 0) {
-    paste0(
-      "Epoch 2: G",
-      min(epoch.config$epoch.2.generations),
-      "-G",
-      max(epoch.config$epoch.2.generations),
-      ", WF assumptions"
-    )
+      "Epoch 2: WF 'Inbreeding Nb'"
   } else {
     NA_character_
   }
   epoch.3.label <- if (length(epoch.config$epoch.3.generations) > 0) {
-    paste0(
-      "Epoch 3: G",
-      min(epoch.config$epoch.3.generations),
-      "-G",
-      max(epoch.config$epoch.3.generations),
-      ", modern exponential growth"
-    )
+      "Epoch 3: Modern exponential growth"
   } else {
     NA_character_
   }
@@ -700,9 +682,9 @@ gen.time <- 25
 hacker.start.year <- 1610
 hacker.end.year <- 1865
 present.year <- 2000
-epoch.1.len <- 1
-epoch.2.len <- 7
-epoch.3.len <- 8
+epoch.1.len <- 8
+epoch.2.len <- 3
+epoch.3.len <- 5
 
 hacker.tbl <- data.frame(
   period = c(
@@ -1059,16 +1041,16 @@ combined.ne.plot <- ggplot(
     ) +
   scale_shape_manual(
     values = c(
-      `Epoch 1: G1-G1, Import-influenced sex-ratio` = 22,
-      `Epoch 2: G2-G8, WF assumptions` = 21,
-      `Epoch 3: G9-G16, modern exponential growth` = 24
+      `Epoch 1: Import-influenced sex proportions` = 22,
+      `Epoch 2: WF 'Inbreeding Nb'` = 21,
+      `Epoch 3: Modern exponential growth` = 24
     ),
     labels = c(
-      `Epoch 1: G1-G1, Import-influenced sex-ratio` = "G1: Founders' sex proportions",
-      `Epoch 2: G2-G8, WF assumptions` = "G2-8: WF 'Inbreeding Nb'",
-      `Epoch 3: G9-G16, modern exponential growth` = "G9-16: Modern exponential growth"
+      `Epoch 1: Import-influenced sex proportions` = "Founders' sex proportions",
+      `Epoch 2: WF 'Inbreeding Nb'` = "WF 'Inbreeding Nb'",
+      `Epoch 3: Modern exponential growth` = "Modern exponential growth"
     ),
-    name = "Ne calculations for Admixture cohort",
+    name = "AA generation-wise calculation method",
     na.translate = FALSE
   ) +
   scale_color_manual(
@@ -1078,7 +1060,7 @@ combined.ne.plot <- ggplot(
       eur = "#33a02c"
     ),
     labels = c(
-      aa = "AFR-EUR Admixture ",
+      aa = "Derived AA",
       afr = "Tennessen AFR",
       eur = "Tennessen EUR"
     ),
@@ -1093,13 +1075,17 @@ combined.ne.plot <- ggplot(
     y = "Effective population size",
     color = NULL,
     title = paste0(
-      "Effective population size across three populations, ",
+      "African, European, and African American effective population size, ",
       tennessen.start.year,
       "-",
       tennessen.end.year
     )
   ) +
-  theme_bw()
+  guides(
+    color = guide_legend(order = 1),
+    shape = guide_legend(order = 2)
+  ) +
+  theme_bw(base_size = 18)
 
 if (interactive()) {
   print(combined.ne.plot)
