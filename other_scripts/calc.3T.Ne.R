@@ -8,14 +8,656 @@
 # calc.3T.Ne.R
 # ______________________________________________________________________________
 
+# pattern: Mixed (needs refactoring)
+# Reason: This analysis script defines pure helpers and runs the report/plot.
+
 
 library(tidyverse)
 
-# historical generation-level Ne calculator ----
+
+# functions ----
+
+calc.founder.ne <- function(founder.count, female.proportion) {
+  female.count <- founder.count * female.proportion
+  male.count <- founder.count - female.count
+
+  if (female.count <= 0 || male.count <= 0) {
+    return(0)
+  }
+
+  4 * female.count * male.count / (female.count + male.count)
+}
+
+validate.whole.generation.count <- function(value, name) {
+  if (
+    length(value) != 1 ||
+      is.na(value) ||
+      !is.finite(value) ||
+      value != as.integer(value) ||
+      value <= 0
+  ) {
+    stop(name, " must be a positive whole generation count", call. = FALSE)
+  }
+
+  as.integer(value)
+}
+
+resolve.default.param <- function(value, name, defaults.env) {
+  if (!is.null(value)) {
+    return(value)
+  }
+
+  get(name, envir = defaults.env)
+}
+
+calc.epoch.config <- function(
+    epoch.1.len,
+    epoch.2.len,
+    epoch.3.len,
+    gen.time,
+    present.year,
+    start.year = 1600,
+    max.epoch.1.len = 8
+) {
+  epoch.1.len <- validate.whole.generation.count(
+    epoch.1.len,
+    "epoch.1.len"
+  )
+  epoch.2.len <- validate.whole.generation.count(
+    epoch.2.len,
+    "epoch.2.len"
+  )
+  epoch.3.len <- validate.whole.generation.count(
+    epoch.3.len,
+    "epoch.3.len"
+  )
+
+  if (epoch.1.len > max.epoch.1.len) {
+    stop("epoch.1.len must be <= ", max.epoch.1.len, call. = FALSE)
+  }
+
+  year.span <- present.year - start.year
+  total.generations <- year.span / gen.time
+
+  if (total.generations != as.integer(total.generations)) {
+    stop(
+      "present.year - 1600 must be divisible by gen.time",
+      call. = FALSE
+    )
+  }
+
+  total.generations <- as.integer(total.generations)
+  total.epoch.len <- epoch.1.len + epoch.2.len + epoch.3.len
+
+  if (total.epoch.len != total.generations) {
+    stop(
+      "total epoch length must equal (present.year - 1600) / gen.time",
+      call. = FALSE
+    )
+  }
+
+  epoch.1.generations <- seq_len(epoch.1.len)
+  epoch.2.generations <- seq.int(epoch.1.len + 1, epoch.1.len + epoch.2.len)
+  epoch.3.first.generation <- epoch.1.len + epoch.2.len + 1
+  epoch.3.generations <- seq.int(epoch.3.first.generation, total.generations)
+  epoch.3.anchor.generation <- max(epoch.2.generations)
+
+  list(
+    epoch.1.len = epoch.1.len,
+    epoch.2.len = epoch.2.len,
+    epoch.3.len = epoch.3.len,
+    total.generations = total.generations,
+    final.generation = total.generations,
+    epoch.1.generations = epoch.1.generations,
+    epoch.1.sex.generations = epoch.1.generations[epoch.1.generations >= 2],
+    epoch.2.generations = epoch.2.generations,
+    epoch.3.generations = epoch.3.generations,
+    epoch.3.first.generation = epoch.3.first.generation,
+    epoch.3.anchor.generation = epoch.3.anchor.generation
+  )
+}
+
+build.mixing.props <- function(
+    epoch.config,
+    mooney.cg,
+    epoch.1.eur.prop,
+    epoch.2.afr.prop,
+    epoch.2.eur.prop,
+    epoch.3.afr.prop,
+    epoch.3.eur.prop
+) {
+  if (epoch.config$epoch.1.len > length(mooney.cg)) {
+    stop("epoch.1.len cannot exceed length(mooney.cg)", call. = FALSE)
+  }
+
+  s.eur <- c(
+    rep(epoch.1.eur.prop, epoch.config$epoch.1.len),
+    rep(epoch.2.eur.prop, epoch.config$epoch.2.len),
+    rep(epoch.3.eur.prop, epoch.config$epoch.3.len)
+  )
+  s.afr <- c(
+    (1 - epoch.1.eur.prop) * mooney.cg[seq_len(epoch.config$epoch.1.len)],
+    rep(epoch.2.afr.prop, epoch.config$epoch.2.len),
+    rep(epoch.3.afr.prop, epoch.config$epoch.3.len)
+  )
+
+  if (
+    length(s.eur) != epoch.config$total.generations ||
+      length(s.afr) != epoch.config$total.generations
+  ) {
+    stop("AA.mixing.props vectors must not recycle", call. = FALSE)
+  }
+
+  tibble(
+    g = seq_len(epoch.config$total.generations),
+    s.afr = s.afr,
+    s.eur = s.eur,
+    h = pmax(1 - s.afr - s.eur, 0)
+  )
+}
+
+calc.period.overlaps <- function(window.tbl, hacker.tbl) {
+  merge(window.tbl, hacker.tbl, by = NULL) %>%
+    as_tibble() %>%
+    mutate(
+      period.length = end.year - start.year,
+      overlap.start.year = pmax(window.start.year, start.year),
+      overlap.end.year = pmin(window.end.year, end.year),
+      overlap.years = pmax(0, overlap.end.year - overlap.start.year),
+      overlap.weight = overlap.years / period.length
+    ) %>%
+    filter(overlap.years > 0) %>%
+    arrange(generation, start.year)
+}
+
+calc.boundary.population <- function(year, hacker.tbl) {
+  if (is.na(year)) {
+    return(NA_real_)
+  }
+
+  if (year < min(hacker.tbl$start.year) || year > max(hacker.tbl$end.year)) {
+    return(NA_real_)
+  }
+
+  period.idx <- which(
+    hacker.tbl$start.year <= year & hacker.tbl$end.year >= year
+  )
+  period.idx <- period.idx[length(period.idx)]
+  period.row <- hacker.tbl[period.idx, ]
+  period.length <- period.row$end.year - period.row$start.year
+  period.frac <- (year - period.row$start.year) / period.length
+
+  period.row$pop.beginning +
+    period.frac * (period.row$pop.end - period.row$pop.beginning)
+}
+
+make.epoch.labels <- function(AA.ne, epoch.config) {
+  epoch.1.label <- paste0(
+    "Epoch 1: G",
+    min(epoch.config$epoch.1.generations),
+    "-G",
+    max(epoch.config$epoch.1.generations),
+    " sex-count Ne"
+  )
+  epoch.2.label <- paste0(
+    "Epoch 2: G",
+    min(epoch.config$epoch.2.generations),
+    "-G",
+    max(epoch.config$epoch.2.generations),
+    " Maples-style Ne"
+  )
+  epoch.3.label <- paste0(
+    "Epoch 3: G",
+    min(epoch.config$epoch.3.generations),
+    "-G",
+    max(epoch.config$epoch.3.generations),
+    " exponential growth"
+  )
+
+  AA.ne %>%
+    mutate(
+      epoch = case_when(
+        generation %in% epoch.config$epoch.1.generations ~ epoch.1.label,
+        generation %in% epoch.config$epoch.2.generations ~ epoch.2.label,
+        generation %in% epoch.config$epoch.3.generations ~ epoch.3.label
+      )
+    )
+}
+
+validate.analysis.outputs <- function(
+    AA.ne,
+    AA.overlap,
+    AA.mixing.props,
+    epoch.config,
+    hacker.start.year,
+    gen.time,
+    present.year
+) {
+  stopifnot(
+    identical(
+      sort(AA.ne$generation),
+      seq_len(epoch.config$total.generations)
+    ),
+    nrow(AA.mixing.props) == epoch.config$total.generations,
+    identical(AA.mixing.props$g, seq_len(epoch.config$total.generations)),
+    all(AA.ne$generation.window.years == gen.time),
+    AA.ne$aggregation.start.year[1] == hacker.start.year,
+    AA.ne$generation.end.year[epoch.config$final.generation] == present.year,
+    all(AA.overlap$overlap.weight > 0),
+    all(AA.overlap$overlap.weight <= 1),
+    all(!is.na(AA.ne$female.total[epoch.config$epoch.1.sex.generations])),
+    all(!is.na(AA.ne$male.total[epoch.config$epoch.1.sex.generations])),
+    all(!is.na(AA.ne$parental.population[epoch.config$epoch.2.generations])),
+    all(!is.na(AA.ne$k[epoch.config$epoch.2.generations])),
+    all(
+      grepl(
+        "^Epoch 3:",
+        AA.ne$epoch[epoch.config$epoch.3.generations]
+      )
+    ),
+    all(is.finite(AA.ne$ne)),
+    all(AA.ne$ne > 0)
+  )
+}
+
+calc.aa.ne.results <- function(
+    gen.time = NULL,
+    hacker.start.year = NULL,
+    hacker.end.year = NULL,
+    present.year = NULL,
+    epoch.1.len = NULL,
+    epoch.2.len = NULL,
+    epoch.3.len = NULL,
+    afr.founder.count = NULL,
+    afr.female.proportion = NULL,
+    eur.founder.count = NULL,
+    eur.female.proportion = NULL,
+    epoch.3.growth.rate = NULL,
+    mooney.cg = NULL,
+    epoch.1.eur.prop = NULL,
+    epoch.2.afr.prop = NULL,
+    epoch.2.eur.prop = NULL,
+    epoch.3.afr.prop = NULL,
+    epoch.3.eur.prop = NULL,
+    hacker.tbl = NULL
+) {
+  defaults.env <- parent.env(environment())
+  gen.time <- resolve.default.param(gen.time, "gen.time", defaults.env)
+  hacker.start.year <- resolve.default.param(
+    hacker.start.year,
+    "hacker.start.year",
+    defaults.env
+  )
+  hacker.end.year <- resolve.default.param(
+    hacker.end.year,
+    "hacker.end.year",
+    defaults.env
+  )
+  present.year <- resolve.default.param(
+    present.year,
+    "present.year",
+    defaults.env
+  )
+  epoch.1.len <- resolve.default.param(
+    epoch.1.len,
+    "epoch.1.len",
+    defaults.env
+  )
+  epoch.2.len <- resolve.default.param(
+    epoch.2.len,
+    "epoch.2.len",
+    defaults.env
+  )
+  epoch.3.len <- resolve.default.param(
+    epoch.3.len,
+    "epoch.3.len",
+    defaults.env
+  )
+  afr.founder.count <- resolve.default.param(
+    afr.founder.count,
+    "afr.founder.count",
+    defaults.env
+  )
+  afr.female.proportion <- resolve.default.param(
+    afr.female.proportion,
+    "afr.female.proportion",
+    defaults.env
+  )
+  eur.founder.count <- resolve.default.param(
+    eur.founder.count,
+    "eur.founder.count",
+    defaults.env
+  )
+  eur.female.proportion <- resolve.default.param(
+    eur.female.proportion,
+    "eur.female.proportion",
+    defaults.env
+  )
+  epoch.3.growth.rate <- resolve.default.param(
+    epoch.3.growth.rate,
+    "epoch.3.growth.rate",
+    defaults.env
+  )
+  mooney.cg <- resolve.default.param(mooney.cg, "mooney.cg", defaults.env)
+  epoch.1.eur.prop <- resolve.default.param(
+    epoch.1.eur.prop,
+    "epoch.1.eur.prop",
+    defaults.env
+  )
+  epoch.2.afr.prop <- resolve.default.param(
+    epoch.2.afr.prop,
+    "epoch.2.afr.prop",
+    defaults.env
+  )
+  epoch.2.eur.prop <- resolve.default.param(
+    epoch.2.eur.prop,
+    "epoch.2.eur.prop",
+    defaults.env
+  )
+  epoch.3.afr.prop <- resolve.default.param(
+    epoch.3.afr.prop,
+    "epoch.3.afr.prop",
+    defaults.env
+  )
+  epoch.3.eur.prop <- resolve.default.param(
+    epoch.3.eur.prop,
+    "epoch.3.eur.prop",
+    defaults.env
+  )
+  hacker.tbl <- resolve.default.param(hacker.tbl, "hacker.tbl", defaults.env)
+
+  epoch.config <- calc.epoch.config(
+    epoch.1.len = epoch.1.len,
+    epoch.2.len = epoch.2.len,
+    epoch.3.len = epoch.3.len,
+    gen.time = gen.time,
+    present.year = present.year
+  )
+
+  AA.mixing.props <- build.mixing.props(
+    epoch.config = epoch.config,
+    mooney.cg = mooney.cg,
+    epoch.1.eur.prop = epoch.1.eur.prop,
+    epoch.2.afr.prop = epoch.2.afr.prop,
+    epoch.2.eur.prop = epoch.2.eur.prop,
+    epoch.3.afr.prop = epoch.3.afr.prop,
+    epoch.3.eur.prop = epoch.3.eur.prop
+  )
+
+  AA.hacker.tbl <- hacker.tbl %>%
+    mutate(
+      start.year = as.numeric(sub("-.*", "", period)),
+      end.year = as.numeric(sub(".*-", "", period))
+    ) %>%
+    select(
+      period,
+      start.year,
+      end.year,
+      person.years.lived,
+      assumed.birth.rate,
+      imported,
+      births,
+      pop.beginning,
+      pop.end
+    )
+
+  AA.generation.map <- tibble(
+    generation = seq_len(epoch.config$total.generations),
+    generation.start.year = seq(
+      1600,
+      present.year - gen.time,
+      by = gen.time
+    ),
+    generation.end.year = generation.start.year + gen.time,
+    generation.window.years = generation.end.year - generation.start.year,
+    window.start.year = generation.start.year,
+    window.end.year = generation.end.year
+  )
+
+  AA.overlap <- calc.period.overlaps(
+    AA.generation.map,
+    AA.hacker.tbl
+  ) %>%
+    select(
+      generation,
+      generation.start.year,
+      generation.end.year,
+      period,
+      start.year,
+      end.year,
+      overlap.start.year,
+      overlap.end.year,
+      overlap.years,
+      overlap.weight,
+      imported,
+      births,
+      assumed.birth.rate,
+      person.years.lived
+    )
+
+  AA.agg <- AA.overlap %>%
+    group_by(generation, generation.start.year, generation.end.year) %>%
+    summarise(
+      periods = paste(period, collapse = ", "),
+      imported = sum(imported * overlap.weight, na.rm = TRUE),
+      births = sum(births * overlap.weight, na.rm = TRUE),
+      birth.rate = weighted.mean(
+        assumed.birth.rate,
+        person.years.lived * overlap.weight,
+        na.rm = TRUE
+      ),
+      aggregation.start.year = min(overlap.start.year),
+      aggregation.end.year = max(overlap.end.year),
+      hacker.window.years = sum(overlap.years),
+      .groups = "drop"
+    )
+
+  AA.agg <- AA.generation.map %>%
+    select(
+      generation,
+      generation.start.year,
+      generation.end.year,
+      generation.window.years
+    ) %>%
+    left_join(
+      AA.agg,
+      by = c("generation", "generation.start.year", "generation.end.year")
+    ) %>%
+    mutate(
+      population.boundary.year = if_else(
+        generation.start.year < hacker.end.year,
+        pmin(generation.end.year, hacker.end.year),
+        NA_real_
+      ),
+      pop.end = map_dbl(
+        population.boundary.year,
+        calc.boundary.population,
+        hacker.tbl = AA.hacker.tbl
+      ),
+      is.truncated = !is.na(hacker.window.years) &
+        hacker.window.years < generation.window.years
+    )
+
+  AA.parental.windows <- AA.generation.map %>%
+    transmute(
+      generation,
+      generation.start.year,
+      generation.end.year,
+      window.start.year = generation.start.year - gen.time,
+      window.end.year = generation.start.year
+    )
+
+  AA.parental.births <- calc.period.overlaps(
+    AA.parental.windows,
+    AA.hacker.tbl
+  ) %>%
+    select(
+      generation,
+      generation.start.year,
+      generation.end.year,
+      period,
+      start.year,
+      end.year,
+      overlap.start.year,
+      overlap.end.year,
+      overlap.years,
+      overlap.weight,
+      births
+    )
+
+  AA.parental.agg <- AA.parental.births %>%
+    group_by(generation) %>%
+    summarise(
+      previous.birth.periods = paste(period, collapse = ", "),
+      births.in.previous.25.years = sum(births * overlap.weight, na.rm = TRUE),
+      .groups = "drop"
+    )
+
+  AA.ne <- AA.agg %>%
+    arrange(generation) %>%
+    left_join(AA.parental.agg, by = "generation") %>%
+    mutate(
+      population.at.generation.start = map_dbl(
+        generation.start.year,
+        calc.boundary.population,
+        hacker.tbl = AA.hacker.tbl
+      ),
+      prev.births = dplyr::lag(births),
+      female.imported = if_else(
+        generation %in% epoch.config$epoch.1.sex.generations,
+        ceiling(imported / 3),
+        NA_real_
+      ),
+      male.imported = if_else(
+        generation %in% epoch.config$epoch.1.sex.generations,
+        floor(2 * imported / 3),
+        NA_real_
+      ),
+      female.potential = if_else(
+        generation %in% epoch.config$epoch.1.sex.generations,
+        0.5 * prev.births,
+        NA_real_
+      ),
+      male.potential = if_else(
+        generation %in% epoch.config$epoch.1.sex.generations,
+        0.5 * prev.births,
+        NA_real_
+      ),
+      female.total = female.imported + female.potential,
+      male.total = male.imported + male.potential,
+      adult.population.age25.proxy = if_else(
+        generation %in% epoch.config$epoch.2.generations,
+        population.at.generation.start - births.in.previous.25.years,
+        NA_real_
+      ),
+      parental.population = case_when(
+        !(generation %in% epoch.config$epoch.2.generations) ~ NA_real_,
+        adult.population.age25.proxy > 0 ~ adult.population.age25.proxy,
+        TRUE ~ population.at.generation.start
+      ),
+      parental.population.method = case_when(
+        !(generation %in% epoch.config$epoch.2.generations) ~ NA_character_,
+        adult.population.age25.proxy > 0 ~ "age-25 proxy",
+        TRUE ~ "generation-start population fallback"
+      ),
+      k = if_else(
+        generation %in% epoch.config$epoch.2.generations,
+        gen.time * birth.rate / 1000,
+        NA_real_
+      )
+    )
+
+  ne.g1 <- calc.founder.ne(
+    afr.founder.count,
+    afr.female.proportion
+  ) +
+    calc.founder.ne(
+      eur.founder.count,
+      eur.female.proportion
+    )
+
+  AA.ne <- AA.ne %>%
+    mutate(
+      ne = case_when(
+        generation == 1 ~ ne.g1,
+        generation %in% epoch.config$epoch.1.sex.generations ~
+          4 * female.total * male.total / (female.total + male.total),
+        generation %in% epoch.config$epoch.2.generations ~
+          (k * parental.population - 1) / k,
+        TRUE ~ NA_real_
+      )
+    )
+
+  epoch.3.anchor.ne <- AA.ne %>%
+    filter(generation == epoch.config$epoch.3.anchor.generation) %>%
+    pull(ne)
+
+  AA.ne <- AA.ne %>%
+    mutate(
+      ne = if_else(
+        generation %in% epoch.config$epoch.3.generations,
+        epoch.3.anchor.ne *
+          exp(epoch.3.growth.rate *
+            (generation - epoch.config$epoch.3.anchor.generation)),
+        ne
+      )
+    ) %>%
+    make.epoch.labels(epoch.config) %>%
+    select(
+      generation,
+      generation.start.year,
+      generation.end.year,
+      generation.window.years,
+      aggregation.start.year,
+      aggregation.end.year,
+      hacker.window.years,
+      is.truncated,
+      population.boundary.year,
+      periods,
+      epoch,
+      imported,
+      births,
+      birth.rate,
+      pop.end,
+      previous.birth.periods,
+      births.in.previous.25.years,
+      population.at.generation.start,
+      female.total,
+      male.total,
+      adult.population.age25.proxy,
+      parental.population,
+      parental.population.method,
+      k,
+      ne
+    )
+
+  validate.analysis.outputs(
+    AA.ne = AA.ne,
+    AA.overlap = AA.overlap,
+    AA.mixing.props = AA.mixing.props,
+    epoch.config = epoch.config,
+    hacker.start.year = hacker.start.year,
+    gen.time = gen.time,
+    present.year = present.year
+  )
+
+  list(
+    AA.ne = AA.ne,
+    AA.overlap = AA.overlap,
+    AA.mixing.props = AA.mixing.props,
+    epoch.config = epoch.config,
+    ne.g1 = ne.g1,
+    epoch.3.anchor.ne = epoch.3.anchor.ne,
+    epoch.3.growth.rate = epoch.3.growth.rate
+  )
+}
+
+
+# tunable parameters ----
+
 gen.time <- 25
 hacker.start.year <- 1610
 hacker.end.year <- 1865
-epoch.3.start.year <- 1875
 present.year <- 2000
 epoch.1.len <- 8
 epoch.2.len <- 3
@@ -145,348 +787,45 @@ hacker.tbl <- data.frame(
   stringsAsFactors = FALSE
 )
 
-# editable scenario inputs for the first historical Ne pass.
 afr.founder.count <- 183
-afr.female.proportion <- 1/3
+afr.female.proportion <- 1 / 3
 eur.founder.count <- 25
 eur.female.proportion <- 0.5
 epoch.3.growth.rate <- 0.023175
 
-# store for later msprime work; these proportions are not used below.
 mooney.cg <- c(1, 1, 0.9835, 0.8602, 0.8551, 0.7826, 0.5380, 0.1418)
 epoch.1.eur.prop <- 0.08
 epoch.2.afr.prop <- 0.06
 epoch.2.eur.prop <- 0.03
 epoch.3.afr.prop <- 0
 epoch.3.eur.prop <- 0
-AA.mixing.props <- tibble(g = 1:16, s.afr = NA, s.eur = NA, h = NA)
-AA.mixing.props <- AA.mixing.props %>%
-  mutate(
-    s.eur = c(
-      rep(epoch.1.eur.prop, epoch.1.len), rep(epoch.2.eur.prop, epoch.2.len), 
-      rep(epoch.3.eur.prop, epoch.3.len)
-      ),
-    s.afr = c(
-      (1 - epoch.1.eur.prop) * mooney.cg, rep(epoch.2.afr.prop, epoch.2.len),
-      rep(epoch.3.afr.prop, epoch.3.len)
-      ),
-    h = pmax(1 - s.afr - s.eur, 0)
-    )
 
-calc.founder.ne <- function(founder.count, female.proportion) {
-  female.count <- founder.count * female.proportion
-  male.count <- founder.count - female.count
-  
-  if (female.count <= 0 || male.count <= 0) {
-    return(0)
-  }
-  
-  4 * female.count * male.count / (female.count + male.count)
-}
 
-AA.hacker.tbl <- hacker.tbl %>%
-  mutate(
-    start.year = as.numeric(sub("-.*", "", period)),
-    end.year = as.numeric(sub(".*-", "", period))
-  ) %>%
-  select(
-    period,
-    start.year,
-    end.year,
-    person.years.lived,
-    assumed.birth.rate,
-    imported,
-    births,
-    pop.beginning,
-    pop.end
-  )
+# calculations ----
 
-calc.period.overlaps <- function(window.tbl, hacker.tbl) {
-  merge(window.tbl, hacker.tbl, by = NULL) %>%
-    as_tibble() %>%
-    mutate(
-      period.length = end.year - start.year,
-      overlap.start.year = pmax(window.start.year, start.year),
-      overlap.end.year = pmin(window.end.year, end.year),
-      overlap.years = pmax(0, overlap.end.year - overlap.start.year),
-      overlap.weight = overlap.years / period.length
-    ) %>%
-    filter(overlap.years > 0) %>%
-    arrange(generation, start.year)
-}
+analysis.results <- calc.aa.ne.results()
 
-calc.boundary.population <- function(year, hacker.tbl) {
-  if (is.na(year)) {
-    return(NA_real_)
-  }
+AA.ne <- analysis.results$AA.ne
+AA.overlap <- analysis.results$AA.overlap
+AA.mixing.props <- analysis.results$AA.mixing.props
+epoch.config <- analysis.results$epoch.config
+ne.g1 <- analysis.results$ne.g1
+epoch.3.anchor.ne <- analysis.results$epoch.3.anchor.ne
 
-  if (year < min(hacker.tbl$start.year) || year > max(hacker.tbl$end.year)) {
-    return(NA_real_)
-  }
 
-  period.idx <- which(
-    hacker.tbl$start.year <= year & hacker.tbl$end.year >= year
-  )
-  period.idx <- period.idx[length(period.idx)]
-  period.row <- hacker.tbl[period.idx, ]
-  period.length <- period.row$end.year - period.row$start.year
-  period.frac <- (year - period.row$start.year) / period.length
+# plotting ----
 
-  period.row$pop.beginning +
-    period.frac * (period.row$pop.end - period.row$pop.beginning)
-}
-
-AA.generation.map <- tibble(
-  generation = 1:16,
-  generation.start.year = seq(1600, present.year - gen.time, by = gen.time),
-  generation.end.year = generation.start.year + gen.time,
-  generation.window.years = generation.end.year - generation.start.year,
-  window.start.year = generation.start.year,
-  window.end.year = generation.end.year
+summary.generations <- c(
+  epoch.config$epoch.1.generations,
+  epoch.config$epoch.2.generations,
+  epoch.config$final.generation
 )
-
-AA.overlap <- calc.period.overlaps(
-  AA.generation.map,
-  AA.hacker.tbl
-) %>%
-  select(
-    generation,
-    generation.start.year,
-    generation.end.year,
-    period,
-    start.year,
-    end.year,
-    overlap.start.year,
-    overlap.end.year,
-    overlap.years,
-    overlap.weight,
-    imported,
-    births,
-    assumed.birth.rate,
-    person.years.lived
-  )
-
-AA.agg <- AA.overlap %>%
-  group_by(generation, generation.start.year, generation.end.year) %>%
-  summarise(
-    periods = paste(period, collapse = ", "),
-    imported = sum(imported * overlap.weight, na.rm = TRUE),
-    births = sum(births * overlap.weight, na.rm = TRUE),
-    birth.rate = weighted.mean(
-      assumed.birth.rate,
-      person.years.lived * overlap.weight,
-      na.rm = TRUE
-    ),
-    aggregation.start.year = min(overlap.start.year),
-    aggregation.end.year = max(overlap.end.year),
-    hacker.window.years = sum(overlap.years),
-    .groups = "drop"
-  )
-
-AA.agg <- AA.generation.map %>%
-  select(
-    generation,
-    generation.start.year,
-    generation.end.year,
-    generation.window.years
-  ) %>%
-  left_join(
-    AA.agg,
-    by = c("generation", "generation.start.year", "generation.end.year")
-  ) %>%
-  mutate(
-    population.boundary.year = if_else(
-      generation <= 11,
-      pmin(generation.end.year, hacker.end.year),
-      NA_real_
-    ),
-    pop.end = map_dbl(
-      population.boundary.year,
-      calc.boundary.population,
-      hacker.tbl = AA.hacker.tbl
-    ),
-    is.truncated = !is.na(hacker.window.years) &
-      hacker.window.years < generation.window.years,
-    epoch = case_when(
-      generation <= 10 ~
-        "Epoch 1: 1600-1865 Hacker-table historical reconstruction",
-      generation == 11 ~ "Epoch 2: 1865-1875 bridge period",
-      TRUE ~ "Epoch 3: 1875-2000 exponential growth"
-    )
-  )
-
-AA.parental.windows <- AA.generation.map %>%
-  transmute(
-    generation,
-    generation.start.year,
-    generation.end.year,
-    window.start.year = generation.start.year - gen.time,
-    window.end.year = generation.start.year
-  )
-
-AA.parental.births <- calc.period.overlaps(
-  AA.parental.windows,
-  AA.hacker.tbl
-) %>%
-  select(
-    generation,
-    generation.start.year,
-    generation.end.year,
-    period,
-    start.year,
-    end.year,
-    overlap.start.year,
-    overlap.end.year,
-    overlap.years,
-    overlap.weight,
-    births
-  )
-
-AA.parental.agg <- AA.parental.births %>%
-  group_by(generation) %>%
-  summarise(
-    previous.birth.periods = paste(period, collapse = ", "),
-    births.in.previous.25.years = sum(births * overlap.weight, na.rm = TRUE),
-    .groups = "drop"
-  )
-
-AA.ne <- AA.agg %>%
-  arrange(generation) %>%
-  left_join(AA.parental.agg, by = "generation") %>%
-  mutate(
-    population.at.generation.start = map_dbl(
-      generation.start.year,
-      calc.boundary.population,
-      hacker.tbl = AA.hacker.tbl
-    ),
-    prev.births = dplyr::lag(births),
-    female.imported = if_else(
-      generation >= 2 & generation <= epoch.1.len,
-      ceiling(imported / 3),
-      NA_real_
-    ),
-    male.imported = if_else(
-      generation >= 2 & generation <= epoch.1.len,
-      floor(2 * imported / 3),
-      NA_real_
-    ),
-    female.potential = if_else(
-      generation >= 2 & generation <= epoch.1.len,
-      0.5 * prev.births,
-      NA_real_
-    ),
-    male.potential = if_else(
-      generation >= 2 & generation <= epoch.1.len,
-      0.5 * prev.births,
-      NA_real_
-    ),
-    female.total = female.imported + female.potential,
-    male.total = male.imported + male.potential,
-    adult.population.age25.proxy = if_else(
-      generation > epoch.1.len & generation <= epoch.1.len + epoch.2.len,
-      population.at.generation.start - births.in.previous.25.years,
-      NA_real_
-    ),
-    parental.population = case_when(
-      generation < epoch.1.len | generation > epoch.1.len + epoch.2.len ~ NA_real_,
-      adult.population.age25.proxy > 0 ~ adult.population.age25.proxy,
-      TRUE ~ population.at.generation.start
-    ),
-    parental.population.method = case_when(
-      generation < epoch.1.len | generation > epoch.1.len + epoch.2.len ~ NA_character_,
-      adult.population.age25.proxy > 0 ~ "age-25 proxy",
-      TRUE ~ "generation-start population fallback"
-    ),
-    k = if_else(
-      generation >= epoch.1.len & generation <= epoch.1.len + epoch.2.len,
-      gen.time * birth.rate / 1000,
-      NA_real_
-    )
-  )
-
-ne.g1 <- calc.founder.ne(
-  afr.founder.count,
-  afr.female.proportion
-) +
-  calc.founder.ne(
-    eur.founder.count,
-    eur.female.proportion
-  )
-
-AA.ne <- AA.ne %>%
-  mutate(
-    ne = case_when(
-      generation == 1 ~ ne.g1,
-      generation >= 2 & generation <= epoch.1.len ~
-        4 * female.total * male.total / (female.total + male.total),
-      generation > epoch.1.len & generation <= epoch.1.len + epoch.2.len ~
-        (k * parental.population - 1) / k,
-      TRUE ~ NA_real_
-    )
-  )
-
-ne.g11 <- AA.ne %>%
-  filter(generation == 11) %>%
-  pull(ne)
-
-AA.ne <- AA.ne %>%
-  mutate(
-    ne = if_else(
-      generation.start.year >= epoch.3.start.year,
-      ne.g11 * exp(epoch.3.growth.rate * (generation - 11)),
-      ne
-    )
-  ) %>%
-  select(
-    generation,
-    generation.start.year,
-    generation.end.year,
-    generation.window.years,
-    aggregation.start.year,
-    aggregation.end.year,
-    hacker.window.years,
-    is.truncated,
-    population.boundary.year,
-    periods,
-    epoch,
-    imported,
-    births,
-    birth.rate,
-    pop.end,
-    previous.birth.periods,
-    births.in.previous.25.years,
-    population.at.generation.start,
-    female.total,
-    male.total,
-    adult.population.age25.proxy,
-    parental.population,
-    parental.population.method,
-    k,
-    ne
-  )
-
-stopifnot(
-  identical(sort(AA.ne$generation), 1:16),
-  all(AA.ne$generation.window.years == gen.time),
-  AA.ne$aggregation.start.year[1] == hacker.start.year,
-  all(AA.overlap$overlap.weight > 0),
-  all(AA.overlap$overlap.weight <= 1),
-  all(!is.na(AA.ne$female.total[2:5])),
-  all(!is.na(AA.ne$male.total[2:5])),
-  all(!is.na(AA.ne$parental.population[6:11])),
-  all(!is.na(AA.ne$k[6:11])),
-  all(
-    AA.ne$epoch[12:16] ==
-      "Epoch 3: 1875-2000 exponential growth"
-  ),
-  all(is.finite(AA.ne$ne)),
-  all(AA.ne$ne > 0)
-)
+summary.generations <- sort(unique(summary.generations))
 
 cat("\nHistorical generation-level ADMIX Ne summary\n")
 print(
   AA.ne %>%
-    filter(generation <= epoch.1.len + epoch.2.len | generation == epoch.1.len + epoch.2.len + epoch.3.len) %>%
+    filter(generation %in% summary.generations) %>%
     select(
       generation,
       generation.start.year,
@@ -509,8 +848,10 @@ print(
 
 cat(
   paste0(
-    "\nHistorical present-day G16 Ne: ",
-    round(AA.ne$ne[AA.ne$generation == epoch.1.len + epoch.2.len + epoch.3.len], 1),
+    "\nHistorical present-day G",
+    epoch.config$final.generation,
+    " Ne: ",
+    round(AA.ne$ne[AA.ne$generation == epoch.config$final.generation], 1),
     "\n"
   )
 )
@@ -532,10 +873,16 @@ AA.ne.plot <- ggplot(
     shape = NULL,
     title = "Historical generation-level African American Ne",
     subtitle = paste0(
-      "G1 founder Ne = ", round(ne.g1, 1),
-      " | G11 Ne = ", round(ne.g11, 1),
-      " | G16 Ne = ",
-      round(AA.ne$ne[AA.ne$generation == 16], 1)
+      "G1 founder Ne = ",
+      round(ne.g1, 1),
+      " | G",
+      epoch.config$epoch.3.anchor.generation,
+      " anchor Ne = ",
+      round(epoch.3.anchor.ne, 1),
+      " | G",
+      epoch.config$final.generation,
+      " Ne = ",
+      round(AA.ne$ne[AA.ne$generation == epoch.config$final.generation], 1)
     )
   ) +
   theme_bw()
