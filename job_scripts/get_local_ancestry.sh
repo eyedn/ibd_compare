@@ -34,12 +34,13 @@ source /home1/karatas/ibd_compare/other_scripts/log_msg.sh
 
 tree_dir="$1"
 anc_dir="$2"
-chr="$3"
-sample_size="$4"
-admixture_time="$5"
-census_time_offset="$6"
-num_reps="$7"
-shift 7
+global_anc_dir="$3"
+chr="$4"
+sample_size="$5"
+admixture_time="$6"
+census_time_offset="$7"
+num_reps="$8"
+shift 8
 
 maps=()
 while [[ $# -gt 0 && "$1" != "--" ]]; do
@@ -69,7 +70,12 @@ gmap="${maps[$map_idx]}"
 seed="${rep_id}"
 
 all_outputs_exist=true
+global_out_tsv="${global_anc_dir}/${gmap}_${seed}_ADMIX.tsv"
+admix_found=false
 for pop in "${pops[@]}"; do
+    if [[ "${pop}" == "ADMIX" ]]; then
+        admix_found=true
+    fi
     out_tsv="${anc_dir}/${gmap}_${seed}_${pop}.tsv"
     if [[ ! -s "${out_tsv}" ]]; then
         all_outputs_exist=false
@@ -77,8 +83,13 @@ for pop in "${pops[@]}"; do
     fi
 done
 
-if [[ "${all_outputs_exist}" == "true" ]]; then
-    log_msg "all local ancestry outputs exist for ${gmap} seed=${seed}; skipping"
+if [[ "${admix_found}" != "true" ]]; then
+    echo "ERROR: ADMIX population missing from pops list" >&2
+    exit 1
+fi
+
+if [[ "${all_outputs_exist}" == "true" && -s "${global_out_tsv}" ]]; then
+    log_msg "all ancestry outputs exist for ${gmap} seed=${seed}; skipping"
     exit 0
 fi
 
@@ -110,7 +121,7 @@ else
     exit 1
 fi
 
-mkdir -p "${anc_dir}"
+mkdir -p "${anc_dir}" "${global_anc_dir}"
 log_msg "local ancestry task
 task_id=${tid}
 gmap=${gmap}
@@ -119,13 +130,21 @@ chr=${chr}
 sample_size=${sample_size}
 canonical_ts=${in_ts}
 work_ts=${temp_ts}
-pops=${pops[*]}"
+pops=${pops[*]}
+global_out_tsv=${global_out_tsv}"
 
+admix_start=""
+admix_end=""
 for idx in "${!pops[@]}"; do
     pop="${pops[$idx]}"
     start=$(( idx * sample_size ))
     end=$(( (idx + 1) * sample_size - 1 ))
     out_tsv="${anc_dir}/${gmap}_${seed}_${pop}.tsv"
+
+    if [[ "${pop}" == "ADMIX" ]]; then
+        admix_start="${start}"
+        admix_end="${end}"
+    fi
 
     if [[ -s "${out_tsv}" ]]; then
         log_msg "local ancestry exists (${out_tsv}); skipping ${pop}"
@@ -135,6 +154,7 @@ for idx in "${!pops[@]}"; do
     python /home1/karatas/ibd_compare/job_scripts/get_local_ancestry.py \
         "${temp_ts}" \
         "${out_tsv}" \
+        "local" \
         "${chr}" \
         "${pop}" \
         "${start}" \
@@ -143,4 +163,24 @@ for idx in "${!pops[@]}"; do
         "${census_time_offset}"
 done
 
-log_msg "done with local ancestry for ${gmap} seed=${seed}"
+if [[ -z "${admix_start}" || -z "${admix_end}" ]]; then
+    echo "ERROR: failed to locate ADMIX sample bounds" >&2
+    exit 1
+fi
+
+if [[ -s "${global_out_tsv}" ]]; then
+    log_msg "global ancestry exists (${global_out_tsv}); skipping ADMIX global"
+else
+    python /home1/karatas/ibd_compare/job_scripts/get_local_ancestry.py \
+        "${temp_ts}" \
+        "${global_out_tsv}" \
+        "global" \
+        "${chr}" \
+        "ADMIX" \
+        "${admix_start}" \
+        "${admix_end}" \
+        "${admixture_time}" \
+        "${census_time_offset}"
+fi
+
+log_msg "done with local and global ancestry for ${gmap} seed=${seed}"

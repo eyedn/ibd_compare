@@ -26,6 +26,7 @@ sample_size=${SAMPLE_SIZE}
 tree_dir=${TREE_DIR}
 msprime_model=${MSPRIME_MODEL}
 anc_dir=${ANC_DIR}
+global_anc_dir=${GLOBAL_ANC_DIR}
 ped_dir=${PED_DIR}
 rapid_map_dir=${RAPID_MAP_DIR}
 ilash_map_dir=${ILASH_MAP_DIR}
@@ -69,6 +70,7 @@ case "${MODEL_SUFFIX}" in
             "job_scripts/get_local_ancestry.sh" \
                 "$TREE_DIR" \
                 "$ANC_DIR" \
+                "$GLOBAL_ANC_DIR" \
                 "$CHR" \
                 "$SAMPLE_SIZE" \
                 "$ADMIXTURE_TIME" \
