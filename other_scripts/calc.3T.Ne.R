@@ -912,3 +912,47 @@ AA.ne.plot <- ggplot(
 if (interactive()) {
   print(AA.ne.plot)
 }
+
+
+# tennessen afr/eur ne trajectory ----
+tennessen.present.year <- 2000
+tennessen.time.years <- seq(1600, 2000, by = 1)
+tennessen.time.bp <- tennessen.present.year - tennessen.time.years
+
+# recent Tennessen/Fu sizes reconstructed in the python demography builder.
+tennessen.n.af.present <- n_af1 / exp(-r_af * t_eg)
+tennessen.n.eu.present <- n_eu0 / exp(-r_eu0 * (t_eu0 - t_eg)) /
+  exp(-r_eu * t_eg)
+
+tennessen.ne <- tibble(
+  year = tennessen.time.years,
+  time.bp = tennessen.time.bp,
+  AFR = tennessen.n.af.present * exp(-r_af * tennessen.time.bp),
+  EUR = tennessen.n.eu.present * exp(-r_eu * tennessen.time.bp)
+)
+
+tennessen.ne.long <- tennessen.ne %>%
+  pivot_longer(
+    cols = c(AFR, EUR),
+    names_to = "population",
+    values_to = "ne"
+  )
+
+tennessen.ne.plot <- ggplot(
+  tennessen.ne.long,
+  aes(x = year, y = ne, color = population)
+) +
+  geom_line(linewidth = 1.1) +
+  scale_y_continuous(labels = scales::comma) +
+  scale_x_continuous(breaks = seq(1600, 2000, by = 50)) +
+  labs(
+    x = "Year",
+    y = "Effective population size",
+    color = NULL,
+    title = "Tennessen AFR/EUR effective population size, 1600-2000"
+  ) +
+  theme_bw()
+
+if (interactive()) {
+  print(tennessen.ne.plot)
+}
