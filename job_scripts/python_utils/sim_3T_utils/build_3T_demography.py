@@ -37,7 +37,7 @@ def build_3T_demography(
     admix_ne_by_generation=None,
     admix_afr_props_by_generation=None,
     admix_eur_props_by_generation=None,
-    admix_hybrid_props_by_generation=None,
+    admix_priorAdmix_props_by_generation=None,
     admix_modern_growth_rate=0.023175,
     census_time_offset=1e-6
 ):
@@ -62,8 +62,8 @@ def build_3T_demography(
             0.030000, 0.030000, 0.030000, 0.000000,
             0.000000, 0.000000, 0.000000, 0.000000
         ]
-    if admix_hybrid_props_by_generation is None:
-        admix_hybrid_props_by_generation = [
+    if admix_priorAdmix_props_by_generation is None:
+        admix_priorAdmix_props_by_generation = [
             0.000000, 0.000000, 0.015180, 0.128616,
             0.133308, 0.200008, 0.425040, 0.789544,
             0.910000, 0.910000, 0.910000, 1.000000,
@@ -75,7 +75,7 @@ def build_3T_demography(
         ("admix_ne_by_generation", admix_ne_by_generation),
         ("admix_afr_props_by_generation", admix_afr_props_by_generation),
         ("admix_eur_props_by_generation", admix_eur_props_by_generation),
-        ("admix_hybrid_props_by_generation", admix_hybrid_props_by_generation)
+        ("admix_priorAdmix_props_by_generation", admix_priorAdmix_props_by_generation)
     ]
     if admix_generation_count <= 0:
         raise ValueError("admix_generation_count must be positive")
@@ -117,7 +117,7 @@ def build_3T_demography(
         props = [
             admix_afr_props_by_generation[idx],
             admix_eur_props_by_generation[idx],
-            admix_hybrid_props_by_generation[idx]
+            admix_priorAdmix_props_by_generation[idx]
         ]
         if not all(value >= 0 for value in props):
             raise ValueError("admixture proportions must be non-negative")
@@ -127,16 +127,16 @@ def build_3T_demography(
             )
 
     if not math.isclose(
-        admix_hybrid_props_by_generation[0],
+        admix_priorAdmix_props_by_generation[0],
         0.0,
         rel_tol=0,
         abs_tol=1e-9
     ):
-        raise ValueError("generation 1 hybrid proportion must be 0")
+        raise ValueError("generation 1 priorAdmix proportion must be 0")
 
     for idx in range(admix_mixing_generation_count, admix_generation_count):
         if not math.isclose(
-            admix_hybrid_props_by_generation[idx],
+            admix_priorAdmix_props_by_generation[idx],
             1.0,
             rel_tol=0,
             abs_tol=1e-9
@@ -223,7 +223,7 @@ def build_3T_demography(
     proportions = [
         admix_afr_props_by_generation[gen_number - 1],
         admix_eur_props_by_generation[gen_number - 1],
-        admix_hybrid_props_by_generation[gen_number - 1]
+        admix_priorAdmix_props_by_generation[gen_number - 1]
     ]
     demography.add_admixture(
         time=admix_generation_count - gen_number,
@@ -239,7 +239,7 @@ def build_3T_demography(
         raw_proportions = [
             admix_afr_props_by_generation[gen_number - 1],
             admix_eur_props_by_generation[gen_number - 1],
-            admix_hybrid_props_by_generation[gen_number - 1]
+            admix_priorAdmix_props_by_generation[gen_number - 1]
         ]
         sources = [
             source
