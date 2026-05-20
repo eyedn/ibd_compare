@@ -210,7 +210,7 @@ def build_3T_demography(
             ),
             initial_size=admix_ne_by_generation[gen_number - 1],
             growth_rate=0,
-            initially_active=False
+            initially_active=True
         )
 
     # allow recent symmetric migration between AFR and EUR
