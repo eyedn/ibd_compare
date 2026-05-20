@@ -8,15 +8,13 @@
 # calc.3T.Ne.R
 # ______________________________________________________________________________
 
-# pattern: Mixed (needs refactoring)
-# Reason: This analysis script defines pure helpers and runs the report/plot.
-
 
 library(tidyverse)
 
-
 # functions ----
-
+# compute the founder effective pop size from a founder census size.
+# `founder.count` is the total founder count and `female.proportion` is the
+# fraction of founders that are female.
 calc.founder.ne <- function(founder.count, female.proportion) {
   female.count <- founder.count * female.proportion
   male.count <- founder.count - female.count
@@ -28,6 +26,8 @@ calc.founder.ne <- function(founder.count, female.proportion) {
   4 * female.count * male.count / (female.count + male.count)
 }
 
+# validate that a given value is a single positive whole generation.
+# `value` is the candidate input and `name` is used in the error message.
 validate.whole.generation.count <- function(value, name) {
   if (
     length(value) != 1 ||
@@ -42,6 +42,9 @@ validate.whole.generation.count <- function(value, name) {
   as.integer(value)
 }
 
+# return an explicit argument when provided, otherwise pull the default.
+# `value` is the user-supplied override, `name` is the default binding name,
+# and `defaults.env` is the environment that stores the fallback value.
 resolve.default.param <- function(value, name, defaults.env) {
   if (!is.null(value)) {
     return(value)
@@ -50,6 +53,9 @@ resolve.default.param <- function(value, name, defaults.env) {
   get(name, envir = defaults.env)
 }
 
+# build the generation layout for the three epochs.
+# `epoch.*.len` are the epoch lengths, `gen.time` and `present.year` define the
+#  timeline, and `start.year`/`max.epoch.1.len` set constraints.
 calc.epoch.config <- function(
     epoch.1.len,
     epoch.2.len,
@@ -117,6 +123,10 @@ calc.epoch.config <- function(
   )
 }
 
+# create the African and European ancestry proportions by generation.
+# `epoch.config` controls the generation grid, `mooney.cg` the proportion of
+# non-European ancestry that is African in epoch-1, and the remaining arguments
+# define the fixed mixture proportions in each following epoch.
 build.mixing.props <- function(
     epoch.config,
     mooney.cg,
@@ -156,6 +166,9 @@ build.mixing.props <- function(
   )
 }
 
+# intersect generation windows with historical periods and measure coverage.
+# `window.tbl` is the generation map and `hacker.tbl` is the historical  period
+# table with start and end years.
 calc.period.overlaps <- function(window.tbl, hacker.tbl) {
   merge(window.tbl, hacker.tbl, by = NULL) %>%
     as_tibble() %>%
@@ -170,6 +183,9 @@ calc.period.overlaps <- function(window.tbl, hacker.tbl) {
     arrange(generation, start.year)
 }
 
+# estimate population size at a year by interpolating inside a period.
+# `year` is the target year to query and `hacker.tbl` contains the period
+# boundaries plus beginning and ending population sizes.
 calc.boundary.population <- function(year, hacker.tbl) {
   if (is.na(year)) {
     return(NA_real_)
@@ -191,27 +207,30 @@ calc.boundary.population <- function(year, hacker.tbl) {
     period.frac * (period.row$pop.end - period.row$pop.beginning)
 }
 
+# add a readable epoch label to each generation row.
+# `AA.ne` is the analysis table and `epoch.config` supplies the generation
+# ranges used to assign the three epoch labels.
 make.epoch.labels <- function(AA.ne, epoch.config) {
   epoch.1.label <- paste0(
     "Epoch 1: G",
     min(epoch.config$epoch.1.generations),
     "-G",
     max(epoch.config$epoch.1.generations),
-    " sex-count Ne"
+    ", Import-influenced sex-ratio"
   )
   epoch.2.label <- paste0(
     "Epoch 2: G",
     min(epoch.config$epoch.2.generations),
     "-G",
     max(epoch.config$epoch.2.generations),
-    " Maples-style Ne"
+    ", WF assumptions"
   )
   epoch.3.label <- paste0(
     "Epoch 3: G",
     min(epoch.config$epoch.3.generations),
     "-G",
     max(epoch.config$epoch.3.generations),
-    " exponential growth"
+    ", modern exponential growth"
   )
 
   AA.ne %>%
@@ -224,6 +243,9 @@ make.epoch.labels <- function(AA.ne, epoch.config) {
     )
 }
 
+# check that the derived tables are internally consistent before returning.
+# `AA.ne`, `AA.overlap`, and `AA.mixing.props` are the computed outputs, while
+# the remaining arguments provide the timeline and boundary checks.
 validate.analysis.outputs <- function(
     AA.ne,
     AA.overlap,
@@ -260,6 +282,9 @@ validate.analysis.outputs <- function(
   )
 }
 
+# compute the full AA Ne analysis and return every intermediate table.
+# the scalar arguments control the demographic timeline, founders, and epoch
+# settings, while `mooney.cg` and `hacker.tbl` provide the input data.
 calc.aa.ne.results <- function(
     gen.time = NULL,
     hacker.start.year = NULL,
@@ -654,7 +679,6 @@ calc.aa.ne.results <- function(
 
 
 # tunable parameters ----
-
 gen.time <- 25
 hacker.start.year <- 1610
 hacker.end.year <- 1865
@@ -802,7 +826,6 @@ epoch.3.eur.prop <- 0
 
 
 # calculations ----
-
 analysis.results <- calc.aa.ne.results()
 
 AA.ne <- analysis.results$AA.ne
@@ -814,7 +837,6 @@ epoch.3.anchor.ne <- analysis.results$epoch.3.anchor.ne
 
 
 # plotting ----
-
 summary.generations <- c(
   epoch.config$epoch.1.generations,
   epoch.config$epoch.2.generations,
