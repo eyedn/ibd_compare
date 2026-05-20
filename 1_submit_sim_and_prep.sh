@@ -35,9 +35,25 @@ total_tasks=${total_tasks} (per job array)
 prep_map_tasks=${prep_total_tasks} (combined rapid+ilash map tasks)
 pops=${POPS[*]}"
 
+# format bash arrays for the Python command-line interface
+join_by_comma() {
+    local IFS=","
+    printf "%s" "$*"
+}
+
 # submit sims
 case "${MODEL_SUFFIX}" in
     3T)
+        admix_ne_by_generation=$(join_by_comma "${ADMIX_NE_BY_GENERATION[@]}")
+        admix_afr_props_by_generation=$(
+            join_by_comma "${ADMIX_AFR_PROPS_BY_GENERATION[@]}"
+        )
+        admix_eur_props_by_generation=$(
+            join_by_comma "${ADMIX_EUR_PROPS_BY_GENERATION[@]}"
+        )
+        admix_hybrid_props_by_generation=$(
+            join_by_comma "${ADMIX_HYBRID_PROPS_BY_GENERATION[@]}"
+        )
         sim_jid=$(sbatch \
             --parsable \
             --chdir=/home1/karatas/ibd_compare \
@@ -52,9 +68,14 @@ case "${MODEL_SUFFIX}" in
                 "$R_EU0" "$R_EU" "$R_AF" \
                 "$N_A" "$N_AF1" "$N_B" "$N_EU0" \
                 "$M_AF_B" "$M_AF_EU" \
-                "$ADMIXTURE_TIME" "$AFR_PROP" "$EUR_PROP" \
-                "$ADMIX_FOUNDING_SIZE" "$ADMIX_GROWTH_RATE_1" \
-                "$ADMIX_GROWTH_RATE_2" "$ADMIX_GROWTH_RATE_2_CHANGE_TIME" \
+                "$ADMIXTURE_TIME" \
+                "$ADMIX_GENERATION_COUNT" \
+                "$ADMIX_MIXING_GENERATION_COUNT" \
+                "$admix_ne_by_generation" \
+                "$admix_afr_props_by_generation" \
+                "$admix_eur_props_by_generation" \
+                "$admix_hybrid_props_by_generation" \
+                "$ADMIX_MODERN_GROWTH_RATE" \
                 "$CENSUS_TIME_OFFSET" \
                 "${TMAPS[@]}"
         )

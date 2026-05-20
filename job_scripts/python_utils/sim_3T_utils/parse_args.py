@@ -36,32 +36,60 @@ def parse_args():
     parser.add_argument("--m-af-b", type=float, default=15e-5)
     parser.add_argument("--m-af-eu", type=float, default=2.5e-5)
     parser.add_argument("--admixture-time", type=float, default=15.0)
-    parser.add_argument("--afr-proportion", type=float, default=0.25)
-    parser.add_argument("--eur-proportion", type=float, default=0.75)
     parser.add_argument(
-        "--admix-founding-size",
-        type=lambda value: None if value == "" else float(value),
-        default=650.0
+        "--admix-generation-count",
+        type=int,
+        default=16
     )
     parser.add_argument(
-        "--admix-initial-size",
-        type=lambda value: None if value == "" else float(value),
-        default=None
+        "--admix-mixing-generation-count",
+        type=int,
+        default=11
     )
     parser.add_argument(
-        "--admix-growth-rate-1",
-        type=lambda value: None if value == "" else float(value),
-        default=0.033
+        "--admix-ne-by-generation",
+        type=lambda value: [float(item) for item in value.split(",")],
+        default=[
+            187.6667, 2.214286, 276.3148, 2019.588,
+            10015.88, 45816.03, 149343.0, 381940.1,
+            390895.0, 400059.7, 409439.4, 419039.0,
+            428863.6, 438918.6, 449209.3, 459741.3
+        ]
     )
     parser.add_argument(
-        "--admix-growth-rate-2",
+        "--admix-afr-props-by-generation",
+        type=lambda value: [float(item) for item in value.split(",")],
+        default=[
+            0.8798077, 0.920000, 0.904820, 0.791384,
+            0.786692, 0.719992, 0.494960, 0.130456,
+            0.060000, 0.060000, 0.060000, 0.000000,
+            0.000000, 0.000000, 0.000000, 0.000000
+        ]
+    )
+    parser.add_argument(
+        "--admix-eur-props-by-generation",
+        type=lambda value: [float(item) for item in value.split(",")],
+        default=[
+            0.1201923, 0.080000, 0.080000, 0.080000,
+            0.080000, 0.080000, 0.080000, 0.080000,
+            0.030000, 0.030000, 0.030000, 0.000000,
+            0.000000, 0.000000, 0.000000, 0.000000
+        ]
+    )
+    parser.add_argument(
+        "--admix-hybrid-props-by-generation",
+        type=lambda value: [float(item) for item in value.split(",")],
+        default=[
+            0.000000, 0.000000, 0.015180, 0.128616,
+            0.133308, 0.200008, 0.425040, 0.789544,
+            0.910000, 0.910000, 0.910000, 1.000000,
+            1.000000, 1.000000, 1.000000, 1.000000
+        ]
+    )
+    parser.add_argument(
+        "--admix-modern-growth-rate",
         type=float,
-        default=0.0189
-    )
-    parser.add_argument(
-        "--admix-growth-rate-2-change-time",
-        type=float,
-        default=6.0
+        default=0.023175
     )
     parser.add_argument("--census-time-offset", type=float, default=1e-6)
     return parser.parse_args()

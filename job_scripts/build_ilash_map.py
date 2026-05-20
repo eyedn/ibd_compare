@@ -11,8 +11,8 @@
 
 from pathlib import Path
 from sys import argv
-
 from python_utils.prepare_ilash_maps_utils import build_ilash_map
+
 
 if len(argv) != 4:
     raise SystemExit(

@@ -9,6 +9,8 @@
 ###############################################################################
 
 
+# pattern: Functional Core
+
 import math
 import msprime
 
@@ -30,45 +32,137 @@ def build_3T_demography(
     m_af_b=15e-5,
     m_af_eu=2.5e-5,
     admixture_time=15.0,
-    afr_proportion=0.75,
-    eur_proportion=0.25,
-    admix_founding_size=435.0,
-    admix_initial_size=None,
-    admix_growth_rate_1=0.02531,
-    admix_growth_rate_2=0.01506,
-    admix_growth_rate_2_change_time=6.0,
+    admix_generation_count=16,
+    admix_mixing_generation_count=11,
+    admix_ne_by_generation=None,
+    admix_afr_props_by_generation=None,
+    admix_eur_props_by_generation=None,
+    admix_hybrid_props_by_generation=None,
+    admix_modern_growth_rate=0.023175,
     census_time_offset=1e-6
 ):
-    # validate user-specified admixture parameters
+    if admix_ne_by_generation is None:
+        admix_ne_by_generation = [
+            187.6667, 2.214286, 276.3148, 2019.588,
+            10015.88, 45816.03, 149343.0, 381940.1,
+            390895.0, 400059.7, 409439.4, 419039.0,
+            428863.6, 438918.6, 449209.3, 459741.3
+        ]
+    if admix_afr_props_by_generation is None:
+        admix_afr_props_by_generation = [
+            0.8798077, 0.920000, 0.904820, 0.791384,
+            0.786692, 0.719992, 0.494960, 0.130456,
+            0.060000, 0.060000, 0.060000, 0.000000,
+            0.000000, 0.000000, 0.000000, 0.000000
+        ]
+    if admix_eur_props_by_generation is None:
+        admix_eur_props_by_generation = [
+            0.1201923, 0.080000, 0.080000, 0.080000,
+            0.080000, 0.080000, 0.080000, 0.080000,
+            0.030000, 0.030000, 0.030000, 0.000000,
+            0.000000, 0.000000, 0.000000, 0.000000
+        ]
+    if admix_hybrid_props_by_generation is None:
+        admix_hybrid_props_by_generation = [
+            0.000000, 0.000000, 0.015180, 0.128616,
+            0.133308, 0.200008, 0.425040, 0.789544,
+            0.910000, 0.910000, 0.910000, 1.000000,
+            1.000000, 1.000000, 1.000000, 1.000000
+        ]
+
+    # validate the generation-indexed ADMIX schedule
+    admix_vectors = [
+        ("admix_ne_by_generation", admix_ne_by_generation),
+        ("admix_afr_props_by_generation", admix_afr_props_by_generation),
+        ("admix_eur_props_by_generation", admix_eur_props_by_generation),
+        ("admix_hybrid_props_by_generation", admix_hybrid_props_by_generation)
+    ]
+    if admix_generation_count <= 0:
+        raise ValueError("admix_generation_count must be positive")
+    if admix_mixing_generation_count <= 0:
+        raise ValueError("admix_mixing_generation_count must be positive")
+    if admix_mixing_generation_count >= admix_generation_count:
+        raise ValueError(
+            "admix_mixing_generation_count must be less than "
+            "admix_generation_count"
+        )
     if admixture_time <= 0:
         raise ValueError("admixture_time must be positive")
     if census_time_offset <= 0:
         raise ValueError("census_time_offset must be positive")
-    if admix_growth_rate_2_change_time <= 0:
-        raise ValueError("admix_growth_rate_2_change_time must be positive")
-    if admix_growth_rate_2_change_time >= admixture_time:
-        raise ValueError(
-            "admix_growth_rate_2_change_time must be less than admixture_time"
-        )
-    if admix_founding_size is not None and admix_founding_size <= 0:
-        raise ValueError("admix_founding_size must be positive")
-    if admix_initial_size is not None and admix_initial_size <= 0:
-        raise ValueError("admix_initial_size must be positive")
-    if (
-        admix_founding_size is not None
-        and admix_initial_size is not None
-    ):
-        raise ValueError(
-            "admix_founding_size and admix_initial_size are mutually "
-            "exclusive"
-        )
     if not math.isclose(
-        afr_proportion + eur_proportion,
-        1.0,
+        admixture_time,
+        admix_generation_count - 1,
         rel_tol=0,
         abs_tol=1e-9
     ):
-        raise ValueError("afr_proportion and eur_proportion must sum to 1")
+        raise ValueError(
+            "admixture_time must equal admix_generation_count - 1"
+        )
+    if admix_modern_growth_rate < 0:
+        raise ValueError("admix_modern_growth_rate must be non-negative")
+
+    for vector_name, vector_value in admix_vectors:
+        if len(vector_value) != admix_generation_count:
+            raise ValueError(
+                f"{vector_name} must have length admix_generation_count"
+            )
+        if not all(math.isfinite(value) for value in vector_value):
+            raise ValueError(f"{vector_name} must contain finite values")
+
+    if not all(value > 0 for value in admix_ne_by_generation):
+        raise ValueError("admix_ne_by_generation must contain positive values")
+
+    for idx in range(admix_generation_count):
+        props = [
+            admix_afr_props_by_generation[idx],
+            admix_eur_props_by_generation[idx],
+            admix_hybrid_props_by_generation[idx]
+        ]
+        if not all(value >= 0 for value in props):
+            raise ValueError("admixture proportions must be non-negative")
+        if not math.isclose(sum(props), 1.0, rel_tol=0, abs_tol=1e-6):
+            raise ValueError(
+                "admixture proportions must sum to 1 for every generation"
+            )
+
+    if not math.isclose(
+        admix_hybrid_props_by_generation[0],
+        0.0,
+        rel_tol=0,
+        abs_tol=1e-9
+    ):
+        raise ValueError("generation 1 hybrid proportion must be 0")
+
+    for idx in range(admix_mixing_generation_count, admix_generation_count):
+        if not math.isclose(
+            admix_hybrid_props_by_generation[idx],
+            1.0,
+            rel_tol=0,
+            abs_tol=1e-9
+        ):
+            raise ValueError("post-mixing generations must have h = 1")
+
+    post_mixing_duration = (
+        admix_generation_count - admix_mixing_generation_count
+    )
+    expected_post_mixing_ne = (
+        admix_ne_by_generation[-1]
+        * math.exp(-admix_modern_growth_rate * post_mixing_duration)
+    )
+    observed_post_mixing_ne = (
+        admix_ne_by_generation[admix_mixing_generation_count - 1]
+    )
+    if not math.isclose(
+        expected_post_mixing_ne,
+        observed_post_mixing_ne,
+        rel_tol=1e-5,
+        abs_tol=1e-3
+    ):
+        raise ValueError(
+            "ADMIX present-day size and growth rate must imply the "
+            "generation-11 Ne at the mixing boundary"
+        )
 
     # convert Tennessen/Fu timings from years to generations
     t_af = t_af_years / generation_time
@@ -81,43 +175,7 @@ def build_3T_demography(
     n_eu = n_eu1 / math.exp(-r_eu * t_eg)
     n_af = n_af1 / math.exp(-r_af * t_eg)
 
-    # a note on on the paramters for the admix population:
-    # 1. the population growth rate set at population creation applies from
-    #    the present back to admix_growth_rate_2_change_time
-    # 2. the change at admix_growth_rate_2_change_time applies farther back in
-    #    time, from admix_growth_rate_2_change_time to admixture_time
-    # therefore:
-    # - admix_growth_rate_2 for the recent interval
-    # - admix_growth_rate_1 for the older post-admixture interval
-    #
-    # by default, the user-facing admix size is the founding cohort size at
-    # the admixture pulse. later effective sizes are derived forward in time.
-    if admix_founding_size is not None:
-        older_duration = (
-            admixture_time - admix_growth_rate_2_change_time
-        )
-        admix_size_at_growth_rate_2_change = (
-            admix_founding_size
-            * math.exp(admix_growth_rate_1 * older_duration)
-        )
-        admix_present_size = (
-            admix_size_at_growth_rate_2_change
-            * math.exp(
-                admix_growth_rate_2 * admix_growth_rate_2_change_time
-            )
-        )
-    else:
-        # this compatibility path retains the old present-day size behavior.
-        admix_present_size = admix_initial_size
-        admix_size_at_growth_rate_2_change = (
-            admix_present_size
-            / math.exp(
-                -admix_growth_rate_2
-                * admix_growth_rate_2_change_time
-            )
-        )
-
-    # define the three extant populations at the present day
+    # define extant source populations and the present-day ADMIX population
     demography = msprime.Demography()
     demography.add_population(
         name="AFR",
@@ -135,30 +193,80 @@ def build_3T_demography(
     demography.add_population(
         name="ADMIX",
         description="African American admixed population",
-        initial_size=admix_present_size,
-        growth_rate=admix_growth_rate_2
+        initial_size=admix_ne_by_generation[-1],
+        growth_rate=admix_modern_growth_rate
     )
+
+    # one-generation hidden ADMIX populations for G1 through G10
+    for gen_number in range(1, admix_mixing_generation_count):
+        demography.add_population(
+            name=f"ADMIX_G{gen_number}",
+            description=(
+                "One-generation African American admixed population "
+                f"for generation {gen_number}"
+            ),
+            initial_size=admix_ne_by_generation[gen_number - 1],
+            growth_rate=0,
+            initially_active=False
+        )
 
     # allow recent symmetric migration between AFR and EUR
     demography.set_symmetric_migration_rate(["AFR", "EUR"], m_af_eu)
 
-    # place a census immediately before the admixture event for ancestry labels
+    # place a census immediately before the first founder event
     demography.add_census(time=admixture_time + census_time_offset)
 
-    # move from the recent ADMIX growth phase to the older post-admixture phase
-    demography.add_population_parameters_change(
-        time=admix_growth_rate_2_change_time,
-        population="ADMIX",
-        initial_size=admix_size_at_growth_rate_2_change,
-        growth_rate=admix_growth_rate_1
+    # connect present-day ADMIX back to the final mixing generation, G11
+    gen_number = admix_mixing_generation_count
+    source_name = f"ADMIX_G{gen_number - 1}"
+    sources = ["AFR", "EUR", source_name]
+    proportions = [
+        admix_afr_props_by_generation[gen_number - 1],
+        admix_eur_props_by_generation[gen_number - 1],
+        admix_hybrid_props_by_generation[gen_number - 1]
+    ]
+    demography.add_admixture(
+        time=admix_generation_count - gen_number,
+        derived="ADMIX",
+        ancestral=sources,
+        proportions=proportions
     )
 
-    # create ADMIX by mixing ancestry from AFR and EUR
+    # walk backward through G10..G2, each with one generation of constant Ne
+    for gen_number in range(admix_mixing_generation_count - 1, 1, -1):
+        source_name = f"ADMIX_G{gen_number - 1}"
+        raw_sources = ["AFR", "EUR", source_name]
+        raw_proportions = [
+            admix_afr_props_by_generation[gen_number - 1],
+            admix_eur_props_by_generation[gen_number - 1],
+            admix_hybrid_props_by_generation[gen_number - 1]
+        ]
+        sources = [
+            source
+            for source, proportion in zip(raw_sources, raw_proportions)
+            if proportion > 0
+        ]
+        proportions = [
+            proportion
+            for proportion in raw_proportions
+            if proportion > 0
+        ]
+        demography.add_admixture(
+            time=admix_generation_count - gen_number,
+            derived=f"ADMIX_G{gen_number}",
+            ancestral=sources,
+            proportions=proportions
+        )
+
+    # generation 1 is founded directly from AFR and EUR ancestry
     demography.add_admixture(
         time=admixture_time,
-        derived="ADMIX",
+        derived="ADMIX_G1",
         ancestral=["AFR", "EUR"],
-        proportions=[afr_proportion, eur_proportion]
+        proportions=[
+            admix_afr_props_by_generation[0],
+            admix_eur_props_by_generation[0]
+        ]
     )
 
     # Tennessen/Fu recent growth epoch boundary
@@ -210,13 +318,17 @@ def build_3T_demography(
     demography.sort_events()
 
     model_metadata = {
-        "id": "OutOfAfrica_AfricanAmericanSkeleton",
-        "description": "Tennessen _ooa_2 skeleton with a recent AFR/EUR admixture event",
+        "id": "OutOfAfrica_AfricanAmericanGeneration3T",
+        "description": (
+            "Tennessen _ooa_2 skeleton with generation-indexed "
+            "African American admixture"
+        ),
         "generation_time": generation_time,
         "mutation_rate": mutation_rate,
-        "admix_present_size": admix_present_size,
-        "admix_size_at_growth_rate_2_change": (
-            admix_size_at_growth_rate_2_change
-        )
+        "admix_generation_count": admix_generation_count,
+        "admix_mixing_generation_count": admix_mixing_generation_count,
+        "admix_present_size": admix_ne_by_generation[-1],
+        "admix_size_at_mixing_boundary": observed_post_mixing_ne,
+        "admix_modern_growth_rate": admix_modern_growth_rate
     }
     return demography, model_metadata

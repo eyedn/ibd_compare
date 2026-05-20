@@ -54,14 +54,15 @@ n_eu0="${18}"
 m_af_b="${19}"
 m_af_eu="${20}"
 admixture_time="${21}"
-afr_prop="${22}"
-eur_prop="${23}"
-admix_founding_size="${24}"
-admix_growth_rate_1="${25}"
-admix_growth_rate_2="${26}"
-admix_growth_rate_2_change_time="${27}"
-census_time_offset="${28}"
-shift 28
+admix_generation_count="${22}"
+admix_mixing_generation_count="${23}"
+admix_ne_by_generation="${24}"
+admix_afr_props_by_generation="${25}"
+admix_eur_props_by_generation="${26}"
+admix_hybrid_props_by_generation="${27}"
+admix_modern_growth_rate="${28}"
+census_time_offset="${29}"
+shift 29
 # decode task id to which map + replicate
 maps=( "$@" )
 if [[ ${#maps[@]} -eq 0 ]]; then
@@ -102,8 +103,8 @@ tree_dir=${tree_dir}
 sample_size=${sample_size}
 model=${msprime_model}
 admixture_time=${admixture_time}
-afr_prop=${afr_prop}
-eur_prop=${eur_prop}
+admix_generation_count=${admix_generation_count}
+admix_mixing_generation_count=${admix_mixing_generation_count}
 generation_time=${generation_time}
 mutation_rate=${mutation_rate}
 t_af_years=${t_af_years}
@@ -119,10 +120,7 @@ n_b=${n_b}
 n_eu0=${n_eu0}
 m_af_b=${m_af_b}
 m_af_eu=${m_af_eu}
-admix_founding_size=${admix_founding_size}
-admix_growth_rate_1=${admix_growth_rate_1}
-admix_growth_rate_2=${admix_growth_rate_2}
-admix_growth_rate_2_change_time=${admix_growth_rate_2_change_time}
+admix_modern_growth_rate=${admix_modern_growth_rate}
 sample_spec=${sample_spec[*]}"
 
 python /home1/karatas/ibd_compare/job_scripts/sim_3T.py \
@@ -148,12 +146,13 @@ python /home1/karatas/ibd_compare/job_scripts/sim_3T.py \
     --m-af-b "$m_af_b" \
     --m-af-eu "$m_af_eu" \
     --admixture-time "$admixture_time" \
-    --afr-proportion "$afr_prop" \
-    --eur-proportion "$eur_prop" \
-    --admix-founding-size "$admix_founding_size" \
-    --admix-growth-rate-1 "$admix_growth_rate_1" \
-    --admix-growth-rate-2 "$admix_growth_rate_2" \
-    --admix-growth-rate-2-change-time "$admix_growth_rate_2_change_time" \
+    --admix-generation-count "$admix_generation_count" \
+    --admix-mixing-generation-count "$admix_mixing_generation_count" \
+    --admix-ne-by-generation "$admix_ne_by_generation" \
+    --admix-afr-props-by-generation "$admix_afr_props_by_generation" \
+    --admix-eur-props-by-generation "$admix_eur_props_by_generation" \
+    --admix-hybrid-props-by-generation "$admix_hybrid_props_by_generation" \
+    --admix-modern-growth-rate "$admix_modern_growth_rate" \
     --census-time-offset "$census_time_offset"
 
 # compress tree sequence

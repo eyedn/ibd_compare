@@ -10,7 +10,6 @@
 
 
 from sys import argv
-
 from python_utils import log_msg
 from python_utils.get_local_ancestry_utils import (
     build_global_ancestry_table,
