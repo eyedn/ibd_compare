@@ -700,8 +700,8 @@ gen.time <- 25
 hacker.start.year <- 1610
 hacker.end.year <- 1865
 present.year <- 2000
-epoch.1.len <- 8
-epoch.2.len <- 0
+epoch.1.len <- 1
+epoch.2.len <- 7
 epoch.3.len <- 8
 
 hacker.tbl <- data.frame(
@@ -979,7 +979,8 @@ tennessen.ne <- tibble(
       time.gen <= t.eu0 ~ n.eu1 * exp(-r.eu0 * (time.gen - t.eg)),
       time.gen <= t.ooa ~ n.b,
       TRUE ~ NA_real_
-    )
+    ),
+    epoch = NA
   )
 
 tennessen.ne.long <- tennessen.ne %>%
@@ -997,6 +998,16 @@ tennessen.ne.plot <- ggplot(
   scale_y_continuous(labels = scales::comma) +
   scale_x_continuous(
     breaks = seq(tennessen.start.year, tennessen.end.year, by = 50)
+  ) +
+  scale_color_manual(
+    values = c(
+      afr = "#fb8072",
+      eur = "#33a02c"
+    ),
+    labels = c(
+      afr = "Tennessen AFR",
+      eur = "Tennessen EUR"
+    )
   ) +
   labs(
     x = "Year",
@@ -1021,13 +1032,14 @@ aa.ne.long <- AA.ne %>%
   transmute(
     year = generation.end.year,
     population = "aa",
-    ne = ne
+    ne = ne,
+    epoch = epoch
   )
 
 combined.ne.long <- bind_rows(
   aa.ne.long,
   tennessen.ne.long %>%
-    transmute(year, population, ne)
+    transmute(year, population, ne, epoch)
 )
 
 combined.ne.plot <- ggplot(
@@ -1043,8 +1055,21 @@ combined.ne.plot <- ggplot(
     linewidth = 1.1
   ) +
   geom_point(
-    data = combined.ne.long %>% filter(population == "aa"),
-    size = 2.3
+    aes(shape = epoch), size = 4, stroke = 1.1, fill = "#ADD8E6", color = "#386cb0"
+    ) +
+  scale_shape_manual(
+    values = c(
+      `Epoch 1: G1-G1, Import-influenced sex-ratio` = 22,
+      `Epoch 2: G2-G8, WF assumptions` = 21,
+      `Epoch 3: G9-G16, modern exponential growth` = 24
+    ),
+    labels = c(
+      `Epoch 1: G1-G1, Import-influenced sex-ratio` = "G1: Founders' sex proportions",
+      `Epoch 2: G2-G8, WF assumptions` = "G2-8: WF 'Inbreeding Nb'",
+      `Epoch 3: G9-G16, modern exponential growth` = "G9-16: Modern exponential growth"
+    ),
+    name = "Ne calculations for Admixture cohort",
+    na.translate = FALSE
   ) +
   scale_color_manual(
     values = c(
@@ -1053,10 +1078,11 @@ combined.ne.plot <- ggplot(
       eur = "#33a02c"
     ),
     labels = c(
-      aa = "African American",
-      afr = "African",
-      eur = "European"
-    )
+      aa = "AFR-EUR Admixture ",
+      afr = "Tennessen AFR",
+      eur = "Tennessen EUR"
+    ),
+    name = "Populations"
   ) +
   scale_y_continuous(labels = scales::comma) +
   scale_x_continuous(
