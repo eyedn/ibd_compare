@@ -915,25 +915,25 @@ if (interactive()) {
 
 
 # tennessen afr/eur ne trajectory ----
-tennessen.present.year <- 2000
-tennessen.time.years <- seq(1600, 2000, by = 1)
+tennessen.present.year <- present.year
+tennessen.time.years <- seq(1600, tennessen.present.year, by = 1)
 tennessen.time.bp <- tennessen.present.year - tennessen.time.years
 
-# recent Tennessen/Fu sizes reconstructed in the python demography builder.
-tennessen.n.af.present <- n_af1 / exp(-r_af * t_eg)
-tennessen.n.eu.present <- n_eu0 / exp(-r_eu0 * (t_eu0 - t_eg)) /
+# Recent Tennessen/Fu sizes reconstructed from the shared constants.
+tennessen.afr.present <- n_af1 / exp(-r_af * t_eg)
+tennessen.eur.present <- n_eu0 / exp(-r_eu0 * (t_eu0 - t_eg)) /
   exp(-r_eu * t_eg)
 
 tennessen.ne <- tibble(
   year = tennessen.time.years,
   time.bp = tennessen.time.bp,
-  AFR = tennessen.n.af.present * exp(-r_af * tennessen.time.bp),
-  EUR = tennessen.n.eu.present * exp(-r_eu * tennessen.time.bp)
+  afr = tennessen.afr.present * exp(-r_af * tennessen.time.bp),
+  eur = tennessen.eur.present * exp(-r_eu * tennessen.time.bp)
 )
 
 tennessen.ne.long <- tennessen.ne %>%
   pivot_longer(
-    cols = c(AFR, EUR),
+    cols = c(afr, eur),
     names_to = "population",
     values_to = "ne"
   )
