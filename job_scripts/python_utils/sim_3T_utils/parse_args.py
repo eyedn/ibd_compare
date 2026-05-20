@@ -77,8 +77,9 @@ def parse_args():
         ]
     )
     parser.add_argument(
-        "--admix-hybrid-props-by-generation",
+        "--admix-priorAdmix-props-by-generation",
         type=lambda value: [float(item) for item in value.split(",")],
+        dest="admix_priorAdmix_props_by_generation",
         default=[
             0.000000, 0.000000, 0.015180, 0.128616,
             0.133308, 0.200008, 0.425040, 0.789544,

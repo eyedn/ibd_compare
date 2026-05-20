@@ -51,8 +51,8 @@ case "${MODEL_SUFFIX}" in
         admix_eur_props_by_generation=$(
             join_by_comma "${ADMIX_EUR_PROPS_BY_GENERATION[@]}"
         )
-        admix_hybrid_props_by_generation=$(
-            join_by_comma "${ADMIX_HYBRID_PROPS_BY_GENERATION[@]}"
+        admix_priorAdmix_props_by_generation=$(
+            join_by_comma "${ADMIX_PRIORADMIX_PROPS_BY_GENERATION[@]}"
         )
         sim_jid=$(sbatch \
             --parsable \
@@ -74,7 +74,7 @@ case "${MODEL_SUFFIX}" in
                 "$admix_ne_by_generation" \
                 "$admix_afr_props_by_generation" \
                 "$admix_eur_props_by_generation" \
-                "$admix_hybrid_props_by_generation" \
+                "$admix_priorAdmix_props_by_generation" \
                 "$ADMIX_MODERN_GROWTH_RATE" \
                 "$CENSUS_TIME_OFFSET" \
                 "${TMAPS[@]}"

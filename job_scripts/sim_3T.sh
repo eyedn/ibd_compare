@@ -59,7 +59,7 @@ admix_mixing_generation_count="${23}"
 admix_ne_by_generation="${24}"
 admix_afr_props_by_generation="${25}"
 admix_eur_props_by_generation="${26}"
-admix_hybrid_props_by_generation="${27}"
+admix_priorAdmix_props_by_generation="${27}"
 admix_modern_growth_rate="${28}"
 census_time_offset="${29}"
 shift 29
@@ -151,7 +151,8 @@ python /home1/karatas/ibd_compare/job_scripts/sim_3T.py \
     --admix-ne-by-generation "$admix_ne_by_generation" \
     --admix-afr-props-by-generation "$admix_afr_props_by_generation" \
     --admix-eur-props-by-generation "$admix_eur_props_by_generation" \
-    --admix-hybrid-props-by-generation "$admix_hybrid_props_by_generation" \
+    --admix-priorAdmix-props-by-generation \
+    "$admix_priorAdmix_props_by_generation" \
     --admix-modern-growth-rate "$admix_modern_growth_rate" \
     --census-time-offset "$census_time_offset"
 

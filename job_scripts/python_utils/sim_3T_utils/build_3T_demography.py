@@ -75,7 +75,10 @@ def build_3T_demography(
         ("admix_ne_by_generation", admix_ne_by_generation),
         ("admix_afr_props_by_generation", admix_afr_props_by_generation),
         ("admix_eur_props_by_generation", admix_eur_props_by_generation),
-        ("admix_priorAdmix_props_by_generation", admix_priorAdmix_props_by_generation)
+        (
+            "admix_priorAdmix_props_by_generation",
+            admix_priorAdmix_props_by_generation
+        )
     ]
     if admix_generation_count <= 0:
         raise ValueError("admix_generation_count must be positive")

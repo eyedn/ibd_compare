@@ -54,8 +54,8 @@ def main():
         admix_ne_by_generation=args.admix_ne_by_generation,
         admix_afr_props_by_generation=args.admix_afr_props_by_generation,
         admix_eur_props_by_generation=args.admix_eur_props_by_generation,
-        admix_hybrid_props_by_generation=(
-            args.admix_hybrid_props_by_generation
+        admix_priorAdmix_props_by_generation=(
+            args.admix_priorAdmix_props_by_generation
         ),
         admix_modern_growth_rate=args.admix_modern_growth_rate,
         census_time_offset=args.census_time_offset
