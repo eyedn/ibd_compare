@@ -636,7 +636,10 @@ calc.aa.ne.results <- function(
           exp(epoch.3.growth.rate *
             (generation - epoch.config$epoch.3.anchor.generation)),
         ne
-      )
+      ),
+      n.f.plus.m = (female.total + male.total),
+      ne.over.n = ne / n.f.plus.m,
+      four.f.m = 4 * (female.total / n.f.plus.m) * (male.total / n.f.plus.m)
     ) %>%
     make.epoch.labels(epoch.config) %>%
     select(
@@ -664,7 +667,10 @@ calc.aa.ne.results <- function(
       parental.population,
       parental.population.method,
       k,
-      ne
+      ne,
+      n.f.plus.m,
+      ne.over.n,
+      four.f.m
     )
 
   validate.analysis.outputs(
@@ -695,8 +701,8 @@ hacker.start.year <- 1610
 hacker.end.year <- 1865
 present.year <- 2000
 epoch.1.len <- 8
-epoch.2.len <- 3
-epoch.3.len <- 5
+epoch.2.len <- 0
+epoch.3.len <- 8
 
 hacker.tbl <- data.frame(
   period = c(
@@ -828,13 +834,16 @@ eur.founder.count <- 25
 eur.female.proportion <- 0.5
 epoch.3.growth.rate <- 0.023175
 
-mooney.cg <- c(1, 1, 0.9835, 0.8602, 0.8551, 0.7826, 0.5380, 0.1418)
 epoch.1.eur.prop <- 0.08
 epoch.2.afr.prop <- 0.06
 epoch.2.eur.prop <- 0.03
 epoch.3.afr.prop <- 0
 epoch.3.eur.prop <- 0
-
+mooney.cg <- c(
+  1, 1, 0.9835, 0.8602, 0.8551, 0.7826, 0.5380, 0.1418,
+  rep(epoch.2.afr.prop/(1-epoch.2.eur.prop), 3),
+  rep(epoch.3.afr.prop/(1-epoch.3.eur.prop), 6)
+)
 
 # calculations ----
 analysis.results <- calc.aa.ne.results()
