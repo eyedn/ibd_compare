@@ -1014,3 +1014,67 @@ tennessen.ne.plot <- ggplot(
 if (interactive()) {
   print(tennessen.ne.plot)
 }
+
+
+# combined aa/afr/eur ne plot ----
+aa.ne.long <- AA.ne %>%
+  transmute(
+    year = generation.end.year,
+    population = "aa",
+    ne = ne
+  )
+
+combined.ne.long <- bind_rows(
+  aa.ne.long,
+  tennessen.ne.long %>%
+    transmute(year, population, ne)
+)
+
+combined.ne.plot <- ggplot(
+  combined.ne.long,
+  aes(x = year, y = ne, color = population)
+) +
+  geom_line(
+    data = combined.ne.long %>% filter(population != "aa"),
+    linewidth = 1.1
+  ) +
+  geom_line(
+    data = combined.ne.long %>% filter(population == "aa"),
+    linewidth = 1.1
+  ) +
+  geom_point(
+    data = combined.ne.long %>% filter(population == "aa"),
+    size = 2.3
+  ) +
+  scale_color_manual(
+    values = c(
+      aa = "#386cb0",
+      afr = "#fb8072",
+      eur = "#33a02c"
+    ),
+    labels = c(
+      aa = "African American",
+      afr = "African",
+      eur = "European"
+    )
+  ) +
+  scale_y_continuous(labels = scales::comma) +
+  scale_x_continuous(
+    breaks = seq(tennessen.start.year, tennessen.end.year, by = 50)
+  ) +
+  labs(
+    x = "Year",
+    y = "Effective population size",
+    color = NULL,
+    title = paste0(
+      "Effective population size across three populations, ",
+      tennessen.start.year,
+      "-",
+      tennessen.end.year
+    )
+  ) +
+  theme_bw()
+
+if (interactive()) {
+  print(combined.ne.plot)
+}
