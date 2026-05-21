@@ -614,12 +614,12 @@ calc.aa.ne.results <- function(
       adult.population.age25.proxy = NA_real_,
       parental.population = if_else(
         generation %in% epoch.config$epoch.2.generations,
-        prev.births,
+        prev.births + imported,
         NA_real_
       ),
       parental.population.method = if_else(
         generation %in% epoch.config$epoch.2.generations,
-        "previous-generation births",
+        "prev.births + imported",
         NA_character_
       ),
       k = if_else(
@@ -719,9 +719,9 @@ calc.aa.ne.results <- function(
 gen.time <- 25
 hacker.end.year <- 1865
 present.year <- 2000
-epoch.1.len <- 7
-epoch.2.len <- 3
-epoch.3.len <- 5
+epoch.1.len <- 3
+epoch.2.len <- 4
+epoch.3.len <- 8
 
 # This source table keeps several historical columns for completeness. The model
 # directly uses only period, person-years, birth-rate, imports, births, and
