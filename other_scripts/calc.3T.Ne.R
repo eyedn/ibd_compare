@@ -9,9 +9,6 @@
 # ______________________________________________________________________________
 
 
-# pattern: Mixed (script)
-# Reason: this analysis script combines calculations with printing/plotting.
-
 library(tidyverse)
 
 # functions ----
@@ -774,8 +771,8 @@ calc.aa.ne.results <- function(
 gen.time <- 25
 hacker.end.year <- 1865
 present.year <- 2000
-epoch.1.len <- 3
-epoch.2.len <- 4
+epoch.1.len <- 5
+epoch.2.len <- 2
 epoch.3.len <- 8
 
 # This source table keeps several historical columns for completeness. The model
@@ -1155,9 +1152,11 @@ combined.ne.plot <- ggplot(
     ),
     labels = c(
       `Epoch 1: Import-influenced sex proportions` =
-        "Founders' sex proportions",
-      `Epoch 2: WF 'Inbreeding Nb'` = "WF 'Inbreeding Nb'",
-      `Epoch 3: Modern exponential growth` = "Modern exponential growth"
+        "Founders'/Imports' sex proportions",
+      `Epoch 2: WF 'Inbreeding Nb'` = 
+        "WF Inbreeding Nb + Imports' sex proportions",
+      `Epoch 3: Modern exponential growth` = 
+        "Modern exponential growth"
     ),
     name = "AA generation-wise calculation method",
     na.translate = FALSE
