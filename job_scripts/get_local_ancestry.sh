@@ -79,12 +79,12 @@ for pop in "${pops[@]}"; do
     out_tsv="${anc_dir}/${gmap}_${seed}_${pop}.tsv"
     if [[ ! -s "${out_tsv}" ]]; then
         all_outputs_exist=false
-        break
     fi
 done
 
 if [[ "${admix_found}" != "true" ]]; then
-    echo "ERROR: ADMIX population missing from pops list" >&2
+    echo "ERROR: ADMIX population missing from pops list: ${pops[*]}" >&2
+    echo "Parsed maps: ${maps[*]}" >&2
     exit 1
 fi
 
