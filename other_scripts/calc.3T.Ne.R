@@ -400,6 +400,32 @@ validate.analysis.outputs <- function(
       )
     ),
     all(!is.na(AA.ne$k[epoch.config$epoch.2.generations])),
+    all(is.finite(AA.ne$admix.ne[epoch.config$epoch.2.generations])),
+    all(AA.ne$admix.ne[epoch.config$epoch.2.generations] > 0),
+    all(is.finite(AA.ne$import.ne[epoch.config$epoch.2.generations])),
+    all(AA.ne$import.ne[epoch.config$epoch.2.generations] >= 0),
+    all(
+      is.na(AA.ne$import.female[epoch.config$epoch.2.generations]) |
+        AA.ne$import.female[epoch.config$epoch.2.generations] > 0
+    ),
+    all(
+      is.na(AA.ne$import.male[epoch.config$epoch.2.generations]) |
+        AA.ne$import.male[epoch.config$epoch.2.generations] > 0
+    ),
+    all(
+      abs(
+        AA.ne$ne[epoch.config$epoch.2.generations] -
+          AA.ne$admix.ne[epoch.config$epoch.2.generations] -
+          AA.ne$import.ne[epoch.config$epoch.2.generations]
+      ) < 1e-6
+    ),
+    all(
+      AA.ne$import.ne[
+        epoch.config$epoch.2.generations[
+          AA.ne$imported[epoch.config$epoch.2.generations] <= 0
+        ]
+      ] == 0
+    ),
     all(
       grepl(
         "^Epoch 3:",
@@ -614,18 +640,42 @@ calc.aa.ne.results <- function(
       adult.population.age25.proxy = NA_real_,
       parental.population = if_else(
         generation %in% epoch.config$epoch.2.generations,
-        prev.births + imported,
+        prev.births,
         NA_real_
       ),
       parental.population.method = if_else(
         generation %in% epoch.config$epoch.2.generations,
-        "prev.births + imported",
+        "prev.births plus separate import Ne component",
         NA_character_
       ),
       k = if_else(
         generation %in% epoch.config$epoch.2.generations,
         gen.time * birth.rate / 1000,
         NA_real_
+      ),
+      import.female = if_else(
+        generation %in% epoch.config$epoch.2.generations & imported > 0,
+        ceiling(imported / 3),
+        NA_real_
+      ),
+      import.male = if_else(
+        generation %in% epoch.config$epoch.2.generations & imported > 0,
+        floor(2 * imported / 3),
+        NA_real_
+      ),
+      admix.ne = if_else(
+        generation %in% epoch.config$epoch.2.generations,
+        (k * parental.population - 1) / k,
+        NA_real_
+      ),
+      import.ne = case_when(
+        generation %in% epoch.config$epoch.2.generations &
+          imported > 0 &
+          import.female > 0 &
+          import.male > 0 ~
+            4 * import.female * import.male / (import.female + import.male),
+        generation %in% epoch.config$epoch.2.generations ~ 0,
+        TRUE ~ NA_real_
       )
     )
 
@@ -636,7 +686,7 @@ calc.aa.ne.results <- function(
         generation %in% epoch.config$epoch.1.sex.generations ~
           4 * female.total * male.total / (female.total + male.total),
         generation %in% epoch.config$epoch.2.generations ~
-          (k * parental.population - 1) / k,
+          admix.ne + import.ne,
         TRUE ~ NA_real_
       )
     )
@@ -678,6 +728,7 @@ calc.aa.ne.results <- function(
       imported,
       births,
       birth.rate,
+      prev.births,
       pop.end,
       previous.birth.periods,
       births.in.previous.25.years,
@@ -688,6 +739,10 @@ calc.aa.ne.results <- function(
       parental.population,
       parental.population.method,
       k,
+      admix.ne,
+      import.female,
+      import.male,
+      import.ne,
       ne,
       n.f.plus.m,
       ne.over.n,
@@ -903,12 +958,17 @@ print(
       imported,
       births,
       birth.rate,
+      prev.births,
       female.total,
       male.total,
       adult.population.age25.proxy,
       parental.population,
       parental.population.method,
       k,
+      admix.ne,
+      import.female,
+      import.male,
+      import.ne,
       ne
     ),
   n = Inf
