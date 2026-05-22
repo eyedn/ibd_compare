@@ -186,21 +186,6 @@ def build_3T_demography(
     # allow recent symmetric migration between AFR and EUR
     demography.set_symmetric_migration_rate(["AFR", "EUR"], m_af_eu)
 
-    # keep already-contributed hidden generations effectively empty forward
-    # in time after they pass ancestry into the next generation.
-    min_admix_size = 1e-9
-    for gen_number in range(admix_mixing_generation_count, 1, -1):
-        event_time = admix_generation_count - gen_number
-        previous_population = f"ADMIX_G{gen_number - 1}"
-        tiny_time = event_time - census_time_offset
-        if tiny_time > 0:
-            demography.add_population_parameters_change(
-                time=tiny_time,
-                population=previous_population,
-                initial_size=min_admix_size,
-                growth_rate=0
-            )
-
     # place a census immediately before the first founder event
     demography.add_census(time=admixture_time + census_time_offset)
 
