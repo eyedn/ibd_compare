@@ -54,6 +54,16 @@ case "${MODEL_SUFFIX}" in
         admix_priorAdmix_props_by_generation=$(
             join_by_comma "${ADMIX_PRIORADMIX_PROPS_BY_GENERATION[@]}"
         )
+        log_msg "3T admixture specifications
+admixture_time=${ADMIXTURE_TIME}
+admix_generation_count=${ADMIX_GENERATION_COUNT}
+admix_mixing_generation_count=${ADMIX_MIXING_GENERATION_COUNT}
+admix_ne_by_generation=${admix_ne_by_generation}
+admix_afr_props_by_generation=${admix_afr_props_by_generation}
+admix_eur_props_by_generation=${admix_eur_props_by_generation}
+admix_priorAdmix_props_by_generation=${admix_priorAdmix_props_by_generation}
+admix_modern_growth_rate=${ADMIX_MODERN_GROWTH_RATE}
+census_time_offset=${CENSUS_TIME_OFFSET}"
         sim_jid=$(sbatch \
             --parsable \
             --chdir=/home1/karatas/ibd_compare \
