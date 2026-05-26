@@ -8,10 +8,16 @@
 # constants.R
 # ______________________________________________________________________________
 
+# pattern: Functional Core
 
 library(glue)
 
 n.samples <- 300
+
+# manuscript model numerical safeguards
+ibd.score.mse.epsilon <- 1e-8
+kinship.mse.epsilon <- 1e-8
+kinship.corr.clamp.epsilon <- 1e-8
 
 # chr18
 cen.start.bp <- 15460900

@@ -11,7 +11,7 @@
 ###############################################################################
 
 # simulation specifications: 4B18 or 3T
-MODEL_SUFFIX="${MODEL_SUFFIX:-3T}"
+MODEL_SUFFIX="${MODEL_SUFFIX:-4B18}"
 
 # TMAP exsamples: "HapMapII_GRCh38", "DeCodeSexAveraged_GRCh38", "DefaultUniform"
 TMAPS=(
@@ -44,8 +44,8 @@ esac
 REF_DIR="${HOME}/references"
 
 # dirs under #SCRATCH
-OUTDIR="${SCRATCH}/msprime_runs2_chr${CHR}_admix_${MODEL_SUFFIX}"
-COMMON_FF_DIR="${SCRATCH}/ibd_compare2_chr${CHR}_admix_${MODEL_SUFFIX}"
+OUTDIR="${SCRATCH}/stdpopsim_runs_chr${CHR}_admix_${MODEL_SUFFIX}"
+COMMON_FF_DIR="${SCRATCH}/ibd_compare_chr${CHR}_admix_${MODEL_SUFFIX}"
 DEMO_DIR="${SCRATCH}/demo_inf_chr${CHR}_admix_${MODEL_SUFFIX}"
 ONEKG_IBD_INIT_INFERENCE_DIR="${SCRATCH}/1kG_ibd_init_inference_1kG"
 ONEKG_IBD_COMPARE_DIR="${SCRATCH}/1kG_ibd_compare_1kG"
@@ -219,8 +219,8 @@ KIN_CUTOFF="${KIN_CUTOFF:-0.0442}"
 # hapibd params
 # perturbaton on (HAP_MIN_SEED, HAP_MAX_GAP):
 #   (1.0, 2000), (1.0, 1000), (2.0, 1000)
-HAP_MIN_SEED=1.0
-HAP_MAX_GAP=2000
+HAP_MIN_SEED=2.0
+HAP_MAX_GAP=1000
 HAP_MIN_EXTEND=1.0
 HAP_MIN_OUTPUT=2.0
 HAP_MIN_MARKERS=100
@@ -230,7 +230,7 @@ HAP_MIN_MAC=2
 # perturbaton on (RAP_WINDOW_SIZE):
 #   (100), (200), (300)
 RAP_MIN_LEN=2
-RAP_WINDOW_SIZE=300
+RAP_WINDOW_SIZE=100
 RAP_NUM_RUNS=10
 RAP_NUM_SUCCESSES=2
 

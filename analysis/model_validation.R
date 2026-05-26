@@ -5,7 +5,7 @@
 # Department of Quantitative and Computational Biology
 # Mooney Lab
 # ___
-# model.validation.R
+# model_validation.R
 # ______________________________________________________________________________
 
 library(tidyverse)
@@ -92,7 +92,7 @@ sim.mut.rate <- 2.36e-8
 sim.het <- sim.het.tbl %>%
   mutate(`O(HET)`=((N_SITES-`O(HOM)`)/chr18.len))
 summary(sim.het$`O(HET)`)
-shapiro.test(sim.het$`O(HET)`)
+# shapiro.test(sim.het$`O(HET)`)
 
 # plot mean and median heterozygotisties and Ne
 sim.mean.Ohet <- mean(sim.het$`O(HET)`)
@@ -124,7 +124,7 @@ ggplot(sim.het, aes(x = `O(HET)`)) +
   labs(
     x = "Observed heterozygosity",
     y = "Count",
-    title = "Observed heterozygosity of ADMIX on chr18"
+    title = "Observed heterozygosity of ADMIX on chr18 (\"larger\" model)"
   ) +
   theme_bw(base_size = 32) +
   theme(
@@ -136,7 +136,7 @@ ggplot(sim.het, aes(x = `O(HET)`)) +
   )
 
 # ADMIX ancestry proportions ----
-anc.dir <- "~/scratch/msprime_runs_chr18_admix_3T/global_ancestry"
+anc.dir <- "~/scratch/msprime_runs2_chr18_admix_3T/global_ancestry"
 
 anc.files <- list.files(
   anc.dir,
@@ -182,7 +182,7 @@ plot.ancestry.summary(
   summary.tbl = admix.anc.summary,
   value.col = mean.african.ancestry,
   ci = mean.african.ancestry.ci,
-  title = "Mean African ancestry of ADMIX",
+  title = "Mean African ancestry of ADMIX (\"larger\" model)",
   xlab = "Replicate mean African ancestry"
 )
 
@@ -190,6 +190,6 @@ plot.ancestry.summary(
   summary.tbl = admix.anc.summary,
   value.col = sd.african.ancestry,
   ci = sd.african.ancestry.ci,
-  title = "SD African ancestry of ADMIX",
+  title = "SD African ancestry of ADMIX (\"larger\" model)",
   xlab = "Replicate SD African ancestry"
 )
