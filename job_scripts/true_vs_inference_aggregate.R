@@ -49,7 +49,7 @@ chr18.len <- data.frame(
 )
 
 genome.seg.len.bp <- ifelse(sim.chr == "1", chr1.100mb.len[2, tmap], chr18.len[2, tmap])
-genome.seg.len.cm <- ifelse(
+genome.seg.len.cM <- ifelse(
   sim.chr == "1",
   chr1.100mb.len[1, tmap],
   chr18.len[1, tmap]
@@ -61,7 +61,7 @@ message("tmap = ", tmap)
 message("sim.chr = ", sim.chr)
 message("n.diploids = ", n.diploids)
 message("genome.seg.len.bp = ", genome.seg.len.bp)
-message("genome.seg.len.cm = ", genome.seg.len.cm)
+message("genome.seg.len.cM = ", genome.seg.len.cM)
 message("res.out = ", res.out)
 
 # read manifest ----
