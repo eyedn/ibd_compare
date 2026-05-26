@@ -771,9 +771,9 @@ calc.aa.ne.results <- function(
 gen.time <- 25
 hacker.end.year <- 1865
 present.year <- 2000
-epoch.1.len <- 5
-epoch.2.len <- 2
-epoch.3.len <- 8
+epoch.1.len <- 1
+epoch.2.len <- 9 
+epoch.3.len <- 5
 
 # This source table keeps several historical columns for completeness. The model
 # directly uses only period, person-years, birth-rate, imports, births, and
@@ -923,6 +923,12 @@ mooney.cg <- c(
   0.1418
 )
 
+# plot colors
+afr.prim <- "#56B4E9"
+afr.sec <- "#8FD0F2"
+eur.prim <- "#fb8072"
+admix.prim <- "#703BE7"
+admix.sec <- "#C6B3F6"
 # calculations ----
 analysis.results <- calc.aa.ne.results()
 
@@ -985,7 +991,7 @@ AA.ne.plot <- ggplot(
   data = AA.ne,
   aes(x = generation.end.year, y = ne)
 ) +
-  geom_line(color = "#386cb0", linewidth = 1.1) +
+  geom_line(color = admix.prim, linewidth = 1.1) +
   geom_point(aes(shape = epoch), size = 2.5) +
   scale_y_continuous(labels = scales::comma) +
   scale_x_continuous(
@@ -1063,7 +1069,9 @@ tennessen.ne <- tibble(
       time.gen <= t.ooa ~ n.b,
       TRUE ~ NA_real_
     ),
-    epoch = NA
+    epoch = NA,
+    admix.ne = NA,
+    import.ne = NA
   )
 
 tennessen.ne.long <- tennessen.ne %>%
@@ -1084,8 +1092,8 @@ tennessen.ne.plot <- ggplot(
   ) +
   scale_color_manual(
     values = c(
-      afr = "#fb8072",
-      eur = "#33a02c"
+      afr = afr.prim,
+      eur = eur.prim
     ),
     labels = c(
       afr = "Tennessen AFR",
@@ -1116,33 +1124,52 @@ aa.ne.long <- AA.ne %>%
     year = generation.end.year,
     population = "aa",
     ne = ne,
+    admix.ne = admix.ne,
+    import.ne = import.ne,
     epoch = epoch
   )
 
 combined.ne.long <- bind_rows(
   aa.ne.long,
   tennessen.ne.long %>%
-    transmute(year, population, ne, epoch)
+    transmute(year, population, ne, admix.ne, import.ne, epoch)
 )
 
 combined.ne.plot <- ggplot(
   combined.ne.long,
-  aes(x = year, y = ne, color = population)
+  aes(x = year, color = population)
 ) +
   geom_line(
-    data = combined.ne.long %>% filter(population != "aa"),
+    aes(y = ne), data = combined.ne.long %>% filter(population != "aa"),
     linewidth = 1.1
   ) +
   geom_line(
-    data = combined.ne.long %>% filter(population == "aa"),
+    aes(y = ne), data = combined.ne.long %>% filter(population == "aa"),
     linewidth = 1.1
   ) +
   geom_point(
-    aes(shape = epoch),
+    aes(y = ne, shape = epoch),
     size = 4,
     stroke = 1.1,
-    fill = "#ADD8E6",
-    color = "#386cb0"
+    fill = admix.sec,
+    color = admix.prim
+  ) +
+  geom_line(
+    aes(y = import.ne, linetype = "Import-only trajectory"),
+    data = combined.ne.long %>% filter(population == "aa"),
+    linewidth = 1.1, color = afr.sec
+  ) +
+  geom_line(
+    aes(y = admix.ne, linetype = "American-born-only trajectory"),
+    data = combined.ne.long %>% filter(population == "aa"),
+    linewidth = 1.1, color = admix.sec
+  ) +
+  scale_linetype_manual(
+    values = c(
+      "Import-only trajectory" = "dashed",
+      "American-born-only trajectory" = "dashed"
+    ),
+    name = "AA sub-trajectories"
   ) +
   scale_shape_manual(
     values = c(
@@ -1152,9 +1179,9 @@ combined.ne.plot <- ggplot(
     ),
     labels = c(
       `Epoch 1: Import-influenced sex proportions` =
-        "Founders'/Imports' sex proportions",
+        "Founders' sex proportions",
       `Epoch 2: WF 'Inbreeding Nb'` = 
-        "WF Inbreeding Nb + Imports' sex proportions",
+        "US-born WF  + Imports' sex proportions",
       `Epoch 3: Modern exponential growth` = 
         "Modern exponential growth"
     ),
@@ -1163,9 +1190,9 @@ combined.ne.plot <- ggplot(
   ) +
   scale_color_manual(
     values = c(
-      aa = "#386cb0",
-      afr = "#fb8072",
-      eur = "#33a02c"
+      aa = admix.prim,
+      afr = afr.prim,
+      eur = eur.prim
     ),
     labels = c(
       aa = "Derived AA",
@@ -1191,7 +1218,8 @@ combined.ne.plot <- ggplot(
   ) +
   guides(
     color = guide_legend(order = 1),
-    shape = guide_legend(order = 2)
+    linetype = guide_legend(order = 2),
+    shape = guide_legend(order = 3)
   ) +
   theme_bw(base_size = 18)
 
