@@ -32,20 +32,6 @@ source("R_utils/plot.confusion.boxplots.R")
 # define constants ----
 adj.method <- "bonferroni"
 per.rep.path <- glue("{ibd.comp.dir}/true_vs_inference/all_stats.per_rep.tsv")
-software.palette <- c(
-  "h1" = "lightblue1",
-  "h2" = "dodgerblue",
-  "h3" = "blue",
-  "r1" = "mistyrose",
-  "r2" = "red",
-  "r3" = "darkred"
-)
-pop.palette <- c(
-  "ADMIX" = "dodgerblue",
-  "AFR" = "mistyrose",
-  "ASIA" = "red",
-  "EUR" = "darkred"
-)
 
 # read in replicate-level statistics ----
 all.stats.per.rep <- read.all.stats.per.rep(
@@ -75,6 +61,24 @@ sens.long.bins <- sens.long %>%
 precision.long.bins <- precision.long %>% 
   filter(threshold != "overall")
 
+# summary statistics for boxplot-ready confusion metrics ----
+confusion.boxplot.summary <- bind_rows(sens.long, precision.long) %>%
+  group_by(pop, software.code, imap, filt, threshold, metric) %>%
+  summarise(
+    min = min(estimate, na.rm = TRUE),
+    q1 = quantile(estimate, 0.25, na.rm = TRUE, names = FALSE),
+    median = median(estimate, na.rm = TRUE),
+    q3 = quantile(estimate, 0.75, na.rm = TRUE, names = FALSE),
+    max = max(estimate, na.rm = TRUE),
+    mean = mean(estimate, na.rm = TRUE),
+    sd = sd(estimate, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  pivot_longer(
+    cols = c(min, q1, median, q3, max, mean, sd),
+    names_to = "statistic",
+    values_to = "value"
+  )
 
 # fit four primary glmm models and omnibus lrt tables ----
 # note: format of data from pivot.confusion.metric.long
@@ -128,4 +132,3 @@ plot.confusion.boxplots(precision.long, "ADMIX", "1Mb1cM", "Precision")
 plot.confusion.boxplots(precision.long, "AFR", "1Mb1cM", "Precision")
 # plot.confusion.boxplots(precision.long, "ASIA", "1Mb1cM", "Precision")
 plot.confusion.boxplots(precision.long, "EUR", "1Mb1cM", "Precision")
-

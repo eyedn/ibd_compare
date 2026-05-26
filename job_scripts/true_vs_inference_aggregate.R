@@ -138,7 +138,10 @@ for (i in seq_len(n.reps)) {
   ) %>%
     tibble::as_tibble()
 
-  message("calculating confusion matrix statistics (cM.len windows: 2-2.5, ..., 5+)")
+  message(
+    "calculating confusion matrix statistics ",
+    "(cM.len windows: 2-2.5, ..., 9.5-10, >10)"
+  )
   conf.win <- compute.confusion.metrics.windows(
     cov.res = cov.res,
     inf.ibd = inf.ibd,

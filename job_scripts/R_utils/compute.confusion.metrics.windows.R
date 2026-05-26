@@ -19,24 +19,18 @@ compute.confusion.metrics.windows <- function(
     inf.ibd,
     region.len.bp,
     n.diploids,
-    lower.bounds = c(2, 2.5, 3, 3.5, 4, 4.5, 5),
-    upper.bounds = c(2.5, 3, 3.5, 4, 4.5, 5, Inf)
+    lower.bounds = c(seq(2, 9.5, by = 0.5), 10),
+    upper.bounds = c(seq(2.5, 10, by = 0.5), Inf)
 ) {
   stopifnot(length(lower.bounds) == length(upper.bounds))
 
   purrr::map2_dfc(lower.bounds, upper.bounds, function(lo, hi) {
 
     cov.res.sub <- cov.res %>%
-      dplyr::filter(
-        cM.len >= lo,
-        if (is.finite(hi)) cM.len < hi else TRUE
-      )
+      dplyr::filter(.window.filter(cM.len, lo, hi))
 
     inf.ibd.sub <- inf.ibd %>%
-      dplyr::filter(
-        cM.len >= lo,
-        if (is.finite(hi)) cM.len < hi else TRUE
-      )
+      dplyr::filter(.window.filter(cM.len, lo, hi))
 
     # compute metrics on the subset
     out <- compute.confusion.metrics(
@@ -54,4 +48,17 @@ compute.confusion.metrics.windows <- function(
 
     out
   })
+}
+
+# Bins are left-closed except for the final >10 cM bin.
+.window.filter <- function(cm.len, lo, hi) {
+  if (!is.finite(hi)) {
+    return(cm.len > lo)
+  }
+
+  if (hi == 10) {
+    return(cm.len >= lo & cm.len <= hi)
+  }
+
+  cm.len >= lo & cm.len < hi
 }

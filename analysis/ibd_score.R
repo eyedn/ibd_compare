@@ -22,6 +22,9 @@ source("R_utils/constants.R")
 source("R_utils/read.all.stats.R")
 source("R_utils/read.all.stats.per.rep.R")
 
+# define constants ----
+per.rep.path <- glue("{ibd.comp.dir}/true_vs_inference/all_stats.per_rep.tsv")
+
 # read in statistics aggregated across replicates ----
 all.stats <- readr::read_tsv(
   glue("{ibd.comp.dir}/true_vs_inference/all_stats.tsv"), 
@@ -30,6 +33,18 @@ all.stats <- readr::read_tsv(
 all.stats <- all.stats %>%
   mutate(
     software.code = param.map[software.with.params]
+  )
+
+# read in replicate-level statistics ----
+all.stats.per.rep <- read.all.stats.per.rep(
+  per.rep.path,
+  stats.meta.names,
+  param.map
+) %>%
+  mutate(
+    filt = factor(filt, levels = filt.levels),
+    software.code = factor(software.code),
+    pop = factor(pop)
   )
 
 # analyze ibd score rel true performance ----
@@ -43,11 +58,16 @@ df.reltrue <- all.stats.per.rep %>%
     values_to = "ibd.score.rel.true"
   )
 
-ggplot(df.reltrue, aes(x = filt, y = ibd.score.rel.true, color = software.code)) +
+ggplot(
+  df.reltrue,
+  aes(x = filt, y = ibd.score.rel.true, color = software.code)
+) +
   geom_boxplot(
     aes(group = interaction(filt, software.code)), fill = "lightgrey"
   ) +
   geom_hline(yintercept = 1, linetype = "dashed") +
+  scale_x_discrete(labels = filt.labels) +
+  scale_color_manual(values = software.palette) +
   labs(
     x = "Filtering procedure",
     y = "Relative IBD score (inferred / true)",
@@ -56,7 +76,7 @@ ggplot(df.reltrue, aes(x = filt, y = ibd.score.rel.true, color = software.code))
   ) +
   coord_trans(y = "log10") +
   facet_wrap(~ pop) +
-  theme_bw()
+  theme_bw(base_size = 32)
 
 ## plot true ibd scores ----
 df.true.ibd <- all.stats.per.rep %>%
@@ -73,26 +93,30 @@ df.true.ibd <- all.stats.per.rep %>%
 afr.score <- 119695.72
 df.true.ibd <- df.true.ibd %>%
   mutate(rel.score = true.ibd.score / afr.score)
-ggplot(df.true.ibd, aes(x = pop, y = true.ibd.score)) +
-  geom_col(fill = "grey") +
+ggplot(df.true.ibd, aes(x = pop, y = true.ibd.score, fill = pop)) +
+  geom_col() +
   geom_hline(yintercept = 0, linetype = "dashed") +
+  scale_fill_manual(values = pop.palette) +
   labs(
     x = NULL,
     y = "True IBD score",
     title = glue("IBD score"),
     fill = NULL
   ) +
-  theme_bw(base_size = 32) 
-ggplot(df.true.ibd, aes(x = pop, y = rel.score)) +
-  geom_col(fill = "grey") +
+  theme_bw(base_size = 32) +
+  theme(legend.position = "none")
+ggplot(df.true.ibd, aes(x = pop, y = rel.score, fill = pop)) +
+  geom_col() +
   geom_hline(yintercept = 0, linetype = "dashed") +
+  scale_fill_manual(values = pop.palette) +
   labs(
     x = NULL,
     y = "True IBD score rel. to AFR",
     title = glue("IBD score rel. to AFR"),
     fill = NULL
   ) +
-  theme_bw(base_size = 32) 
+  theme_bw(base_size = 32) +
+  theme(legend.position = "none")
 
 # analyze ibd score error performance ----
 df.err <- all.stats.per.rep %>%
@@ -105,28 +129,23 @@ df.err <- all.stats.per.rep %>%
     cols = matches("^ibd\\.score\\.err(\\.|$)"),
     values_to = "ibd.score.err"
   )
-df.err.ex <- df.err %>% filter(filt == "ibdends", imap == "hapmap", software.code %in% c("h1", "r1"))
+df.err.ex <- df.err %>%
+  filter(
+    filt == "ibdends",
+    imap == "hapmap",
+    software.code %in% c("h1", "r1")
+  )
 ggplot(df.err, aes(x = pop, y = ibd.score.err, fill = software.code)) +
   geom_boxplot() +
   geom_hline(yintercept = 0, linetype = "dashed") +
-  scale_fill_manual(
-    values = c(
-      "h1" = "lightblue1",
-      "h2"  = "dodgerblue",
-      "h3" = "blue",
-      "r1" = "mistyrose",
-      "r2"  = "red",
-      "r3" = "darkred"
-    )
-  ) +
+  scale_fill_manual(values = software.palette) +
   labs(
     x = NULL,
     y = "IBD score error",
     title = glue("IBD score error"),
     fill = NULL
   ) +
-  facet_grid(filt ~ software) +
-  # facet_wrap(~ filt + imap) +
+  facet_grid(filt ~ software, labeller = filt.labeller) +
   theme_bw(base_size = 32) 
 
 # plot rel ibd score error to AFR ----
@@ -149,29 +168,20 @@ df.err <- all.stats.per.rep %>%
   ) %>%
   ungroup() %>%
   # optional safety: drop groups where AFR is missing or 0 (would create Inf/NA)
-  filter(is.finite(true.ibd.score.rel.afr),
-         is.finite(inf.ibd.score.rel.afr),
-         is.finite(ibd.score.rel.afr.err))
+  filter(
+    is.finite(true.ibd.score.rel.afr),
+    is.finite(inf.ibd.score.rel.afr),
+    is.finite(ibd.score.rel.afr.err)
+  )
 
 ggplot(df.err, aes(x = pop, y = ibd.score.rel.afr.err, fill = software.code)) +
   geom_boxplot(outlier.shape = NA) +
   geom_hline(yintercept = 0, linetype = "dashed") +
-  scale_fill_manual(
-    values = c(
-      "h1" = "lightblue1",
-      "h2" = "dodgerblue",
-      "h3" = "blue",
-      "r1" = "mistyrose",
-      "r2" = "red",
-      "r3" = "darkred"
-    )
-  ) +
+  scale_fill_manual(values = software.palette) +
   labs(
     x = NULL,
     y = "Relative IBD score error",
     title = "IBD score error (relative to AFR)" ,
     fill = NULL
   ) +
-  # facet_grid(filt ~ imap) +
-  # facet_wrap(~ filt + imap) +
   theme_bw(base_size = 32)

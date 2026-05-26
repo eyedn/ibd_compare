@@ -36,7 +36,10 @@ stats.meta.names <- c(
 )
 
 # for plotting where the x axis is composed of discrete ibd length bins ----
-thr.levels <- c("overall", "2", "2.5", "3", "3.5", "4", "4.5", "5")
+thr.levels <- c(
+  "overall", "2", "2.5", "3", "3.5", "4", "4.5", "5", "5.5",
+  "6", "6.5", "7", "7.5", "8", "8.5", "9", "9.5", "10"
+)
 thr.labels <- c(
   "overall" = "overall",
   "2"   = "2–2.5",
@@ -45,14 +48,50 @@ thr.labels <- c(
   "3.5" = "3.5–4",
   "4"   = "4–4.5",
   "4.5" = "4.5–5",
-  "5"   = "≥5"
+  "5"   = "5–5.5",
+  "5.5" = "5.5–6",
+  "6"   = "6–6.5",
+  "6.5" = "6.5–7",
+  "7"   = "7–7.5",
+  "7.5" = "7.5–8",
+  "8"   = "8–8.5",
+  "8.5" = "8.5–9",
+  "9"   = "9–9.5",
+  "9.5" = "9.5–10",
+  "10"  = ">10"
 )
 
 thr.labels.descriptive <- c(
   "overall" = "All IBD",
   "2"   = "Short IBD\n(2–2.5 cM)",
-  "5"   = "Long IBD\n(≥5 cM)"
+  "10"  = "Long IBD\n(>10 cM)"
 )
+
+software.palette <- c(
+  "h1" = "lightblue1",
+  "h2" = "dodgerblue",
+  "h3" = "blue",
+  "r1" = "mistyrose",
+  "r2" = "red",
+  "r3" = "darkred"
+)
+
+pop.palette <- c(
+  "ADMIX" = "dodgerblue",
+  "AFR" = "mistyrose",
+  "ASIA" = "red",
+  "EUR" = "darkred"
+)
+
+filt.levels <- c("none", "hot", "ibdends", "hotibdends", "ibdendshot")
+filt.labels <- c(
+  "none" = "N",
+  "hot" = "H",
+  "ibdends" = "I",
+  "hotibdends" = "HI",
+  "ibdendshot" = "IH"
+)
+filt.labeller <- ggplot2::labeller(filt = filt.labels)
 
 # map software_param string to software.code
 param.map <- c(

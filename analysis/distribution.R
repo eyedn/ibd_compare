@@ -82,10 +82,7 @@ ks.res <- ks.res %>%
     p.adj = p.adjust(p.value, method = "BH"),
     log.p.adj = log10(p.adj),
     is.sig = p.adj <= 0.05,
-    filt = factor(
-      filt,
-      levels = c("none", "hot", "ibdends", "hotibdends", "ibdendshot")
-    ),
+    filt = factor(filt, levels = filt.levels),
     imap = factor(imap, levels = c("hapmap", "decode", "1Mb1cM")),
     software.code = factor(software.code),
     param.code = factor(param.code),
@@ -114,7 +111,7 @@ ggplot(
   aes(x = param.code, y = frac, fill = fill.key)
 ) +
   geom_col(position = "stack", width = 0.8, color = "black", linewidth = 0.5) +
-  facet_grid(imap ~ filt) +
+  facet_grid(imap ~ filt, labeller = filt.labeller) +
   scale_y_continuous(limits = c(0, 1)) +
   scale_fill_manual(
     values = c(
@@ -153,14 +150,15 @@ sub.calls <- rep1.calls %>%
   ) %>%
   # hard coded facet wrap order
   mutate(
-    facet = interaction(param.code, imap, filt, sep = ", "),
+    filt.label = filt.labels[as.character(filt)],
+    facet = interaction(param.code, imap, filt.label, sep = ", "),
     facet = fct_relevel(
       facet,
-      "h1, 1Mb1cM, ibdends",
-      "h1, hapmap, ibdends",
-      "true, true, none",
-      "r1, 1Mb1cM, ibdends",
-      "r1, hapmap, ibdends"
+      "h1, 1Mb1cM, I",
+      "h1, hapmap, I",
+      "true, true, N",
+      "r1, 1Mb1cM, I",
+      "r1, hapmap, I"
     )
   )
 
@@ -171,14 +169,7 @@ ggplot(sub.calls) +
   facet_wrap(~ facet, drop = TRUE) +
   coord_cartesian(ylim = c(0, sub.call.y.max)) +
   scale_fill_manual(
-    values = c(
-      "h1" = "lightblue1",
-      "h2"  = "dodgerblue",
-      "h3" = "blue",
-      "r1" = "mistyrose",
-      "r2"  = "red",
-      "r3" = "darkred"
-    ),
+    values = software.palette,
     labels = NULL
   ) + 
   labs(
@@ -209,12 +200,7 @@ ggplot(sub.calls.cen) +
   facet_wrap(~ facet, drop = TRUE) +
   coord_cartesian(ylim = c(0, sub.call.y.max)) +
   scale_fill_manual(
-    values = c(
-      "h1"   = "lightblue1",
-      "r1"   = "mistyrose",
-      "true" = "lightgrey",
-      "cen"  = "black"
-    )
+    values = c(software.palette, "true" = "lightgrey", "cen" = "black")
   ) +
   labs(
     title = glue(
@@ -246,12 +232,7 @@ ggplot(sub.calls.bfcen) +
   facet_wrap(~ facet, drop = TRUE) +
   coord_cartesian(ylim = c(0, sub.call.y.max)) +
   scale_fill_manual(
-    values = c(
-      "h1"   = "lightblue1",
-      "r1"   = "mistyrose",
-      "true" = "lightgrey",
-      "bfcen"  = "black"
-    )
+    values = c(software.palette, "true" = "lightgrey", "bfcen" = "black")
   ) +
   labs(
     title = glue(
@@ -283,12 +264,7 @@ ggplot(sub.calls.aftcen) +
   facet_wrap(~ facet, drop = TRUE) +
   coord_cartesian(ylim = c(0, sub.call.y.max)) +
   scale_fill_manual(
-    values = c(
-      "h1"   = "lightblue1",
-      "r1"   = "mistyrose",
-      "true" = "lightgrey",
-      "aftcen"  = "black"
-    )
+    values = c(software.palette, "true" = "lightgrey", "aftcen" = "black")
   ) +
   labs(
     title = glue(
@@ -327,10 +303,7 @@ ks.res.aftcen <- ks.res.aftcen %>%
     p.adj = p.adjust(p.value, method = "BH"),
     log.p.adj = log10(p.adj),
     is.sig = p.adj <= 0.05,
-    filt = factor(
-      filt,
-      levels = c("none", "hot", "ibdends", "hotibdends", "ibdendshot")
-    ),
+    filt = factor(filt, levels = filt.levels),
     imap = factor(imap, levels = c("hapmap", "decode", "1Mb1cM")),
     software.code = factor(software.code),
     param.code = factor(param.code),
@@ -360,7 +333,7 @@ ggplot(
   aes(x = param.code, y = frac, fill = fill.key)
 ) +
   geom_col(position = "stack", width = 0.8, color = "black", linewidth = 0.5) +
-  facet_grid(imap ~ filt) +
+  facet_grid(imap ~ filt, labeller = filt.labeller) +
   scale_y_continuous(limits = c(0, 1)) +
   scale_fill_manual(
     values = c(

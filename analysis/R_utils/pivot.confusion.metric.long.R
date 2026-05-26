@@ -66,7 +66,7 @@ pivot.confusion.metric.long <- function(all.stats.per.rep, metric, thr.levels) {
       software.with.params = factor(software.with.params),
       software.code = factor(software.code),
       imap = factor(imap),
-      filt = factor(filt),
+      filt = factor(filt, levels = filt.levels),
       pop = factor(pop),
       replicate.id = factor(replicate.id)
     )
