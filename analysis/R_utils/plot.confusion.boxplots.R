@@ -23,7 +23,7 @@ plot.confusion.boxplots <- function(
     geom_boxplot(
       aes(group = interaction(threshold, software.code), fill = software.code)
     ) +
-    facet_grid(filt ~ software) +
+    facet_grid(filt ~ .) +
     scale_x_discrete(labels = thr.labels) +
     scale_fill_manual(values = software.palette) +
     labs(

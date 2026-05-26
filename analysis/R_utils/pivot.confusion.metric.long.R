@@ -21,13 +21,13 @@ pivot.confusion.metric.long <- function(all.stats.per.rep, metric, thr.levels) {
   )
 
   if (metric == "sensitivity") {
-    successes.prefix <- "TP"
-    failures.prefix <- "FN"
+    successes.prefix <- "tp"
+    failures.prefix <- "fn"
     estimate.prefix <- "sensitivity"
   } else {
-    successes.prefix <- "TP"
-    failures.prefix <- "FP"
-    estimate.prefix <- "PPV"
+    successes.prefix <- "tp"
+    failures.prefix <- "fp"
+    estimate.prefix <- "ppv"
   }
 
   long.tbl <- purrr::map_dfr(

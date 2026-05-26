@@ -148,7 +148,7 @@ ggplot(chr18.het, aes(x = `O(HET)`)) +
 
 # ADMIX calculation ----
 # read in heterozygosity results
-sim.het.dir <- "~/scratch/stdpopsim_runs_chr18_admix2/ADMIX_het"
+sim.het.dir <- "~/scratch/msprime_runs2_chr18_admix_3T/ADMIX_het"
 sim.het.tbl <- map_dfr(
   .x = 1:50,
   .f = ~ read_tsv(
@@ -169,8 +169,8 @@ shapiro.test(sim.het$`O(HET)`)
 # plot mean and median heterozygotisties and Ne
 sim.mean.Ohet <- mean(sim.het$`O(HET)`)
 sim.med.Ohet <- median(sim.het$`O(HET)`)
-sim.mean.Ne <- sim.mean.Ohet / (4 * mut.rate)
-sim.med.Ne <- sim.med.Ohet / (4 * mut.rate)
+sim.mean.Ne <- sim.mean.Ohet / (4 * sim.mut.rate)
+sim.med.Ne <- sim.med.Ohet / (4 * sim.mut.rate)
 
 sim.legend.df <- data.frame(
   xintercept = c(sim.mean.Ohet, sim.med.Ohet),

@@ -24,9 +24,9 @@ chr18.map.len <- data.frame(
 )
 
 # various directories frequency used
-ibd.comp.dir <- "/home1/karatas/scratch/ibd_compare_chr18_admix"
+ibd.comp.dir <- "/home1/karatas/scratch/ibd_compare_chr18_admix_3T"
 ref.dir <- "/home1/karatas/references"
-sim.dir <- "/home1/karatas/scratch/stdpopsim_runs_chr18_admix"
+sim.dir <- "/home1/karatas/scratch/msprime_runs_chr18_admix_3T"
 
 # all stats per replicate column names
 stats.meta.names <- c(

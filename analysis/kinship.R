@@ -83,7 +83,7 @@ inf.rep1.tbl <- list(
 
 # analyze kindship performance ----
 # ---- set these two dirs correctly ----
-hap.dir <- "~/scratch/ibd_compare_chr18_admix/true_vs_inference/rapid_sim_tmapHapMapII_GRCh38_imapHapMapII_GRCh38_d2_w100_r10_s2/ibd_kinship_mats"
+hap.dir <- "~/scratch/ibd_compare_chr18_admix_3T/true_vs_inference/rapid_sim_tmapHapMapII_GRCh38_imapHapMapII_GRCh38_d2_w100_r10_s2/ibd_kinship_mats"
 
 # ---- read mats ----
 true.hap <- readRDS(file.path(hap.dir, "true_ADMIX_30.ibdends.rds"))

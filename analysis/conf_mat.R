@@ -101,30 +101,31 @@ precision.bin.analysis <- run.bin.effects.confusion.analysis(
 # build manuscript-facing plotting tables ----
 plot.confusion.boxplots(sens.long, "ADMIX", "hapmap", "Sensitivity")
 plot.confusion.boxplots(sens.long, "AFR", "hapmap", "Sensitivity")
-plot.confusion.boxplots(sens.long, "ASIA", "hapmap", "Sensitivity")
+# plot.confusion.boxplots(sens.long, "ASIA", "hapmap", "Sensitivity")
 plot.confusion.boxplots(sens.long, "EUR", "hapmap", "Sensitivity")
 
 plot.confusion.boxplots(sens.long, "ADMIX", "decode", "Sensitivity")
 plot.confusion.boxplots(sens.long, "AFR", "decode", "Sensitivity")
-plot.confusion.boxplots(sens.long, "ASIA", "decode", "Sensitivity")
+# plot.confusion.boxplots(sens.long, "ASIA", "decode", "Sensitivity")
 plot.confusion.boxplots(sens.long, "EUR", "decode", "Sensitivity")
 
 plot.confusion.boxplots(sens.long, "ADMIX", "1Mb1cM", "Sensitivity")
 plot.confusion.boxplots(sens.long, "AFR", "1Mb1cM", "Sensitivity")
-plot.confusion.boxplots(sens.long, "ASIA", "1Mb1cM", "Sensitivity")
+# plot.confusion.boxplots(sens.long, "ASIA", "1Mb1cM", "Sensitivity")
 plot.confusion.boxplots(sens.long, "EUR", "1Mb1cM", "Sensitivity")
 
 plot.confusion.boxplots(precision.long, "ADMIX", "hapmap", "Precision")
 plot.confusion.boxplots(precision.long, "AFR", "hapmap", "Precision")
-plot.confusion.boxplots(precision.long, "ASIA", "hapmap", "Precision")
+# plot.confusion.boxplots(precision.long, "ASIA", "hapmap", "Precision")
 plot.confusion.boxplots(precision.long, "EUR", "hapmap", "Precision")
 
 plot.confusion.boxplots(precision.long, "ADMIX", "decode", "Precision")
 plot.confusion.boxplots(precision.long, "AFR", "decode", "Precision")
-plot.confusion.boxplots(precision.long, "ASIA", "decode", "Precision")
+# plot.confusion.boxplots(precision.long, "ASIA", "decode", "Precision")
 plot.confusion.boxplots(precision.long, "EUR", "decode", "Precision")
 
 plot.confusion.boxplots(precision.long, "ADMIX", "1Mb1cM", "Precision")
 plot.confusion.boxplots(precision.long, "AFR", "1Mb1cM", "Precision")
-plot.confusion.boxplots(precision.long, "ASIA", "1Mb1cM", "Precision")
+# plot.confusion.boxplots(precision.long, "ASIA", "1Mb1cM", "Precision")
 plot.confusion.boxplots(precision.long, "EUR", "1Mb1cM", "Precision")
+

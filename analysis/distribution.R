@@ -142,7 +142,7 @@ ggplot(
 
 # plot ibd distributions of rep 1 ----
 ## plot ibd length distribution ----
-sub.call.y.max <- 300 # specific to each pop
+sub.call.y.max <- 500 # specific to each pop
 sub.calls <- rep1.calls %>%
   filter(
     param.code == "true" | 
@@ -218,7 +218,7 @@ ggplot(sub.calls.cen) +
   ) +
   labs(
     title = glue(
-      "{sub.call.focal.pop} IBD segments overlapping centromere (black bars)"
+      "{len.focal.pop} IBD segments overlapping centromere (black bars)"
     ),
     x = "Length (cM)",
     y = "Count",
@@ -255,7 +255,7 @@ ggplot(sub.calls.bfcen) +
   ) +
   labs(
     title = glue(
-      "{sub.call.focal.pop} IBD segments before centromere (black bars)"
+      "{len.focal.pop} IBD segments before centromere (black bars)"
     ),
     x = "Length (cM)",
     y = "Count",
