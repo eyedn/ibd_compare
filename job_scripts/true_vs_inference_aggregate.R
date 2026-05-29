@@ -9,6 +9,8 @@
 # ______________________________________________________________________________
 
 
+# pattern: Mixed (needs refactoring)
+
 library(tidyverse)
 library(glue)
 
@@ -25,8 +27,11 @@ source("job_scripts/R_utils/infer.software.with.params.R")
 
 # inputs ----
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) != 7) {
-  stop("Usage: true_vs_inference_aggregate.R manifest.file tmap sim.chr n.diploids res.out")
+if (length(args) != 8) {
+  stop(
+    "Usage: true_vs_inference_aggregate.R ",
+    "manifest.file tmap sim.chr n.diploids res.out filt pop pop.start"
+  )
 }
 manifest.file <- args[1]
 tmap <- args[2]
@@ -35,6 +40,11 @@ n.diploids <- as.integer(args[4])
 res.out <- args[5]
 filt <- args[6]
 pop <- args[7]
+pop.start <- as.integer(args[8])
+
+if (is.na(pop.start)) {
+  stop("pop.start must be integer-compatible; got: ", args[8])
+}
 
 # constants ----
 chr1.100mb.len <- data.frame(
@@ -54,6 +64,7 @@ genome.seg.len.cM <- ifelse(
   chr1.100mb.len[1, tmap],
   chr18.len[1, tmap]
 )
+sample.ids <- as.character(seq(pop.start, pop.start + n.diploids - 1))
 
 message("inputs:")
 message("manifest.file = ", manifest.file)
@@ -63,6 +74,7 @@ message("n.diploids = ", n.diploids)
 message("genome.seg.len.bp = ", genome.seg.len.bp)
 message("genome.seg.len.cM = ", genome.seg.len.cM)
 message("res.out = ", res.out)
+message("pop.start = ", pop.start)
 
 # read manifest ----
 manifest.df <- readr::read_tsv(manifest.file, show_col_types = FALSE)
@@ -180,12 +192,20 @@ for (i in seq_len(n.reps)) {
   # kinship matrices
   message("calculating true ibd-based kinship")
   k.true <- compute.kinship.coeffs(
-    true.ibd, n.diploids, genome.seg.len.cM
+    true.ibd,
+    n.diploids,
+    genome.seg.len.cM,
+    sample.id.mode = "empirical",
+    sample.ids = sample.ids
   )$kinship.matrix
 
   message("calculating inferred ibd-based kinship")
   k.inf <- compute.kinship.coeffs(
-    inf.ibd,  n.diploids, genome.seg.len.cM
+    inf.ibd,
+    n.diploids,
+    genome.seg.len.cM,
+    sample.id.mode = "empirical",
+    sample.ids = sample.ids
   )$kinship.matrix
 
   # store in lists (unchanged behavior)
