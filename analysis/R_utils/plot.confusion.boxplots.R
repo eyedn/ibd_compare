@@ -21,9 +21,10 @@ plot.confusion.boxplots <- function(
   
   ggplot(df2plot, aes(x = threshold, y = estimate)) +
     geom_boxplot(
-      aes(group = interaction(threshold, software.code), fill = software.code)
+      aes(group = interaction(threshold, software.code), fill = software.code), 
+      outliers = FALSE
     ) +
-    facet_grid(filt ~ ., labeller = filt.labeller) +
+    facet_grid(filt ~ software, labeller = filt.labeller) +
     scale_x_discrete(labels = thr.labels) +
     scale_fill_manual(values = software.palette) +
     labs(

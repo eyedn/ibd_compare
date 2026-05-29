@@ -154,39 +154,39 @@ dir.paths.map <- c(
 
 # map sub-dirs under ibd.comp.dir/true_vs_inference to software.code
 tvi.dir.paths.map <- c(
-  setNames("hh1", glue("{ibd.comp.dir}/true_vs_inference/hapibd_sim_tmapHapMapII_GRCh38_imapHapMapII_GRCh38_seed1.0_gap1000_extend1.0_out2.0_mark100_mac2")),
-  setNames("hh2", glue("{ibd.comp.dir}/true_vs_inference/hapibd_sim_tmapHapMapII_GRCh38_imapHapMapII_GRCh38_seed1.0_gap2000_extend1.0_out2.0_mark100_mac2")),
+  # setNames("hh1", glue("{ibd.comp.dir}/true_vs_inference/hapibd_sim_tmapHapMapII_GRCh38_imapHapMapII_GRCh38_seed1.0_gap1000_extend1.0_out2.0_mark100_mac2")),
+  # setNames("hh2", glue("{ibd.comp.dir}/true_vs_inference/hapibd_sim_tmapHapMapII_GRCh38_imapHapMapII_GRCh38_seed1.0_gap2000_extend1.0_out2.0_mark100_mac2")),
   setNames("hh3", glue("{ibd.comp.dir}/true_vs_inference/hapibd_sim_tmapHapMapII_GRCh38_imapHapMapII_GRCh38_seed2.0_gap1000_extend1.0_out2.0_mark100_mac2")),
   
-  setNames("hd1", glue("{ibd.comp.dir}/true_vs_inference/hapibd_sim_tmapHapMapII_GRCh38_imapDeCodeSexAveraged_GRCh38_seed1.0_gap1000_extend1.0_out2.0_mark100_mac2")),
-  setNames("hd2", glue("{ibd.comp.dir}/true_vs_inference/hapibd_sim_tmapHapMapII_GRCh38_imapDeCodeSexAveraged_GRCh38_seed1.0_gap2000_extend1.0_out2.0_mark100_mac2")),
-  setNames("hd3", glue("{ibd.comp.dir}/true_vs_inference/hapibd_sim_tmapHapMapII_GRCh38_imapDeCodeSexAveraged_GRCh38_seed2.0_gap1000_extend1.0_out2.0_mark100_mac2")),
+  # setNames("hd1", glue("{ibd.comp.dir}/true_vs_inference/hapibd_sim_tmapHapMapII_GRCh38_imapDeCodeSexAveraged_GRCh38_seed1.0_gap1000_extend1.0_out2.0_mark100_mac2")),
+  # setNames("hd2", glue("{ibd.comp.dir}/true_vs_inference/hapibd_sim_tmapHapMapII_GRCh38_imapDeCodeSexAveraged_GRCh38_seed1.0_gap2000_extend1.0_out2.0_mark100_mac2")),
+  # setNames("hd3", glue("{ibd.comp.dir}/true_vs_inference/hapibd_sim_tmapHapMapII_GRCh38_imapDeCodeSexAveraged_GRCh38_seed2.0_gap1000_extend1.0_out2.0_mark100_mac2")),
   
-  setNames("hf1", glue("{ibd.comp.dir}/true_vs_inference/hapibd_sim_tmapHapMapII_GRCh38_imapFlat1Mb1cM_seed1.0_gap1000_extend1.0_out2.0_mark100_mac2")),
-  setNames("hf2", glue("{ibd.comp.dir}/true_vs_inference/hapibd_sim_tmapHapMapII_GRCh38_imapFlat1Mb1cM_seed1.0_gap2000_extend1.0_out2.0_mark100_mac2")),
+  # setNames("hf1", glue("{ibd.comp.dir}/true_vs_inference/hapibd_sim_tmapHapMapII_GRCh38_imapFlat1Mb1cM_seed1.0_gap1000_extend1.0_out2.0_mark100_mac2")),
+  # setNames("hf2", glue("{ibd.comp.dir}/true_vs_inference/hapibd_sim_tmapHapMapII_GRCh38_imapFlat1Mb1cM_seed1.0_gap2000_extend1.0_out2.0_mark100_mac2")),
   setNames("hf3", glue("{ibd.comp.dir}/true_vs_inference/hapibd_sim_tmapHapMapII_GRCh38_imapFlat1Mb1cM_seed2.0_gap1000_extend1.0_out2.0_mark100_mac2")),
   
   setNames("rh1", glue("{ibd.comp.dir}/true_vs_inference/rapid_sim_tmapHapMapII_GRCh38_imapHapMapII_GRCh38_d2_w100_r10_s2")),
-  setNames("rh2", glue("{ibd.comp.dir}/true_vs_inference/rapid_sim_tmapHapMapII_GRCh38_imapHapMapII_GRCh38_d2_w200_r10_s2")),
-  setNames("rh3", glue("{ibd.comp.dir}/true_vs_inference/rapid_sim_tmapHapMapII_GRCh38_imapHapMapII_GRCh38_d2_w300_r10_s2")),
+  # setNames("rh2", glue("{ibd.comp.dir}/true_vs_inference/rapid_sim_tmapHapMapII_GRCh38_imapHapMapII_GRCh38_d2_w200_r10_s2")),
+  # setNames("rh3", glue("{ibd.comp.dir}/true_vs_inference/rapid_sim_tmapHapMapII_GRCh38_imapHapMapII_GRCh38_d2_w300_r10_s2")),
   
-  setNames("rd1", glue("{ibd.comp.dir}/true_vs_inference/rapid_sim_tmapHapMapII_GRCh38_imapDeCodeSexAveraged_GRCh38_d2_w100_r10_s2")),
-  setNames("rd2", glue("{ibd.comp.dir}/true_vs_inference/rapid_sim_tmapHapMapII_GRCh38_imapDeCodeSexAveraged_GRCh38_d2_w200_r10_s2")),
-  setNames("rd3", glue("{ibd.comp.dir}/true_vs_inference/rapid_sim_tmapHapMapII_GRCh38_imapDeCodeSexAveraged_GRCh38_d2_w300_r10_s2")),
+  # setNames("rd1", glue("{ibd.comp.dir}/true_vs_inference/rapid_sim_tmapHapMapII_GRCh38_imapDeCodeSexAveraged_GRCh38_d2_w100_r10_s2")),
+  # setNames("rd2", glue("{ibd.comp.dir}/true_vs_inference/rapid_sim_tmapHapMapII_GRCh38_imapDeCodeSexAveraged_GRCh38_d2_w200_r10_s2")),
+  # setNames("rd3", glue("{ibd.comp.dir}/true_vs_inference/rapid_sim_tmapHapMapII_GRCh38_imapDeCodeSexAveraged_GRCh38_d2_w300_r10_s2")),
   
-  setNames("rf1", glue("{ibd.comp.dir}/true_vs_inference/rapid_sim_tmapHapMapII_GRCh38_imapFlat1Mb1cM_d2_w100_r10_s2")),
-  setNames("rf2", glue("{ibd.comp.dir}/true_vs_inference/rapid_sim_tmapHapMapII_GRCh38_imapFlat1Mb1cM_d2_w200_r10_s2")),
-  setNames("rf3", glue("{ibd.comp.dir}/true_vs_inference/rapid_sim_tmapHapMapII_GRCh38_imapFlat1Mb1cM_d2_w300_r10_s2")),
+  setNames("rf1", glue("{ibd.comp.dir}/true_vs_inference/rapid_sim_tmapHapMapII_GRCh38_imapFlat1Mb1cM_d2_w100_r10_s2"))
+  # setNames("rf2", glue("{ibd.comp.dir}/true_vs_inference/rapid_sim_tmapHapMapII_GRCh38_imapFlat1Mb1cM_d2_w200_r10_s2")),
+  # setNames("rf3", glue("{ibd.comp.dir}/true_vs_inference/rapid_sim_tmapHapMapII_GRCh38_imapFlat1Mb1cM_d2_w300_r10_s2")),
   
-  setNames("ih1", glue("{ibd.comp.dir}/true_vs_inference/ilash_sim_tmapHapMapII_GRCh38_imapHapMapII_GRCh38_auto1_min2.0_slice2.0_overlap1.5")),
-  setNames("ih2", glue("{ibd.comp.dir}/true_vs_inference/ilash_sim_tmapHapMapII_GRCh38_imapHapMapII_GRCh38_auto1_min2.0_slice2.0_overlap1.0")),
-  setNames("ih3", glue("{ibd.comp.dir}/true_vs_inference/ilash_sim_tmapHapMapII_GRCh38_imapHapMapII_GRCh38_auto1_min2.0_slice2.0_overlap0.5")),
-  setNames("id1", glue("{ibd.comp.dir}/true_vs_inference/ilash_sim_tmapHapMapII_GRCh38_imapDeCodeSexAveraged_GRCh38_auto1_min2.0_slice2.0_overlap1.5")),
-  setNames("id2", glue("{ibd.comp.dir}/true_vs_inference/ilash_sim_tmapHapMapII_GRCh38_imapDeCodeSexAveraged_GRCh38_auto1_min2.0_slice2.0_overlap1.0")),
-  setNames("id3", glue("{ibd.comp.dir}/true_vs_inference/ilash_sim_tmapHapMapII_GRCh38_imapDeCodeSexAveraged_GRCh38_auto1_min2.0_slice2.0_overlap0.5")),
-  setNames("if1", glue("{ibd.comp.dir}/true_vs_inference/ilash_sim_tmapHapMapII_GRCh38_imapFlat1Mb1cM_auto1_min2.0_slice2.0_overlap1.5")),
-  setNames("if2", glue("{ibd.comp.dir}/true_vs_inference/ilash_sim_tmapHapMapII_GRCh38_imapFlat1Mb1cM_auto1_min2.0_slice2.0_overlap1.0")),
-  setNames("if3", glue("{ibd.comp.dir}/true_vs_inference/ilash_sim_tmapHapMapII_GRCh38_imapFlat1Mb1cM_auto1_min2.0_slice2.0_overlap0.5"))
+  # setNames("ih1", glue("{ibd.comp.dir}/true_vs_inference/ilash_sim_tmapHapMapII_GRCh38_imapHapMapII_GRCh38_auto1_min2.0_slice2.0_overlap1.5")),
+  # setNames("ih2", glue("{ibd.comp.dir}/true_vs_inference/ilash_sim_tmapHapMapII_GRCh38_imapHapMapII_GRCh38_auto1_min2.0_slice2.0_overlap1.0")),
+  # setNames("ih3", glue("{ibd.comp.dir}/true_vs_inference/ilash_sim_tmapHapMapII_GRCh38_imapHapMapII_GRCh38_auto1_min2.0_slice2.0_overlap0.5")),
+  # setNames("id1", glue("{ibd.comp.dir}/true_vs_inference/ilash_sim_tmapHapMapII_GRCh38_imapDeCodeSexAveraged_GRCh38_auto1_min2.0_slice2.0_overlap1.5")),
+  # setNames("id2", glue("{ibd.comp.dir}/true_vs_inference/ilash_sim_tmapHapMapII_GRCh38_imapDeCodeSexAveraged_GRCh38_auto1_min2.0_slice2.0_overlap1.0")),
+  # setNames("id3", glue("{ibd.comp.dir}/true_vs_inference/ilash_sim_tmapHapMapII_GRCh38_imapDeCodeSexAveraged_GRCh38_auto1_min2.0_slice2.0_overlap0.5")),
+  # setNames("if1", glue("{ibd.comp.dir}/true_vs_inference/ilash_sim_tmapHapMapII_GRCh38_imapFlat1Mb1cM_auto1_min2.0_slice2.0_overlap1.5")),
+  # setNames("if2", glue("{ibd.comp.dir}/true_vs_inference/ilash_sim_tmapHapMapII_GRCh38_imapFlat1Mb1cM_auto1_min2.0_slice2.0_overlap1.0")),
+  # setNames("if3", glue("{ibd.comp.dir}/true_vs_inference/ilash_sim_tmapHapMapII_GRCh38_imapFlat1Mb1cM_auto1_min2.0_slice2.0_overlap0.5"))
 )
 
 # map sub-dirs where imap == hapmap under ibd.comp.dir to software.code ----

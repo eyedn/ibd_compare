@@ -772,8 +772,8 @@ gen.time <- 25
 hacker.end.year <- 1865
 present.year <- 2000
 epoch.1.len <- 1
-epoch.2.len <- 9 
-epoch.3.len <- 5
+epoch.2.len <- 6 
+epoch.3.len <- 8
 
 # This source table keeps several historical columns for completeness. The model
 # directly uses only period, person-years, birth-rate, imports, births, and
@@ -1157,12 +1157,14 @@ combined.ne.plot <- ggplot(
   geom_line(
     aes(y = import.ne, linetype = "Import-only trajectory"),
     data = combined.ne.long %>% filter(population == "aa"),
-    linewidth = 1.1, color = afr.sec
+    linewidth = 1.1,
+    color = afr.sec
   ) +
   geom_line(
     aes(y = admix.ne, linetype = "American-born-only trajectory"),
     data = combined.ne.long %>% filter(population == "aa"),
-    linewidth = 1.1, color = admix.sec
+    linewidth = 1.1,
+    color = admix.sec
   ) +
   scale_linetype_manual(
     values = c(
@@ -1180,9 +1182,9 @@ combined.ne.plot <- ggplot(
     labels = c(
       `Epoch 1: Import-influenced sex proportions` =
         "Founders' sex proportions",
-      `Epoch 2: WF 'Inbreeding Nb'` = 
-        "US-born WF  + Imports' sex proportions",
-      `Epoch 3: Modern exponential growth` = 
+      `Epoch 2: WF 'Inbreeding Nb'` =
+        "US-born WF + Imports' sex proportions",
+      `Epoch 3: Modern exponential growth` =
         "Modern exponential growth"
     ),
     name = "AA generation-wise calculation method",
@@ -1221,8 +1223,214 @@ combined.ne.plot <- ggplot(
     linetype = guide_legend(order = 2),
     shape = guide_legend(order = 3)
   ) +
-  theme_bw(base_size = 18)
+  theme_bw(base_size = 18) +
+  theme(
+    legend.position = c(0.98, 0.02),
+    legend.justification = c(1, 0),
+    legend.background = element_rect(
+      fill = scales::alpha("white", 0.9),
+      color = "black"
+    ),
+    legend.box = "vertical"
+  )
 
 if (interactive()) {
   print(combined.ne.plot)
 }
+
+# Ne plot for PEQG ----
+line.sizes = 2
+combined.ne.long <- combined.ne.long %>%
+  mutate(generation = as.integer((year - 1625) / gen.time)) %>%
+  filter(generation > 0, year %% gen.time == 0)
+combined.ne.plot <- ggplot(
+  combined.ne.long,
+  aes(x = generation, color = population)
+) +
+  geom_line(
+    aes(y = ne),
+    data = combined.ne.long %>% filter(population != "aa"),
+    linewidth = line.sizes
+  ) +
+  geom_line(
+    aes(y = ne),
+    data = combined.ne.long %>% filter(population == "aa"),
+    linewidth = line.sizes
+  ) +
+  geom_line(
+    aes(y = import.ne),
+    data = combined.ne.long %>% filter(population == "aa"),
+    linewidth = line.sizes,
+    color = afr.sec,
+    linetype = "dashed"
+  ) +
+  geom_line(
+    aes(y = admix.ne),
+    data = combined.ne.long %>% filter(population == "aa"),
+    linewidth = line.sizes,
+    color = admix.sec,
+    linetype = "dashed"
+  ) +
+  scale_color_manual(
+    values = c(
+      aa = admix.prim,
+      afr = afr.prim,
+      eur = eur.prim
+    )
+  ) +
+  scale_y_continuous(
+    breaks = c(0, 100000, 200000, 300000, 400000, 500000),
+    limits = c(0, 550000)
+  ) +
+  scale_x_continuous(
+    breaks = c(0, 5, 10, 15),
+    limits = c(0, 15.5)
+  ) +
+  coord_cartesian(clip = "off") +
+  theme_bw(base_size = 24, base_line_size = line.sizes, base_rect_size = line.sizes) +
+  theme(
+    legend.position = "none",
+    panel.grid.minor = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank()
+  )
+
+if (interactive()) {
+  print(combined.ne.plot)
+}
+
+# save Ne figure for PEQG
+pdf(
+  "~/proj/ibd_compare_results/ne_plot.pdf",
+  width = 8,
+  height = 5,
+  family = "Helvetica"
+)
+
+print(combined.ne.plot)
+
+dev.off()
+
+# mixing proportions plot ----
+admix.tbl <- tibble(
+  generation = 1:15,
+  
+  afr = c(
+    0.850000,
+    0.904820,
+    0.791384,
+    0.786692,
+    0.719992,
+    0.494960,
+    0.130456,
+    0.060000,
+    0.060000,
+    0.060000,
+    0.000000,
+    0.000000,
+    0.000000,
+    0.000000,
+    0.000000
+  ),
+  
+  eur = c(
+    0.150000,
+    0.080000,
+    0.080000,
+    0.080000,
+    0.080000,
+    0.080000,
+    0.080000,
+    0.030000,
+    0.030000,
+    0.030000,
+    0.000000,
+    0.000000,
+    0.000000,
+    0.000000,
+    0.000000
+  ),
+  
+  prior.admix = c(
+    0.000000,
+    0.015180,
+    0.128616,
+    0.133308,
+    0.200008,
+    0.425040,
+    0.789544,
+    0.910000,
+    0.910000,
+    0.910000,
+    1.000000,
+    1.000000,
+    1.000000,
+    1.000000,
+    1.000000
+  )
+)
+
+# long format
+admix.long <- admix.tbl %>%
+  pivot_longer(
+    cols = -generation,
+    names_to = "ancestry",
+    values_to = "proportion"
+  ) %>%
+  mutate(perc = proportion * 100)
+
+
+admix.plot <- ggplot(
+  admix.long,
+  aes(
+    x = generation,
+    y = perc,
+    color = ancestry
+  )
+) +
+  geom_line(
+    linewidth = line.sizes
+  ) +
+  scale_color_manual(
+    values = c(
+      afr = afr.prim,
+      eur = eur.prim,
+      prior.admix = admix.prim
+    )
+  ) +
+  scale_x_continuous(
+    breaks = c(0, 5, 10, 15),
+    limits = c(0, 15.5)
+  ) +
+  scale_y_continuous(
+    breaks = c(0, 25, 50, 75, 100),
+    limits = c(0, 108)
+  ) +
+  coord_cartesian(clip = "off") +
+  theme_bw(
+    base_size = 24,
+    base_line_size = line.sizes,
+    base_rect_size = line.sizes
+  ) +
+  theme(
+    legend.position = "none",
+    panel.grid.minor = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank()
+  )
+
+if (interactive()) {
+  print(admix.plot)
+}
+
+# save Ne figure for PEQG
+pdf(
+  "~/proj/ibd_compare_results/anc_plot.pdf",
+  width = 8,
+  height = 5,
+  family = "Helvetica"
+)
+
+print(admix.plot)
+
+dev.off()

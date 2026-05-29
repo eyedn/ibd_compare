@@ -358,3 +358,83 @@ ggplot(
     fill = NULL
   ) +
   theme_bw(base_size = 32)
+
+# figures for PEQG ----
+line.sizes = 2
+filt.labels.tmp <- c(
+  "none" = "None",
+  "hot" = "Z",
+  "ibdends" = "I",
+  "hotibdends" = "Z then I",
+  "ibdendshot" = "I then Z"
+)
+map.labels.tmp <- c(
+  "1Mb1cM" = "flat",
+  "hapmap" = "HapMapII"
+)
+ks.df <- ks.bar %>% 
+  filter(imap != "decode", param.code %in% c("h3", "r1")) %>% 
+  mutate(perc = frac * 100)
+ks.plot <- ggplot(
+  ks.df,
+  aes(x = param.code, y = perc, fill = fill.key)
+) +
+  geom_col(position = "stack", width = 0.8, color = "black", linewidth = 1) +
+  facet_grid(
+    imap ~ filt, 
+    labeller = labeller(imap = map.labels.tmp, filt = filt.labels.tmp)
+  ) +
+  scale_y_continuous(
+    breaks = c(0, 25, 50, 75, 100)
+  ) +
+  scale_fill_manual(
+    values = c(
+      "hapibd_don't reject" = "#EBC9DE",
+      "hapibd_reject"       = "#C75DAA",
+      "rapid_don't reject"  = "#B0DDDE",
+      "rapid_reject"        = "#009B9F"
+    ),
+    labels = c(
+      "hapibd_don't reject" = "hap-IBD: don't reject",
+      "hapibd_reject"       = "hap-IBD: reject",
+      "rapid_don't reject"  = "RaPID: don't reject",
+      "rapid_reject"        = "RaPID: reject"
+    )
+  ) +
+  labs(
+    title =  NULL,
+    x = NULL,
+    y = "% replicates",
+    fill = NULL
+  ) +
+  theme_bw(
+    base_size = 24,
+    base_line_size = line.sizes,
+    base_rect_size = line.sizes
+  ) +
+  theme(
+    panel.grid.minor = element_blank(),
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    strip.background = element_rect(
+      fill = "#fbc2c1",
+      color = "black"
+    )
+  )
+
+if (interactive()) {
+  print(ks.plot)
+}
+
+# save precision figure for PEQG
+pdf(
+  "~/proj/ibd_compare_results/ks_admix.pdf",
+  width = 12,
+  height = 6,
+  family = "Helvetica"
+)
+
+print(ks.plot)
+
+dev.off()

@@ -49,14 +49,20 @@ all.stats.per.rep <- read.all.stats.per.rep(
 
 # analyze ibd score rel true performance ----
 df.reltrue <- all.stats.per.rep %>%
-  filter(
-    imap == "hapmap",
-    filt %in% c("ibdends")
-  ) %>%
+  filter(imap == "hapmap") %>%
   pivot_longer(
     cols = matches("^ibd\\.score\\.rel\\.true(\\.|$)"),
     values_to = "ibd.score.rel.true"
   )
+
+ggplot(df.reltrue) +
+  geom_boxplot(
+    aes(x = pop, y = true.ibd.score), 
+    outliers = FALSE
+  ) +
+  facet_grid(filt ~ software, labeller = filt.labeller) +
+  theme_bw(base_size = 32) + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
 
 ggplot(
   df.reltrue,
@@ -185,3 +191,4 @@ ggplot(df.err, aes(x = pop, y = ibd.score.rel.afr.err, fill = software.code)) +
     fill = NULL
   ) +
   theme_bw(base_size = 32)
+

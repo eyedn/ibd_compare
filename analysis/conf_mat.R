@@ -82,27 +82,28 @@ confusion.boxplot.summary <- bind_rows(sens.long, precision.long) %>%
 
 # fit four primary glmm models and omnibus lrt tables ----
 # note: format of data from pivot.confusion.metric.long
-sens.analysis <- run.overall.confusion.analysis(
-  long.data = sens.long.overall, 
-  adjust.method = adj.method
-  )
-
-precision.analysis <- run.overall.confusion.analysis(
-  long.data = precision.long.overall, 
-  adjust.method = adj.method
-  )
-
-sens.bin.analysis <- run.bin.effects.confusion.analysis(
-  long.data = sens.long.bins,
-  adjust.method = adj.method
-  )
-
-precision.bin.analysis <- run.bin.effects.confusion.analysis(
-  long.data = precision.long.bins,
-  adjust.method = adj.method
-  )
+# sens.analysis <- run.overall.confusion.analysis(
+#   long.data = sens.long.overall, 
+#   adjust.method = adj.method
+#   )
+# 
+# precision.analysis <- run.overall.confusion.analysis(
+#   long.data = precision.long.overall, 
+#   adjust.method = adj.method
+#   )
+# 
+# sens.bin.analysis <- run.bin.effects.confusion.analysis(
+#   long.data = sens.long.bins,
+#   adjust.method = adj.method
+#   )
+# 
+# precision.bin.analysis <- run.bin.effects.confusion.analysis(
+#   long.data = precision.long.bins,
+#   adjust.method = adj.method
+#   )
 
 # build manuscript-facing plotting tables ----
+sens.long.tmp <- sens.long %>% filter(software.code %in% c("h3", "r1"), threshold %in% c("overall", "2"))
 plot.confusion.boxplots(sens.long, "ADMIX", "hapmap", "Sensitivity")
 plot.confusion.boxplots(sens.long, "AFR", "hapmap", "Sensitivity")
 # plot.confusion.boxplots(sens.long, "ASIA", "hapmap", "Sensitivity")
@@ -132,3 +133,157 @@ plot.confusion.boxplots(precision.long, "ADMIX", "1Mb1cM", "Precision")
 plot.confusion.boxplots(precision.long, "AFR", "1Mb1cM", "Precision")
 # plot.confusion.boxplots(precision.long, "ASIA", "1Mb1cM", "Precision")
 plot.confusion.boxplots(precision.long, "EUR", "1Mb1cM", "Precision")
+
+# plots for PEQG ----
+line.sizes = 2
+filt.labels.tmp <- c(
+  "none" = "None",
+  "hot" = "Z",
+  "ibdends" = "I",
+  "hotibdends" = "Z then I",
+  "ibdendshot" = "I then Z"
+)
+map.labels.tmp <- c(
+  "1Mb1cM" = "flat",
+  "hapmap" = "HapMapII"
+)
+sens.long.tmp <- sens.long %>% 
+  filter(
+    software.code %in% c("h3", "r1"), threshold == "overall", pop == "ADMIX", 
+    imap != "decode"
+    ) %>%
+  mutate(imap = factor(imap, levels = c("hapmap", "1Mb1cM")))
+
+sens.box <- ggplot(sens.long.tmp, aes(x = software.code, y = estimate)) +
+  geom_violin(
+    aes(
+      group = software.code, fill = software.code, 
+      color = software.code
+      ), linewidth = 0.75
+    ) +
+  geom_boxplot(
+    aes(
+      group = software.code, color = software.code
+    ), linewidth = 0.75, width = 0.2, outliers = FALSE, fill = "white"
+  ) +
+  facet_grid(
+    imap ~ filt, 
+    labeller = labeller(imap = map.labels.tmp, filt = filt.labels.tmp)
+    ) +
+  scale_color_manual(
+    name = "Software",
+    values = c("h3" = "#C75DAA", "r1" = "#009B9F"),
+    labels = c("h3" = "hap-IBD", "r1" = "RaPID")
+  ) +
+  scale_fill_manual(
+    name = "Software",
+    values = c("h3" = "#EBC9DE", "r1" = "#B0DDDE"),
+    labels = c("h3" = "hap-IBD", "r1" = "RaPID")
+  ) +
+  labs(
+    x = "Filtering Strategy", y = "Sensitivity", 
+    title = NULL, fill = NULL
+    ) +
+  theme_bw(
+    base_size = 24,
+    base_line_size = line.sizes,
+    base_rect_size = line.sizes
+  ) + 
+  theme(
+    panel.grid.minor = element_blank(),
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    strip.background = element_rect(
+      fill = "#fbc2c1",
+      color = "black"
+    )
+  )
+
+if (interactive()) {
+  print(sens.box)
+}
+
+# save sens figure for PEQG
+pdf(
+  "~/proj/ibd_compare_results/sens_box.pdf",
+  width = 10,
+  height = 4,
+  family = "Helvetica"
+)
+
+print(sens.box)
+
+dev.off()
+
+# precision -----
+precision.long.tmp <- precision.long %>% 
+  filter(
+    software.code %in% c("h3", "r1"), threshold == "overall", pop == "ADMIX", 
+    imap != "decode"
+  ) %>%
+  mutate(imap = factor(imap, levels = c("hapmap", "1Mb1cM")))
+
+precision.box <- ggplot(
+  precision.long.tmp, aes(x = software.code, y = estimate)
+  ) +
+  geom_violin(
+    aes(
+      group = software.code, fill = software.code, 
+      color = software.code
+    ), linewidth = 0.75
+  ) +
+  geom_boxplot(
+    aes(
+      group = software.code, color = software.code
+    ), linewidth = 0.75, width = 0.2, outliers = FALSE, fill = "white"
+  ) +
+  facet_grid(
+    imap ~ filt, 
+    labeller = labeller(imap = map.labels.tmp, filt = filt.labels.tmp)
+  ) +
+  scale_color_manual(
+    name = "Software",
+    values = c("h3" = "#C75DAA", "r1" = "#009B9F"),
+    labels = c("h3" = "hap-IBD", "r1" = "RaPID")
+  ) +
+  scale_fill_manual(
+    name = "Software",
+    values = c("h3" = "#EBC9DE", "r1" = "#B0DDDE"),
+    labels = c("h3" = "hap-IBD", "r1" = "RaPID")
+  ) +
+  labs(
+    x = "Filtering Strategy", y = "Precision", 
+    title = NULL, fill = NULL
+  ) +
+  theme_bw(
+    base_size = 24,
+    base_line_size = line.sizes,
+    base_rect_size = line.sizes
+  ) + 
+  theme(
+    panel.grid.minor = element_blank(),
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    strip.background = element_rect(
+      fill = "#fbc2c1",
+      color = "black"
+    )
+  )
+
+if (interactive()) {
+  print(precision.box)
+}
+
+# save precision figure for PEQG
+pdf(
+  "~/proj/ibd_compare_results/precision_box.pdf",
+  width = 10,
+  height = 4,
+  family = "Helvetica"
+)
+
+print(precision.box)
+
+dev.off()

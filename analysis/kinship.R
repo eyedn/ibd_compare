@@ -52,7 +52,7 @@ king.tbl <- king.tbl %>%
   select(-sam1.min, -sam2.max)
 
 # read in kinship results for a specific pop ----
-kin.focal.pop <- "ADMIX"
+kin.focal.pop <- "EUR"
 true.tbl <- read.pop.ibd.kinship(
   kin.focal.pop, tvi.dir.paths.map, cores, which = "true"
   ) %>%
@@ -65,6 +65,9 @@ inf.tbl <- list(
     inf.tbl  %>% rename(kin.inf  = kinship) %>% select(-sam1, -sam2)
   ) %>%
   reduce(full_join, by = c("rep", "pop", "sam.pair"))
+summary(inf.tbl$kin.true)
+tmp <- inf.tbl %>% filter(software.code == "rf1", filt == "none")
+cor.test(tmp$kin.true, tmp$kin.inf)
 
 # read in kinships result for rep 1 ----
 kin.focal.rep <- 1
