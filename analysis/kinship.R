@@ -52,7 +52,7 @@ king.tbl <- king.tbl %>%
   select(-sam1.min, -sam2.max)
 
 # read in kinship results for a specific pop ----
-kin.focal.pop <- "EUR"
+kin.focal.pop <- "ADMIX"
 true.tbl <- read.pop.ibd.kinship(
   kin.focal.pop, tvi.dir.paths.map, cores, which = "true"
   ) %>%
@@ -158,3 +158,205 @@ ggplot(plot.pairs, aes(x = kin.x, y = kin.y)) +
   labs(x = NULL, y = NULL) +
   theme_bw(base_size = 32)
 
+# results for PEQG ----
+# read in data
+true.ADMIX.tbl <- read.pop.ibd.kinship(
+  "ADMIX", tvi.dir.paths.map, cores, which = "true"
+) %>%
+  select(-filt, -software.code)
+inf.ADMIX.tbl <- read.pop.ibd.kinship(
+  "ADMIX", tvi.dir.paths.map, cores, which = "inf"
+)
+inf.ADMIX.tbl <- list(
+  true.ADMIX.tbl %>% rename(kin.true = kinship) %>% select(-sam1, -sam2),
+  inf.ADMIX.tbl  %>% rename(kin.inf  = kinship) %>% select(-sam1, -sam2)
+) %>%
+  reduce(full_join, by = c("rep", "pop", "sam.pair"))
+
+true.AFR.tbl <- read.pop.ibd.kinship(
+  "AFR", tvi.dir.paths.map, cores, which = "true"
+) %>%
+  select(-filt, -software.code)
+inf.AFR.tbl <- read.pop.ibd.kinship(
+  "AFR", tvi.dir.paths.map, cores, which = "inf"
+)
+inf.AFR.tbl <- list(
+  true.AFR.tbl %>% rename(kin.true = kinship) %>% select(-sam1, -sam2),
+  inf.AFR.tbl  %>% rename(kin.inf  = kinship) %>% select(-sam1, -sam2)
+) %>%
+  reduce(full_join, by = c("rep", "pop", "sam.pair"))
+
+true.EUR.tbl <- read.pop.ibd.kinship(
+  "EUR", tvi.dir.paths.map, cores, which = "true"
+) %>%
+  select(-filt, -software.code)
+inf.EUR.tbl <- read.pop.ibd.kinship(
+  "EUR", tvi.dir.paths.map, cores, which = "inf"
+)
+inf.EUR.tbl <- list(
+  true.EUR.tbl %>% rename(kin.true = kinship) %>% select(-sam1, -sam2),
+  inf.EUR.tbl  %>% rename(kin.inf  = kinship) %>% select(-sam1, -sam2)
+) %>%
+  reduce(full_join, by = c("rep", "pop", "sam.pair"))
+
+inf.tbl <- bind_rows(inf.ADMIX.tbl, inf.AFR.tbl, inf.EUR.tbl)
+inf.tbl <- inf.tbl %>%
+  mutate(
+    imap = ifelse(substr(software.code, 2, 2) == "f", "flat", "HapMapII"),
+    software.code = paste0(
+      substr(software.code, 1, 1), 
+      substr(
+        software.code, nchar(software.code), nchar(software.code)
+        )
+      )
+    )
+inf.tbl <- inf.tbl %>% filter(kin.true > 0)
+
+# data formatting
+kin.summary <- inf.tbl %>%
+  group_by(pop, filt, imap, software.code) %>%
+  summarise(
+    n = n(),
+    pearson_r = cor(
+      kin.true,
+      kin.inf,
+      method = "pearson",
+      use = "complete.obs"
+    ),
+    spearman_rho = cor(
+      kin.true,
+      kin.inf,
+      method = "spearman",
+      use = "complete.obs"
+    ),
+    rmse = sqrt(mean((kin.inf - kin.true)^2)),
+    bias = mean(kin.inf - kin.true),
+    .groups = "drop"
+  )
+
+# cor.tests <- inf.tbl %>%
+#   group_by(pop, filt, imap, software.code) %>%
+#   summarise(
+#     test = list(cor.test(kin.true, kin.inf)),
+#     .groups = "drop"
+#   ) %>%
+#   mutate(tidy = map(test, broom::tidy)) %>%
+#   tidyr::unnest(tidy)
+
+# kinships plot
+kin.summary <- kin.summary %>%
+  mutate(
+    imap = factor(imap, c("HapMapII", "flat")),
+    filt = factor(filt, c("none", "hot", "ibdends", "hotibdends", "ibdendshot")),
+    pop = factor(pop, c("ADMIX", "AFR", "EUR"))
+    ) %>%
+  filter(imap == "flat")
+
+kin.plot <- ggplot(
+  kin.summary,
+  aes(x = interaction(software.code, pop), y = spearman_rho)
+) +
+  geom_point(
+    aes(
+      color = software.code,
+      fill = software.code,
+      shape = pop
+    ),
+    size = 5, stroke = 2
+  ) +
+  facet_grid(
+    . ~ filt,
+    labeller = labeller(
+      imap = map.labels.tmp,
+      filt = filt.labels.tmp
+    )
+  ) +
+  scale_shape_manual(
+    name = NULL,
+    values = c(
+      "ADMIX" = 21,
+      "AFR" = 24,
+      "EUR" = 25
+    ),
+    labels = c(
+      "ADMIX" = "ADX",
+      "AFR" = "AFR",
+      "EUR" = "EUR"
+    )
+  ) +
+  scale_color_manual(
+    name = NULL,
+    values = c(
+      "h3" = "#C75DAA",
+      "r1" = "#009B9F"
+    ),
+    labels = c(
+      "h3"   = "hap-IBD",
+      "r1"   = "RaPID"
+    )
+  ) +
+  scale_fill_manual(
+    name = NULL,
+    values = c(
+      "h3"   = "#EBC9DE",
+      "r1"   = "#B0DDDE"
+    ),
+    labels = c(
+      "h3"   = "hap-IBD",
+      "r1"   = "RaPID"
+    )
+  ) +
+  labs(y = "flat Spearman's") +
+  scale_y_continuous(limits = c(0.15, 1.05)) +
+  theme_bw(
+    base_size = 24,
+    base_line_size = line.sizes,
+    base_rect_size = line.sizes
+  ) +
+  theme(
+    panel.grid.minor = element_blank(),
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    strip.background = element_rect(
+      fill = "#fbc2c1",
+      color = "black"
+    ),
+    legend.position = "top",
+    legend.direction = "horizontal",
+    legend.box = "horizontal"
+  ) +
+  guides(
+    shape = guide_legend(
+      override.aes = list(
+        fill = "white",
+        color = "black"
+      )
+    ),
+    fill = guide_legend(
+      nrow = 1,
+      byrow = TRUE,
+      override.aes = list(
+        shape = 21,
+        color = c("#C75DAA", "#009B9F"),
+        fill = c("#EBC9DE", "#B0DDDE"),
+        size = 5,
+        stroke = 2
+      )
+    )
+  )
+
+if (interactive()) {
+  print(kin.plot)
+}
+
+pdf(
+  "~/proj/ibd_compare_results/kin_flat.pdf",
+  width = 10,
+  height = 5,
+  family = "Helvetica"
+)
+
+print(kin.plot)
+
+dev.off()

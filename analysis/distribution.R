@@ -45,7 +45,7 @@ unrels.tbl <- tibble(
   select(rep, pop, ids)
 
 # read in calls data for a specific pop ----
-len.focal.pop <- "AFR"
+len.focal.pop <- "EUR"
 imap.all.calls <- read.pop.calls(
   len.focal.pop, dir.paths.map, unrels.tbl, cores
   )
@@ -359,7 +359,7 @@ ggplot(
   ) +
   theme_bw(base_size = 32)
 
-# figures for PEQG ----
+# figure for PEQG ----
 line.sizes = 2
 filt.labels.tmp <- c(
   "none" = "None",
@@ -420,6 +420,15 @@ ks.plot <- ggplot(
     strip.background = element_rect(
       fill = "#fbc2c1",
       color = "black"
+    ),
+    legend.position = "top",
+    legend.direction = "horizontal",
+    legend.box = "horizontal"
+  ) +
+  guides(
+    fill = guide_legend(
+      nrow = 1,
+      byrow = TRUE
     )
   )
 
@@ -429,8 +438,8 @@ if (interactive()) {
 
 # save precision figure for PEQG
 pdf(
-  "~/proj/ibd_compare_results/ks_admix.pdf",
-  width = 12,
+  "~/proj/ibd_compare_results/ks_eur.pdf",
+  width = 11,
   height = 6,
   family = "Helvetica"
 )

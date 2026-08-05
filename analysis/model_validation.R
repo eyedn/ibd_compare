@@ -136,7 +136,7 @@ ggplot(sim.het, aes(x = `O(HET)`)) +
   )
 
 # ADMIX ancestry proportions ----
-anc.dir <- "~/scratch/msprime_runs2_chr18_admix_3T/global_ancestry"
+anc.dir <- "~/scratch/msprime_runs_chr18_admix_3T/global_ancestry"
 
 anc.files <- list.files(
   anc.dir,
@@ -193,3 +193,4 @@ plot.ancestry.summary(
   title = "SD African ancestry of ADMIX (\"larger\" model)",
   xlab = "Replicate SD African ancestry"
 )
+

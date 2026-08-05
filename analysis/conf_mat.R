@@ -147,10 +147,12 @@ map.labels.tmp <- c(
   "1Mb1cM" = "flat",
   "hapmap" = "HapMapII"
 )
+
+# sensitivity
 sens.long.tmp <- sens.long %>% 
   filter(
     software.code %in% c("h3", "r1"), threshold == "overall", pop == "ADMIX", 
-    imap != "decode"
+    imap != "decode", filt %in% c("none", "hot", "ibdends")
     ) %>%
   mutate(imap = factor(imap, levels = c("hapmap", "1Mb1cM")))
 
@@ -171,12 +173,12 @@ sens.box <- ggplot(sens.long.tmp, aes(x = software.code, y = estimate)) +
     labeller = labeller(imap = map.labels.tmp, filt = filt.labels.tmp)
     ) +
   scale_color_manual(
-    name = "Software",
+    name = NULL,
     values = c("h3" = "#C75DAA", "r1" = "#009B9F"),
     labels = c("h3" = "hap-IBD", "r1" = "RaPID")
   ) +
   scale_fill_manual(
-    name = "Software",
+    name = NULL,
     values = c("h3" = "#EBC9DE", "r1" = "#B0DDDE"),
     labels = c("h3" = "hap-IBD", "r1" = "RaPID")
   ) +
@@ -188,7 +190,7 @@ sens.box <- ggplot(sens.long.tmp, aes(x = software.code, y = estimate)) +
     base_size = 24,
     base_line_size = line.sizes,
     base_rect_size = line.sizes
-  ) + 
+  ) +
   theme(
     panel.grid.minor = element_blank(),
     axis.title.x = element_blank(),
@@ -197,6 +199,15 @@ sens.box <- ggplot(sens.long.tmp, aes(x = software.code, y = estimate)) +
     strip.background = element_rect(
       fill = "#fbc2c1",
       color = "black"
+    ),
+    legend.position = "top",
+    legend.direction = "horizontal",
+    legend.box = "horizontal"
+  ) +
+  guides(
+    fill = guide_legend(
+      nrow = 1,
+      byrow = TRUE
     )
   )
 
@@ -204,11 +215,10 @@ if (interactive()) {
   print(sens.box)
 }
 
-# save sens figure for PEQG
 pdf(
   "~/proj/ibd_compare_results/sens_box.pdf",
-  width = 10,
-  height = 4,
+  width = 6,
+  height = 5,
   family = "Helvetica"
 )
 
@@ -216,11 +226,11 @@ print(sens.box)
 
 dev.off()
 
-# precision -----
+# precision
 precision.long.tmp <- precision.long %>% 
   filter(
-    software.code %in% c("h3", "r1"), threshold == "overall", pop == "ADMIX", 
-    imap != "decode"
+    software.code %in% c("h3", "r1"), threshold == "overall", pop == "EUR", 
+    imap != "decode", filt %in% c("none", "hot", "ibdends")
   ) %>%
   mutate(imap = factor(imap, levels = c("hapmap", "1Mb1cM")))
 
@@ -243,15 +253,16 @@ precision.box <- ggplot(
     labeller = labeller(imap = map.labels.tmp, filt = filt.labels.tmp)
   ) +
   scale_color_manual(
-    name = "Software",
+    name = NULL,
     values = c("h3" = "#C75DAA", "r1" = "#009B9F"),
     labels = c("h3" = "hap-IBD", "r1" = "RaPID")
   ) +
   scale_fill_manual(
-    name = "Software",
+    name = NULL,
     values = c("h3" = "#EBC9DE", "r1" = "#B0DDDE"),
     labels = c("h3" = "hap-IBD", "r1" = "RaPID")
   ) +
+  scale_y_continuous(limits = c(0,1), breaks = c(0, .25, 0.5, 0.75, 1)) +
   labs(
     x = "Filtering Strategy", y = "Precision", 
     title = NULL, fill = NULL
@@ -260,7 +271,7 @@ precision.box <- ggplot(
     base_size = 24,
     base_line_size = line.sizes,
     base_rect_size = line.sizes
-  ) + 
+  ) +
   theme(
     panel.grid.minor = element_blank(),
     axis.title.x = element_blank(),
@@ -269,6 +280,15 @@ precision.box <- ggplot(
     strip.background = element_rect(
       fill = "#fbc2c1",
       color = "black"
+    ),
+    legend.position = "top",
+    legend.direction = "horizontal",
+    legend.box = "horizontal"
+  ) +
+  guides(
+    fill = guide_legend(
+      nrow = 1,
+      byrow = TRUE
     )
   )
 
@@ -276,14 +296,120 @@ if (interactive()) {
   print(precision.box)
 }
 
-# save precision figure for PEQG
 pdf(
   "~/proj/ibd_compare_results/precision_box.pdf",
-  width = 10,
-  height = 4,
+  width = 6,
+  height = 5,
   family = "Helvetica"
 )
 
 print(precision.box)
+
+dev.off()
+
+# sensitivity and precision but with different levels
+thr.labels.tmp <- c(
+  "overall" = "overall",
+  "2"   = "2–2.5",
+  "2.5" = "2.5–3",
+  "3"   = "3–3.5"
+)
+metric.labels.tmp <- c(
+  "sensitivity" = "TPR",
+  "precision" = "PPV"
+)
+pd <- position_dodge(width = 0.8)
+
+thresh.long <- rbind(sens.long, precision.long) %>%
+  filter(
+    software.code %in% c("h3", "r1"), 
+    threshold %in% c("overall", "2", "2.5", "3"), 
+    pop == "ADMIX", 
+    imap == "hapmap",
+    filt %in% c("hot", "ibdends")
+  ) %>%
+  mutate(
+    imap = factor(imap, levels = c("hapmap", "1Mb1cM")),
+    metric = factor(metric, levels = c("sensitivity", "precision"))
+      )
+
+thresh.box <- ggplot(
+  thresh.long,
+  aes(
+    x = factor(threshold),
+    y = estimate,
+    fill = software.code,
+    color = software.code
+  )
+) +
+  geom_violin(
+    position = pd,
+    linewidth = 0.75
+  ) +
+  geom_boxplot(
+    position = pd,
+    width = 0.2,
+    linewidth = 0.75,
+    fill = "white",
+    outlier.shape = NA
+  ) +
+  facet_grid(
+    metric ~ filt, 
+    labeller = labeller(metric = metric.labels.tmp, filt = filt.labels.tmp),
+    scales = "free_y"
+  ) +
+  scale_x_discrete(labels = thr.labels.tmp) +
+  scale_color_manual(
+    name = NULL,
+    values = c("h3" = "#C75DAA", "r1" = "#009B9F"),
+    labels = c("h3" = "hap-IBD", "r1" = "RaPID")
+  ) +
+  scale_fill_manual(
+    name = NULL,
+    values = c("h3" = "#EBC9DE", "r1" = "#B0DDDE"),
+    labels = c("h3" = "hap-IBD", "r1" = "RaPID")
+  ) +
+  labs(
+    x = "IBD Length bins (cM)", y = "Value with HapMapII", 
+    title = NULL, fill = NULL
+  ) +
+  theme_bw(
+    base_size = 24,
+    base_line_size = line.sizes,
+    base_rect_size = line.sizes
+  ) +
+  theme(
+    panel.grid.minor = element_blank(),
+    axis.text.x = element_text(angle = 28, hjust = 1, vjust = 1),
+    axis.title.x = element_blank(),
+    # axis.text.x = element_blank(),
+    # axis.ticks.x = element_blank(),
+    strip.background = element_rect(
+      fill = "#fbc2c1",
+      color = "black"
+    ),
+    legend.position = "top",
+    legend.direction = "horizontal",
+    legend.box = "horizontal"
+  ) +
+  guides(
+    fill = guide_legend(
+      nrow = 1,
+      byrow = TRUE
+    )
+  )
+
+if (interactive()) {
+  print(thresh.box)
+}
+
+pdf(
+  "~/proj/ibd_compare_results/thresh_box.pdf",
+  width = 6,
+  height = 5,
+  family = "Helvetica"
+)
+
+print(thresh.box)
 
 dev.off()
