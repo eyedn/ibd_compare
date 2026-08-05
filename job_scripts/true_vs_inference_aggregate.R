@@ -78,7 +78,7 @@ message("pop.start = ", pop.start)
 
 # read manifest ----
 manifest.df <- readr::read_tsv(manifest.file, show_col_types = FALSE)
-req.cols <- c("seed", "true_ibd", "inf_ibd", "coverage_out", "unrels")
+req.cols <- c("rep", "true_ibd", "inf_ibd", "coverage_out", "unrels")
 if (!all(req.cols %in% names(manifest.df))) {
   stop("manifest must contain columns: ", paste(req.cols, collapse = ", "))
 }
@@ -128,8 +128,8 @@ k.inf.list  <- vector("list", n.reps)
 
 for (i in seq_len(n.reps)) {
   
-  seed <- manifest.df$seed[i]
-  message("replicate ", i, "/", n.reps, " (seed=", seed, ")")
+  rep <- manifest.df$rep[i]
+  message("replicate ", i, "/", n.reps, " (rep=", rep, ")")
   
   true.file <- manifest.df$true_ibd[i]
   inf.file  <- manifest.df$inf_ibd[i]
@@ -162,7 +162,7 @@ for (i in seq_len(n.reps)) {
   )
 
   conf.list[[i]] <- dplyr::bind_cols(conf.base, conf.win) %>%
-    dplyr::mutate(seed = seed)
+    dplyr::mutate(rep = rep)
 
   # ibd scores (unrels)
   message("subsetting true ibd for unrels")
@@ -180,7 +180,7 @@ for (i in seq_len(n.reps)) {
     )
   
   ibd.list[[i]] <- tibble(
-    seed = seed,
+    rep = rep,
     n.true.unrels = true.unrel.res$n.unrels,
     n.inf.unrels  = inf.unrel.res$n.unrels,
     true.ibd.score = true.ibd.score,
@@ -213,8 +213,8 @@ for (i in seq_len(n.reps)) {
   k.inf.list[[i]]  <- k.inf
 
   # write to disk for quick later access
-  saveRDS(k.true, file = file.path(kin.dir, glue("true_{pop}_{seed}.{filt}.rds")))
-  saveRDS(k.inf,  file = file.path(kin.dir, glue("inf_{pop}_{seed}.{filt}.rds")))
+  saveRDS(k.true, file = file.path(kin.dir, glue("true_{pop}_{rep}.{filt}.rds")))
+  saveRDS(k.inf,  file = file.path(kin.dir, glue("inf_{pop}_{rep}.{filt}.rds")))
 }
 
 conf.df <- bind_rows(conf.list)
@@ -224,13 +224,12 @@ ibd.df  <- bind_rows(ibd.list)
 message("writing per-replicate true-vs-inference summary (no kinship)")
 
 per.rep.base <- conf.df %>%
-  left_join(ibd.df, by = "seed") %>%
-  mutate(rep = seed)
+  left_join(ibd.df, by = "rep")
 
 n.rows <- nrow(per.rep.base)
 
 per.rep.df <- per.rep.base %>%
-  bind_cols(meta.df[rep(1, n.rows), , drop = FALSE]) %>%
+  bind_cols(meta.df[base::rep(1, n.rows), , drop = FALSE]) %>%
   select(
     software, software.with.params, tmap, imap, filt, pop,
     rep,
@@ -239,8 +238,7 @@ per.rep.df <- per.rep.base %>%
     true.ibd.score, inf.ibd.score,
     ibd.score.rel.true, ibd.score.err,
     # all confusion columns (whatever compute.confusion.metrics returned)
-    all_of(setdiff(names(conf.df), "seed")),
-    -seed
+    all_of(setdiff(names(conf.df), "rep"))
   )
 
 per.rep.out <- sub("\\.tsv$", ".per_rep.tsv", res.out)
@@ -249,7 +247,7 @@ message("wrote per-replicate TSV: ", per.rep.out)
 
 # aggregate confusion metrics ----
 message("aggregate confusion metrics")
-conf.metrics <- setdiff(names(conf.df), "seed")
+conf.metrics <- setdiff(names(conf.df), "rep")
 
 conf.summary <- map_dfc(conf.metrics, function(col) {
   ci <- boot.mean.ci(conf.df[[col]])

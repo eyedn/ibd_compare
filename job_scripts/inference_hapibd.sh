@@ -64,11 +64,11 @@ pops=( "$@" )
 [[ ${#imaps[@]} -gt 0 ]] || { echo "ERROR: no imaps provided" >&2; exit 1; }
 [[ ${#pops[@]} -gt 0 ]] || { echo "ERROR: no pops provided" >&2; exit 1; }
 
-# decode task id to which tmap + imap + seed
+# decode task id to which tmap + imap + replicate
 tid="${SLURM_ARRAY_TASK_ID}"
 tid0=$(( tid - 1 ))
 
-seed_id=$(( tid0 % num_reps + 1 ))
+rep=$(( tid0 % num_reps + 1 ))
 tmp_id=$(( tid0 / num_reps ))
 
 imap_idx=$(( tmp_id % ${#imaps[@]} ))
@@ -85,7 +85,6 @@ fi
 
 tmap="${tmaps[$tmap_idx]}"
 imap="${imaps[$imap_idx]}"
-seed="${seed_id}"
 
 # define genetic map
 if [[ "$imap" == "HapMapII_GRCh38" ]]; then
@@ -100,15 +99,15 @@ else
 fi
 
 # for each pop, infer ibd
-ibd_dir="${outdir}/hapibd_sim_tmap${tmap}_imap${imap}_seed${min_seed}_gap${max_gap}_extend${min_extend}_out${min_output}_mark${min_markers}_mac${min_mac}"
+ibd_dir="${outdir}/hapibd_sim_tmap${tmap}_imap${imap}_minseed${min_seed}_gap${max_gap}_extend${min_extend}_out${min_output}_mark${min_markers}_mac${min_mac}"
 mkdir -p "$ibd_dir"
 log_msg "ibd_dir defined as ${ibd_dir}"
 
 for pop in "${pops[@]}"; do
-        vcf="${vcf_dir}/${tmap}_${seed}_${pop}.vcf.gz"
+        vcf="${vcf_dir}/${tmap}_${rep}_chr${chr}_${pop}.vcf.gz"
         [[ -s "$vcf" ]] || { log_msg "vcf missing/empty: $vcf"; exit 1; }
 
-        prefix="${ibd_dir}/${pop}_chr${chr}_seed${seed}"
+        prefix="${ibd_dir}/${pop}_chr${chr}_rep${rep}"
         ibd_gz="${prefix}.ibd.gz"
         ibd_bed="${prefix}_ibd.bed.gz"
 
@@ -118,7 +117,7 @@ for pop in "${pops[@]}"; do
         fi
 
         # call ibd with hapibd
-        log_msg "Calling IBD of ${pop} for seed${seed} with hapibd using...
+        log_msg "Calling IBD of ${pop} for rep${rep} with hapibd using...
         min-seed=${min_seed}
         max-gap=${max_gap}
         min-extend=${min_extend}
@@ -145,13 +144,13 @@ for pop in "${pops[@]}"; do
 
         # exit nonzero if hap-ibd did not produce an output
         if [[ ! -s "$ibd_gz" ]]; then
-                log_msg "no hap-ibd output for ${pop} seed${seed}"
+                log_msg "no hap-ibd output for ${pop} rep${rep}"
                 exit 1
         fi
 
         # continue if no ibd segments were called (header-only or empty)
         if [[ $(zcat "$ibd_gz" | wc -l) -eq 0 ]]; then
-                log_msg "no ibd segments detected for ${pop} on seed${seed}; continue"
+                log_msg "no ibd segments detected for ${pop} on rep${rep}; continue"
                 continue
         fi
 
@@ -169,4 +168,4 @@ for pop in "${pops[@]}"; do
         rm -rf "$tmpdir"
 done
 
-log_msg "called ibd for tmap=${tmap}, imap=${imap}, seed=${seed}"
+log_msg "called ibd for tmap=${tmap}, imap=${imap}, rep=${rep}"

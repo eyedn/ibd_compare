@@ -52,7 +52,7 @@ king.tbl <- king.tbl %>%
   select(-sam1.min, -sam2.max)
 
 # read in kinship results for a specific pop ----
-kin.focal.pop <- "ADMIX"
+kin.focal.pop <- "ADX"
 true.tbl <- read.pop.ibd.kinship(
   kin.focal.pop, tvi.dir.paths.map, cores, which = "true"
   ) %>%
@@ -89,12 +89,12 @@ inf.rep1.tbl <- list(
 hap.dir <- "~/scratch/ibd_compare_chr18_admix_3T/true_vs_inference/rapid_sim_tmapHapMapII_GRCh38_imapHapMapII_GRCh38_d2_w100_r10_s2/ibd_kinship_mats"
 
 # ---- read mats ----
-true.hap <- readRDS(file.path(hap.dir, "true_ADMIX_30.ibdends.rds"))
-inf.hap  <- readRDS(file.path(hap.dir, "inf_ADMIX_30.ibdends.rds"))
+true.hap <- readRDS(file.path(hap.dir, "true_ADX_30.ibdends.rds"))
+inf.hap  <- readRDS(file.path(hap.dir, "inf_ADX_30.ibdends.rds"))
 
-true.tbl <- kinship.mat2tbl(true.hap, 30, "ADMIX")
-inf.tbl <- kinship.mat2tbl(inf.hap, 30, "ADMIX")
-king.sub.tbl <- king.tbl %>% filter(rep == "30", pop == "ADMIX")
+true.tbl <- kinship.mat2tbl(true.hap, 30, "ADX")
+inf.tbl <- kinship.mat2tbl(inf.hap, 30, "ADX")
+king.sub.tbl <- king.tbl %>% filter(rep == "30", pop == "ADX")
 
 joined.tbl <- list(
   true.tbl %>% rename(kin.true = kinship) %>% select(-sam1, -sam2),
@@ -161,11 +161,11 @@ ggplot(plot.pairs, aes(x = kin.x, y = kin.y)) +
 # results for PEQG ----
 # read in data
 true.ADMIX.tbl <- read.pop.ibd.kinship(
-  "ADMIX", tvi.dir.paths.map, cores, which = "true"
+  "ADX", tvi.dir.paths.map, cores, which = "true"
 ) %>%
   select(-filt, -software.code)
 inf.ADMIX.tbl <- read.pop.ibd.kinship(
-  "ADMIX", tvi.dir.paths.map, cores, which = "inf"
+  "ADX", tvi.dir.paths.map, cores, which = "inf"
 )
 inf.ADMIX.tbl <- list(
   true.ADMIX.tbl %>% rename(kin.true = kinship) %>% select(-sam1, -sam2),
@@ -248,7 +248,7 @@ kin.summary <- kin.summary %>%
   mutate(
     imap = factor(imap, c("HapMapII", "flat")),
     filt = factor(filt, c("none", "hot", "ibdends", "hotibdends", "ibdendshot")),
-    pop = factor(pop, c("ADMIX", "AFR", "EUR"))
+    pop = factor(pop, c("ADX", "AFR", "EUR"))
     ) %>%
   filter(imap == "flat")
 
@@ -274,12 +274,12 @@ kin.plot <- ggplot(
   scale_shape_manual(
     name = NULL,
     values = c(
-      "ADMIX" = 21,
+      "ADX" = 21,
       "AFR" = 24,
       "EUR" = 25
     ),
     labels = c(
-      "ADMIX" = "ADX",
+      "ADX" = "ADX",
       "AFR" = "AFR",
       "EUR" = "EUR"
     )

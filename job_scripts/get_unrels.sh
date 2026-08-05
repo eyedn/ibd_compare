@@ -32,8 +32,9 @@ threads="${SLURM_CPUS_PER_TASK:-1}"
 kin_cutoff="$1"
 vcf_dir="$2"
 pop_info_dir="$3"
-num_reps="$4"
-shift 4
+chr="$4"
+num_reps="$5"
+shift 5
 
 # read maps until "--", then read pops after
 maps=()
@@ -64,12 +65,12 @@ if (( map_idx < 0 || map_idx >= ${#maps[@]} )); then
 fi
 
 gmap="${maps[$map_idx]}"
-seed="${rep_id}"
+rep="${rep_id}"
 
 all_outputs_exist=true
 for pop in "${pops[@]}"; do
-  unrel_ids="${pop_info_dir}/${gmap}_${seed}_${pop}_unrel_samples.txt"
-  unrel_vcf="${vcf_dir}/${gmap}_${seed}_${pop}_unrels.vcf.gz"
+  unrel_ids="${pop_info_dir}/${gmap}_${rep}_chr${chr}_${pop}_unrel_samples.txt"
+  unrel_vcf="${vcf_dir}/${gmap}_${rep}_chr${chr}_${pop}_unrels.vcf.gz"
   if [[ ! -s "${unrel_ids}" || ! -s "${unrel_vcf}" ]]; then
     all_outputs_exist=false
     break
@@ -77,7 +78,7 @@ for pop in "${pops[@]}"; do
 done
 
 if [[ "${all_outputs_exist}" == "true" ]]; then
-  log_msg "all unrel outputs exist for ${gmap} seed=${seed}; skipping"
+  log_msg "all unrel outputs exist for ${gmap} rep=${rep}; skipping"
   exit 0
 fi
 
@@ -87,25 +88,25 @@ mkdir -p "${plink_out_dir}"
 log_msg "get_unrels task
 task_id=${tid}
 gmap=${gmap}
-seed=${seed}
+rep=${rep}
 kin_cutoff=${kin_cutoff}
 pops=${pops[*]}"
 for pop in "${pops[@]}"; do
-  in_vcf="${vcf_dir}/${gmap}_${seed}_${pop}.vcf.gz"
+  in_vcf="${vcf_dir}/${gmap}_${rep}_chr${chr}_${pop}.vcf.gz"
   [[ -s "${in_vcf}" ]] || { echo "ERROR: missing input VCF ${in_vcf}" >&2; exit 1; }
 
-  out_prefix="${plink_out_dir}/${gmap}_${seed}_${pop}"
+  out_prefix="${plink_out_dir}/${gmap}_${rep}_chr${chr}_${pop}"
   king_in="${out_prefix}.king.cutoff.in.id"
 
-  unrel_ids="${pop_info_dir}/${gmap}_${seed}_${pop}_unrel_samples.txt"
-  unrel_vcf="${vcf_dir}/${gmap}_${seed}_${pop}_unrels.vcf.gz"
+  unrel_ids="${pop_info_dir}/${gmap}_${rep}_chr${chr}_${pop}_unrel_samples.txt"
+  unrel_vcf="${vcf_dir}/${gmap}_${rep}_chr${chr}_${pop}_unrels.vcf.gz"
 
   if [[ -s "${unrel_ids}" && -s "${unrel_vcf}" ]]; then
-    log_msg "unrels exist (${unrel_vcf}); skipping ${gmap}_${seed}_${pop}"
+    log_msg "unrels exist (${unrel_vcf}); skipping ${gmap}_${rep}_${pop}"
     continue
   fi
 
-  log_msg "running plink2 KING cutoff=${kin_cutoff} on ${gmap}_${seed}_${pop}"
+  log_msg "running plink2 KING cutoff=${kin_cutoff} on ${gmap}_${rep}_${pop}"
   plink2 \
     --vcf "${in_vcf}" \
     --king-cutoff "${kin_cutoff}" \
@@ -120,7 +121,7 @@ for pop in "${pops[@]}"; do
 awk 'NF>0 && $1!="IID" && $1!="#IID" {print $1}' "${king_in}" | sort -u > "${unrel_ids}"
   log_msg "wrote unrel IDs -> ${unrel_ids} ($(wc -l < "${unrel_ids}") samples)"
 
-  log_msg "creating unrels VCF for ${gmap}_${seed}_${pop}"
+  log_msg "creating unrels VCF for ${gmap}_${rep}_${pop}"
   bcftools view \
     -S "${unrel_ids}" \
     --threads "${threads}" \
@@ -130,4 +131,4 @@ awk 'NF>0 && $1!="IID" && $1!="#IID" {print $1}' "${king_in}" | sort -u > "${unr
   log_msg "created ${unrel_vcf}"
 done
 
-log_msg "created unrels for all pops for ${gmap} seed=${seed}"
+log_msg "created unrels for all pops for ${gmap} rep=${rep}"

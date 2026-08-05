@@ -111,25 +111,25 @@ num_reps=${num_reps}
 software_dir_base=${software_dir_base}"
 
 manifest="${tvi_dir}/${software_dir_base}/${software}_${tmap_label}_${imap_label}_${filt}_${pop}.manifest.tsv"
-printf "seed\ttrue_ibd\tinf_ibd\tcoverage_out\tunrels\n" > "$manifest"
+printf "rep\ttrue_ibd\tinf_ibd\tcoverage_out\tunrels\n" > "$manifest"
 
-for seed in $(seq 1 "$num_reps"); do
-    true_ibd="${common_ff_dir}/true_ibd/true_${tmap_label}_${tmap_label}_${pop}_${seed}.bed.gz"
-    unrels="${pop_info_dir}/${tmap}_${seed}_${pop}_unrel_samples.txt"
+for rep in $(seq 1 "$num_reps"); do
+    true_ibd="${common_ff_dir}/true_ibd/true_${tmap_label}_${tmap_label}_${pop}_${rep}.bed.gz"
+    unrels="${pop_info_dir}/${tmap}_${rep}_chr${chr}_${pop}_unrel_samples.txt"
 
     if [[ "$filt" == "none" ]]; then
-        inf_ibd="${common_ff_dir}/${software_dir_base}/${software}_${tmap_label}_${imap_label}_${pop}_${seed}.bed.gz"
+        inf_ibd="${common_ff_dir}/${software_dir_base}/${software}_${tmap_label}_${imap_label}_${pop}_${rep}.bed.gz"
     else
-        inf_ibd="${common_ff_dir}/${software_dir_base}/${software}_${tmap_label}_${imap_label}_${pop}_${seed}.${filt}.bed.gz"
+        inf_ibd="${common_ff_dir}/${software_dir_base}/${software}_${tmap_label}_${imap_label}_${pop}_${rep}.${filt}.bed.gz"
     fi
 
-    coverage_out="${tvi_dir}/${software_dir_base}/${software}_${tmap_label}_${imap_label}_${filt}_${pop}_${seed}.bed.gz"
+    coverage_out="${tvi_dir}/${software_dir_base}/${software}_${tmap_label}_${imap_label}_${filt}_${pop}_${rep}.bed.gz"
 
     [[ -s "$true_ibd" ]] || { log_msg "ERROR: missing true_ibd=$true_ibd"; exit 1; }
     [[ -s "$inf_ibd"  ]] || { log_msg "ERROR: missing inf_ibd=$inf_ibd"; exit 1; }
     [[ -s "$unrels"   ]] || { log_msg "ERROR: missing unrels=$unrels"; exit 1; }
 
-    log_msg "seed=${seed} | bedtools coverage"
+    log_msg "rep=${rep} | bedtools coverage"
 
     module purge
     ml gcc/13.3.0 bedtools2/2.31.1
@@ -151,7 +151,7 @@ for seed in $(seq 1 "$num_reps"); do
 
     # record this replicate in the manifest
     printf "%s\t%s\t%s\t%s\t%s\n" \
-        "$seed" "$true_ibd" "$inf_ibd" "$coverage_out" "$unrels" >> "$manifest"
+        "$rep" "$true_ibd" "$inf_ibd" "$coverage_out" "$unrels" >> "$manifest"
 done
 
 log_msg "finished bedtools for pop=${pop}; manifest=$manifest"

@@ -31,7 +31,7 @@ sbatch \
         "$MIN_SPAN" \
         "$MAX_TIME" \
         "$CHR" \
-        "$TREE_DIR" \
+        "$OOA_TREE_DIR" \
         "$TRUE_DIR" \
         "$SAMPLE_SIZE" \
         "$NUM_REPS" \

@@ -64,13 +64,13 @@ if (( map_idx < 0 || map_idx >= ${#maps[@]} )); then
     exit 1
 fi
 gmap="${maps[$map_idx]}"
-seed="${rep_id}"
+rep="${rep_id}"
 
 mkdir -p "${common_ff_dir}/true_ibd"
 
 # loop through each pop
 for pop in "${pops[@]}"; do
-    true_ibd="${true_dir}/${gmap}_${seed}_${pop}.tsv"
+    true_ibd="${true_dir}/${gmap}_${rep}_chr${chr}_${pop}.tsv"
 
     # determine gmap path for interpolation; create standard gmap labels
     if [[ "$gmap" == *HapMapII_GRCh38* ]]; then 
@@ -86,8 +86,8 @@ for pop in "${pops[@]}"; do
     
     # run formatting
     # note, "-1" set for inconsequential variables for formatting true ibd
-    ff_out="${common_ff_dir}/true_ibd/true_${gmap_label}_${gmap_label}_${pop}_${seed}.bed"
-    log_msg "formatting true segments for ${gmap_label} pop${pop} rep${seed}"
+    ff_out="${common_ff_dir}/true_ibd/true_${gmap_label}_${gmap_label}_${pop}_${rep}.bed"
+    log_msg "formatting true segments for ${gmap_label} pop${pop} rep${rep}"
     Rscript "/home1/karatas/ibd_compare/job_scripts/filter_and_format.R" \
         "$min_bp_len" \
         "$min_cm_len" \

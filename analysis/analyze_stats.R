@@ -974,7 +974,6 @@ king.tbl <- tibble(
 # 
 # # analyze kindship performance ----
 # # ---- set these two dirs correctly ----
-# hap.dir <- "~/scratch/ibd_compare_chr18_admix/true_vs_inference/hapibd_sim_tmapHapMapII_GRCh38_imapHapMapII_GRCh38_seed1.0_gap2000_extend1.0_out2.0_mark100_mac2/ibd_kinship_mats"
 # rap.dir <- "~/scratch/ibd_compare_chr18_admix/true_vs_inference/rapid_sim_tmapHapMapII_GRCh38_imapHapMapII_GRCh38_d2_w100_r10_s2/ibd_kinship_mats"
 # 
 # # ---- read mats ----
@@ -1156,8 +1155,6 @@ king.tbl <- tibble(
 # 
 # 
 # # inputs (your dirs) ----
-# hap.hap.dir <- "/home1/karatas/scratch/ibd_compare_chr18_admix/true_vs_inference/hapibd_sim_tmapHapMapII_GRCh38_imapHapMapII_GRCh38_seed1.0_gap2000_extend1.0_out2.0_mark100_mac2/ibd_kinship_mats"
-# hap.fla.dir <- "/home1/karatas/scratch/ibd_compare_chr18_admix/true_vs_inference/hapibd_sim_tmapHapMapII_GRCh38_imapFlat1Mb1cM_seed1.0_gap2000_extend1.0_out2.0_mark100_mac2/ibd_kinship_mats"
 # rap.hap.dir <- "/home1/karatas/scratch/ibd_compare_chr18_admix/true_vs_inference/rapid_sim_tmapHapMapII_GRCh38_imapHapMapII_GRCh38_d2_w100_r10_s2/ibd_kinship_mats"
 # rap.fla.dir <- "/home1/karatas/scratch/ibd_compare_chr18_admix/true_vs_inference/rapid_sim_tmapHapMapII_GRCh38_imapFlat1Mb1cM_d2_w100_r10_s2/ibd_kinship_mats"
 # 

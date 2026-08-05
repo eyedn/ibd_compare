@@ -68,14 +68,14 @@ pops=( "$@" )
 [[ ${#imaps[@]} -gt 0 ]] || { echo "ERROR: no imaps provided" >&2; exit 1; }
 [[ ${#pops[@]} -gt 0 ]] || { echo "ERROR: no pops provided" >&2; exit 1; }
 
-# decode array task -> (tmap, imap, seed, pop)
+# decode array task -> (tmap, imap, replicate, pop)
 tid="${SLURM_ARRAY_TASK_ID}"
 tid0=$(( tid - 1 ))
 
 pop_idx=$(( tid0 % ${#pops[@]} ))
 tmp_id=$(( tid0 / ${#pops[@]} ))
 
-seed_id=$(( tmp_id % num_reps + 1 ))
+rep=$(( tmp_id % num_reps + 1 ))
 tmp_id=$(( tmp_id / num_reps ))
 
 imap_idx=$(( tmp_id % ${#imaps[@]} ))
@@ -96,7 +96,6 @@ fi
 
 tmap="${tmaps[$tmap_idx]}"
 imap="${imaps[$imap_idx]}"
-seed="${seed_id}"
 pop="${pops[$pop_idx]}"
 
 mkdir -p "$common_ff_dir"
@@ -128,29 +127,29 @@ fi
 rapid_dir_base="rapid_sim_tmap${tmap}_imap${imap}_d${rap_min_len}_w${rap_window_size}_r${rap_num_runs}_s${rap_num_successes}"
 rapid_dir="${outdir}/${rapid_dir_base}"
 
-vcf="${vcf_dir}/${tmap}_${seed}_${pop}.vcf.gz"
+vcf="${vcf_dir}/${tmap}_${rep}_chr${chr}_${pop}.vcf.gz"
 
-rapid_nonbed_dir="${rapid_dir}/${pop}_chr${chr}_seed${seed}_out"
+rapid_nonbed_dir="${rapid_dir}/${pop}_chr${chr}_rep${rep}_out"
 rapid_nonbed="${rapid_nonbed_dir}/results.max.gz"
 rapid_nonbed_hapibdformat="${rapid_nonbed_dir}/results.max.hapibdformat.gz"
-rapid_ibdends_prefix="${rapid_dir}/${pop}_chr${chr}_seed${seed}.ibdends"
+rapid_ibdends_prefix="${rapid_dir}/${pop}_chr${chr}_rep${rep}.ibdends"
 rapid_ibdends_ibd="${rapid_ibdends_prefix}_ibd.ibdends.bed.gz"
 rapid_hot_hapibdformat="${rapid_nonbed_dir}/results.max.hot.hapibdformat.gz"
-rapid_hot_ibdends_prefix="${rapid_dir}/${pop}_chr${chr}_seed${seed}.hot.ibdends"
+rapid_hot_ibdends_prefix="${rapid_dir}/${pop}_chr${chr}_rep${rep}.hot.ibdends"
 rapid_hot_ibdends_ibd="${rapid_hot_ibdends_prefix}_ibd.ibdends.bed.gz"
 
 # bed made from previous step
-rapid_ibd="${rapid_dir}/${pop}_chr${chr}_seed${seed}_ibd.bed.gz"
+rapid_ibd="${rapid_dir}/${pop}_chr${chr}_rep${rep}_ibd.bed.gz"
 
 # rapid map for cM interpolation during formatting
-rapid_gmap="${rapid_map_dir}/pop${pop}_chr${chr}_seed${seed}_tmap${tmap}_imap${imap}.map"
+rapid_gmap="${rapid_map_dir}/pop${pop}_chr${chr}_rep${rep}_tmap${tmap}_imap${imap}.map"
 
 rapid_ff_dir="${common_ff_dir}/${rapid_dir_base}"
-rapid_out="${rapid_ff_dir}/rapid_${tmap_label}_${imap_label}_${pop}_${seed}.bed"
-rapid_hot_out="${rapid_ff_dir}/rapid_${tmap_label}_${imap_label}_${pop}_${seed}.hot.bed"
-rapid_ibdends_out="${rapid_ff_dir}/rapid_${tmap_label}_${imap_label}_${pop}_${seed}.ibdends.bed"
-rapid_hotibdends_out="${rapid_ff_dir}/rapid_${tmap_label}_${imap_label}_${pop}_${seed}.hotibdends.bed"
-rapid_ibdendshot_out="${rapid_ff_dir}/rapid_${tmap_label}_${imap_label}_${pop}_${seed}.ibdendshot.bed"
+rapid_out="${rapid_ff_dir}/rapid_${tmap_label}_${imap_label}_${pop}_${rep}.bed"
+rapid_hot_out="${rapid_ff_dir}/rapid_${tmap_label}_${imap_label}_${pop}_${rep}.hot.bed"
+rapid_ibdends_out="${rapid_ff_dir}/rapid_${tmap_label}_${imap_label}_${pop}_${rep}.ibdends.bed"
+rapid_hotibdends_out="${rapid_ff_dir}/rapid_${tmap_label}_${imap_label}_${pop}_${rep}.hotibdends.bed"
+rapid_ibdendshot_out="${rapid_ff_dir}/rapid_${tmap_label}_${imap_label}_${pop}_${rep}.ibdendshot.bed"
 
 [[ -s "$vcf" ]] || { echo "ERROR: missing vcf: $vcf" >&2; exit 1; }
 [[ -s "$rapid_nonbed" ]] || { echo "ERROR: missing rapid results: $rapid_nonbed" >&2; exit 1; }
@@ -171,7 +170,7 @@ zcat "$rapid_nonbed" | \
     awk 'BEGIN{OFS="\t"} ($6 >= 0 && $7 >= 0 && $6 <= $7) { print $2, $4+1, $3, $5+1, $1, $6, $7, $8 }' | \
     gzip -c > "$rapid_nonbed_hapibdformat"
 
-log_msg "rapid: filtering segments using ibd-ends (pop=${pop} seed=${seed} tmap=${tmap_label} imap=${imap_label})"
+log_msg "rapid: filtering segments using ibd-ends (pop=${pop} rep=${rep} tmap=${tmap_label} imap=${imap_label})"
 java -Xmx"${ibdends_xmx}" -jar ~/software/ibd-ends/ibd-ends.jar \
     gt="$vcf" \
     ibd="$rapid_nonbed_hapibdformat" \

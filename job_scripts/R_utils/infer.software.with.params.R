@@ -13,11 +13,11 @@ library(tidyverse)
 
 infer.software.with.params <- function(software.base, software.dir.base) {
     # hapibd directory example:
-    # hapibd_sim_tmapHapMapII_GRCh38_imapHapMapII_GRCh38_seed2.0_gap1000_extend1.0_out2.0_mark100_mac2
+    # hapibd_sim_tmapHapMapII_GRCh38_imapHapMapII_GRCh38_minseed2.0_gap1000_extend1.0_out2.0_mark100_mac2
     if (software.base == "hapibd") {
     m <- stringr::str_match(
         software.dir.base,
-        "seed[^_]+_gap[^_]+_extend[^_]+_out[^_]+_mark[^_]+_mac[^_]+"
+        "minseed[^_]+_gap[^_]+_extend[^_]+_out[^_]+_mark[^_]+_mac[^_]+"
     )
     if (!is.na(m[1, 1])) {
         return(paste0("hapibd_", m[1, 1]))
@@ -37,20 +37,6 @@ infer.software.with.params <- function(software.base, software.dir.base) {
         return(paste0("rapid_", m[1, 1]))
     } else {
         return("rapid")
-    }
-    }
-
-    # ilash directory example:
-    # ilash_sim_tmapHapMapII_GRCh38_imapHapMapII_GRCh38_auto1_min2.0_slice2.0_overlap1.5
-    if (software.base == "ilash") {
-    m <- stringr::str_match(
-        software.dir.base,
-        "auto[^_]+_min[^_]+_slice[^_]+_overlap[^_]+"
-    )
-    if (!is.na(m[1, 1])) {
-        return(paste0("ilash_", m[1, 1]))
-    } else {
-        return("ilash")
     }
     }
 

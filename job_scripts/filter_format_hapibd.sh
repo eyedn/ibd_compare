@@ -69,14 +69,14 @@ pops=( "$@" )
 [[ ${#imaps[@]} -gt 0 ]] || { echo "ERROR: no imaps provided" >&2; exit 1; }
 [[ ${#pops[@]} -gt 0 ]] || { echo "ERROR: no pops provided" >&2; exit 1; }
 
-# decode array task -> (tmap, imap, seed, pop)
+# decode array task -> (tmap, imap, replicate, pop)
 tid="${SLURM_ARRAY_TASK_ID}"
 tid0=$(( tid - 1 ))
 
 pop_idx=$(( tid0 % ${#pops[@]} ))
 tmp_id=$(( tid0 / ${#pops[@]} ))
 
-seed_id=$(( tmp_id % num_reps + 1 ))
+rep=$(( tmp_id % num_reps + 1 ))
 tmp_id=$(( tmp_id / num_reps ))
 
 imap_idx=$(( tmp_id % ${#imaps[@]} ))
@@ -97,7 +97,6 @@ fi
 
 tmap="${tmaps[$tmap_idx]}"
 imap="${imaps[$imap_idx]}"
-seed="${seed_id}"
 pop="${pops[$pop_idx]}"
 
 mkdir -p "$common_ff_dir"
@@ -126,27 +125,27 @@ fi
 [[ -n "$hapibd_gmap" && -s "$hapibd_gmap" ]] || { echo "ERROR: missing hapibd_gmap: $hapibd_gmap" >&2; exit 1; }
 
 # hapibd dir base (use const params)
-hapibd_dir_base="hapibd_sim_tmap${tmap}_imap${imap}_seed${hap_min_seed}_gap${hap_max_gap}_extend${hap_min_extend}_out${hap_min_output}_mark${hap_min_markers}_mac${hap_min_mac}"
+hapibd_dir_base="hapibd_sim_tmap${tmap}_imap${imap}_minseed${hap_min_seed}_gap${hap_max_gap}_extend${hap_min_extend}_out${hap_min_output}_mark${hap_min_markers}_mac${hap_min_mac}"
 hapibd_dir="${outdir}/${hapibd_dir_base}"
 
-vcf="${vcf_dir}/${tmap}_${seed}_${pop}.vcf.gz"
+vcf="${vcf_dir}/${tmap}_${rep}_chr${chr}_${pop}.vcf.gz"
 
-hapibd_nonbed="${hapibd_dir}/${pop}_chr${chr}_seed${seed}.ibd.gz"
-hapibd_ibdends_prefix="${hapibd_dir}/${pop}_chr${chr}_seed${seed}.ibdends"
+hapibd_nonbed="${hapibd_dir}/${pop}_chr${chr}_rep${rep}.ibd.gz"
+hapibd_ibdends_prefix="${hapibd_dir}/${pop}_chr${chr}_rep${rep}.ibdends"
 hapibd_ibdends_ibd="${hapibd_ibdends_prefix}_ibd.ibdends.bed.gz"
-hapibd_hot_hapibdformat="${hapibd_dir}/${pop}_chr${chr}_seed${seed}.hot.hapibdformat.gz"
-hapibd_hot_ibdends_prefix="${hapibd_dir}/${pop}_chr${chr}_seed${seed}.hot.ibdends"
+hapibd_hot_hapibdformat="${hapibd_dir}/${pop}_chr${chr}_rep${rep}.hot.hapibdformat.gz"
+hapibd_hot_ibdends_prefix="${hapibd_dir}/${pop}_chr${chr}_rep${rep}.hot.ibdends"
 hapibd_hot_ibdends_ibd="${hapibd_hot_ibdends_prefix}_ibd.ibdends.bed.gz"
 
 # bed made from previous step
-hapibd_ibd="${hapibd_dir}/${pop}_chr${chr}_seed${seed}_ibd.bed.gz"
+hapibd_ibd="${hapibd_dir}/${pop}_chr${chr}_rep${rep}_ibd.bed.gz"
 
 hapibd_ff_dir="${common_ff_dir}/${hapibd_dir_base}"
-hapibd_out="${hapibd_ff_dir}/hapibd_${tmap_label}_${imap_label}_${pop}_${seed}.bed"
-hapibd_hot_out="${hapibd_ff_dir}/hapibd_${tmap_label}_${imap_label}_${pop}_${seed}.hot.bed"
-hapibd_ibdends_out="${hapibd_ff_dir}/hapibd_${tmap_label}_${imap_label}_${pop}_${seed}.ibdends.bed"
-hapibd_hotibdends_out="${hapibd_ff_dir}/hapibd_${tmap_label}_${imap_label}_${pop}_${seed}.hotibdends.bed"
-hapibd_ibdendshot_out="${hapibd_ff_dir}/hapibd_${tmap_label}_${imap_label}_${pop}_${seed}.ibdendshot.bed"
+hapibd_out="${hapibd_ff_dir}/hapibd_${tmap_label}_${imap_label}_${pop}_${rep}.bed"
+hapibd_hot_out="${hapibd_ff_dir}/hapibd_${tmap_label}_${imap_label}_${pop}_${rep}.hot.bed"
+hapibd_ibdends_out="${hapibd_ff_dir}/hapibd_${tmap_label}_${imap_label}_${pop}_${rep}.ibdends.bed"
+hapibd_hotibdends_out="${hapibd_ff_dir}/hapibd_${tmap_label}_${imap_label}_${pop}_${rep}.hotibdends.bed"
+hapibd_ibdendshot_out="${hapibd_ff_dir}/hapibd_${tmap_label}_${imap_label}_${pop}_${rep}.ibdendshot.bed"
 
 [[ -s "$vcf" ]] || { echo "ERROR: missing vcf: $vcf" >&2; exit 1; }
 [[ -s "$hapibd_nonbed" ]] || { echo "ERROR: missing hapibd ibd.gz: $hapibd_nonbed" >&2; exit 1; }
@@ -160,7 +159,7 @@ ml openjdk/25.0.2
 log_msg "hapibd: ibd-ends runtime
 ibdends_xmx=${ibdends_xmx}
 ibdends_threads=${ibdends_threads}"
-log_msg "hapibd: filtering segments using ibd-ends (pop=${pop} seed=${seed} tmap=${tmap_label} imap=${imap_label})"
+log_msg "hapibd: filtering segments using ibd-ends (pop=${pop} rep=${rep} tmap=${tmap_label} imap=${imap_label})"
 java -Xmx"${ibdends_xmx}" -jar ~/software/ibd-ends/ibd-ends.jar \
     gt="$vcf" \
     ibd="$hapibd_nonbed" \

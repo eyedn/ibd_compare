@@ -63,11 +63,11 @@ pops=( "$@" )
 [[ ${#imaps[@]} -gt 0 ]] || { echo "ERROR: no imaps provided" >&2; exit 1; }
 [[ ${#pops[@]} -gt 0 ]] || { echo "ERROR: no pops provided" >&2; exit 1; }
 
-# decode task id to which tmap + imap + replicate/seed
+# decode task id to which tmap + imap + replicate
 tid="${SLURM_ARRAY_TASK_ID}"
 tid0=$(( tid - 1 ))
 
-seed_id=$(( tid0 % num_reps + 1 ))
+rep=$(( tid0 % num_reps + 1 ))
 tmp_id=$(( tid0 / num_reps ))
 
 imap_idx=$(( tmp_id % ${#imaps[@]} ))
@@ -84,31 +84,30 @@ fi
 
 tmap="${tmaps[$tmap_idx]}"
 imap="${imaps[$imap_idx]}"
-seed="${seed_id}"
 
 # for each pop, infer ibd
 ibd_dir="${outdir}/rapid_sim_tmap${tmap}_imap${imap}_d${min_len}_w${window_size}_r${num_runs}_s${num_successes}"
 mkdir -p "$ibd_dir"
 log_msg "ibd_dir defined as ${ibd_dir}"
 for pop in "${pops[@]}"; do
-        vcf="${vcf_dir}/${tmap}_${seed}_${pop}.vcf.gz"
+        vcf="${vcf_dir}/${tmap}_${rep}_chr${chr}_${pop}.vcf.gz"
         [[ -s "$vcf" ]] || { log_msg "vcf not found: $vcf"; exit 1; }
 
-        genetic_map="${rapid_map_dir}/pop${pop}_chr${chr}_seed${seed}_tmap${tmap}_imap${imap}.map"
+        genetic_map="${rapid_map_dir}/pop${pop}_chr${chr}_rep${rep}_tmap${tmap}_imap${imap}.map"
         [[ -s "${genetic_map}" ]] || {
                 log_msg "cached rapid map missing: ${genetic_map}"
                 exit 1
         }
 
-        ibd_out="${ibd_dir}/${pop}_chr${chr}_seed${seed}_out"
-        ibd_bed="${ibd_dir}/${pop}_chr${chr}_seed${seed}_ibd.bed.gz"
+        ibd_out="${ibd_dir}/${pop}_chr${chr}_rep${rep}_out"
+        ibd_bed="${ibd_dir}/${pop}_chr${chr}_rep${rep}_ibd.bed.gz"
         if [[ -s "$ibd_bed" ]]; then
                 log_msg "${ibd_bed} already found for ${pop}; continue"
                 continue
         fi
 
         # call ibd with rapid
-        log_msg "Calling IBD of $pop for seed${seed} with rapid using...
+        log_msg "Calling IBD of $pop for rep${rep} with rapid using...
         min_length_in_cM = ${min_len}
         window_size = ${window_size}
         num_runs = ${num_runs}
@@ -129,13 +128,13 @@ for pop in "${pops[@]}"; do
 
         # exit nonzero if rapid did not produce an output
         if [[ ! -s "${ibd_out}/results.max.gz" ]]; then
-                log_msg "no output for $pop seed$seed"
+                log_msg "no output for $pop rep$rep"
                 exit 1
         fi
 
         # early exit if no ibd segments were called
         if [[ $(zcat "${ibd_out}/results.max.gz" | wc -l) -eq 0 ]]; then
-                log_msg "no ibd segments detected for $pop on seed$seed; continue"
+                log_msg "no ibd segments detected for $pop on rep$rep; continue"
                 continue
         fi
 
@@ -155,4 +154,4 @@ for pop in "${pops[@]}"; do
         rm -rf "$tmpdir"
 done
 
-log_msg "called ibd for tmap=${tmap}, imap=${imap}, seed=${seed}"
+log_msg "called ibd for tmap=${tmap}, imap=${imap}, rep=${rep}"

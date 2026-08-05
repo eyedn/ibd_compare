@@ -104,32 +104,32 @@ confusion.boxplot.summary <- bind_rows(sens.long, precision.long) %>%
 
 # build manuscript-facing plotting tables ----
 sens.long.tmp <- sens.long %>% filter(software.code %in% c("h3", "r1"), threshold %in% c("overall", "2"))
-plot.confusion.boxplots(sens.long, "ADMIX", "hapmap", "Sensitivity")
+plot.confusion.boxplots(sens.long, "ADX", "hapmap", "Sensitivity")
 plot.confusion.boxplots(sens.long, "AFR", "hapmap", "Sensitivity")
 # plot.confusion.boxplots(sens.long, "ASIA", "hapmap", "Sensitivity")
 plot.confusion.boxplots(sens.long, "EUR", "hapmap", "Sensitivity")
 
-plot.confusion.boxplots(sens.long, "ADMIX", "decode", "Sensitivity")
+plot.confusion.boxplots(sens.long, "ADX", "decode", "Sensitivity")
 plot.confusion.boxplots(sens.long, "AFR", "decode", "Sensitivity")
 # plot.confusion.boxplots(sens.long, "ASIA", "decode", "Sensitivity")
 plot.confusion.boxplots(sens.long, "EUR", "decode", "Sensitivity")
 
-plot.confusion.boxplots(sens.long, "ADMIX", "1Mb1cM", "Sensitivity")
+plot.confusion.boxplots(sens.long, "ADX", "1Mb1cM", "Sensitivity")
 plot.confusion.boxplots(sens.long, "AFR", "1Mb1cM", "Sensitivity")
 # plot.confusion.boxplots(sens.long, "ASIA", "1Mb1cM", "Sensitivity")
 plot.confusion.boxplots(sens.long, "EUR", "1Mb1cM", "Sensitivity")
 
-plot.confusion.boxplots(precision.long, "ADMIX", "hapmap", "Precision")
+plot.confusion.boxplots(precision.long, "ADX", "hapmap", "Precision")
 plot.confusion.boxplots(precision.long, "AFR", "hapmap", "Precision")
 # plot.confusion.boxplots(precision.long, "ASIA", "hapmap", "Precision")
 plot.confusion.boxplots(precision.long, "EUR", "hapmap", "Precision")
 
-plot.confusion.boxplots(precision.long, "ADMIX", "decode", "Precision")
+plot.confusion.boxplots(precision.long, "ADX", "decode", "Precision")
 plot.confusion.boxplots(precision.long, "AFR", "decode", "Precision")
 # plot.confusion.boxplots(precision.long, "ASIA", "decode", "Precision")
 plot.confusion.boxplots(precision.long, "EUR", "decode", "Precision")
 
-plot.confusion.boxplots(precision.long, "ADMIX", "1Mb1cM", "Precision")
+plot.confusion.boxplots(precision.long, "ADX", "1Mb1cM", "Precision")
 plot.confusion.boxplots(precision.long, "AFR", "1Mb1cM", "Precision")
 # plot.confusion.boxplots(precision.long, "ASIA", "1Mb1cM", "Precision")
 plot.confusion.boxplots(precision.long, "EUR", "1Mb1cM", "Precision")
@@ -151,7 +151,7 @@ map.labels.tmp <- c(
 # sensitivity
 sens.long.tmp <- sens.long %>% 
   filter(
-    software.code %in% c("h3", "r1"), threshold == "overall", pop == "ADMIX", 
+    software.code %in% c("h3", "r1"), threshold == "overall", pop == "ADX",
     imap != "decode", filt %in% c("none", "hot", "ibdends")
     ) %>%
   mutate(imap = factor(imap, levels = c("hapmap", "1Mb1cM")))
@@ -324,7 +324,7 @@ thresh.long <- rbind(sens.long, precision.long) %>%
   filter(
     software.code %in% c("h3", "r1"), 
     threshold %in% c("overall", "2", "2.5", "3"), 
-    pop == "ADMIX", 
+    pop == "ADX",
     imap == "hapmap",
     filt %in% c("hot", "ibdends")
   ) %>%
