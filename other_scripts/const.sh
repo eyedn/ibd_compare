@@ -30,8 +30,8 @@ RAPID_MAP_DIR="${OUTDIR}/rapid_maps"
 TRUE_DIR="${OUTDIR}/true_ibd"
 COMMON_FF_DIR="${OUTDIR}/filter_format"
 TVI_DIR="${COMMON_FF_DIR}/true_vs_inference"
-ONEKG_IBD_INIT_INFERENCE_DIR="${SCRATCH}/1kG_ibd_init_inference_1kG"
-ONEKG_IBD_COMPARE_DIR="${SCRATCH}/1kG_ibd_compare_1kG"
+ONEKG_IBD_INIT_INFERENCE_DIR="${SCRATCH}/ibd_compare_init_1kG"
+ONEKG_IBD_COMPARE_DIR="${SCRATCH}/ibd_compare_1kG"
 
 # Job-array and filtering resources.
 MAX_JOBS=100
@@ -45,8 +45,8 @@ ADMIXED_IBDENDS_THREADS=4
 ADMIXED_IBDENDS_XMX="96G"
 
 # IBD ground-truth specifications.
-MAX_TIME=25
-MIN_SPAN=585786
+MAX_TIME=75
+MIN_SPAN=100000
 MIN_BP_LEN=0
 MIN_CM_LEN=2
 
