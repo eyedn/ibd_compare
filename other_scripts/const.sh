@@ -23,7 +23,10 @@ CHR=18
 
 # IBD-comparison outputs are deliberately separate from OOA inputs.
 REF_DIR="${HOME}/references"
+# Population-prefixed labels are the default simulation ID contract.
+SIM_ID_CONTRACT="population_ids"
 OUTDIR="${SCRATCH}/ibd_compare_chr${CHR}_ooa"
+SIM_ID_CONTRACT_FILE="${OUTDIR}/.simulation_id_contract"
 VCF_DIR="${OUTDIR}/vcfs"
 POP_INFO_DIR="${OUTDIR}/pop_info"
 RAPID_MAP_DIR="${OUTDIR}/rapid_maps"

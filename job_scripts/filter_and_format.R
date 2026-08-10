@@ -18,7 +18,7 @@ source("job_scripts/R_utils/read.true.R")
 source("job_scripts/R_utils/filter.ibd.by.hot.bins.R")
 
 args <- commandArgs(trailingOnly = TRUE)
-if (!length(args) %in% c(10, 11)) {
+if (length(args) != 10) {
   stop("incorrect number of parameters")
 }
 
@@ -33,7 +33,6 @@ ff.out <- args[7]
 ff.hot.out <- args[8]
 is.hapibd.format <- tolower(args[9])
 do.hot.filter <- tolower(args[10])
-sample.id.mode <- if (length(args) == 11) tolower(args[11]) else "simulation"
 if (!is.hapibd.format %in% c("true", "false")) {
   stop("is.hapibd.format must be TRUE/true or FALSE/false; got: ", args[9])
 }
@@ -42,12 +41,6 @@ if (!do.hot.filter %in% c("true", "false")) {
   stop("do.hot.filter must be TRUE/true or FALSE/false; got: ", args[10])
 }
 do.hot.filter <- do.hot.filter == "true"
-if (!sample.id.mode %in% c("simulation", "empirical")) {
-  stop(
-    "sample.id.mode must be simulation or empirical; got: ",
-    sample.id.mode
-  )
-}
 
 print("inputs:")
 print(paste("min.bp.size = ", min.bp.size))
@@ -58,7 +51,19 @@ print(paste("ff.out = ", ff.out))
 print(paste("ff.hot.out = ", ff.hot.out))
 print(paste("is.hapibd.format = ", is.hapibd.format))
 print(paste("do.hot.filter = ", do.hot.filter))
-print(paste("sample.id.mode = ", sample.id.mode))
+
+empty.calls <- tibble::tibble(
+  chr = character(), bp.str = integer(), bp.end = integer(), bp.len = integer(),
+  cM.str = numeric(), cM.end = numeric(), cM.len = numeric(),
+  sam1 = character(), hap1 = integer(), sam2 = character(), hap2 = integer()
+)
+if (length(readr::read_lines(ibd.file)) == 0) {
+  readr::write_tsv(empty.calls, ff.out, col_names = TRUE)
+  if (do.hot.filter) {
+    readr::write_tsv(empty.calls, ff.hot.out, col_names = TRUE)
+  }
+  quit(status = 0)
+}
 
 # read in ibd calls ----
 if (grepl("true_ibd", ibd.file, ignore.case = TRUE)) {
@@ -72,8 +77,7 @@ if (grepl("true_ibd", ibd.file, ignore.case = TRUE)) {
     ibd.file,
     min.bp.size,
     min.cm.size,
-    gmap.file,
-    sample.id.mode = sample.id.mode
+    gmap.file
   )
   gmap <- readr::read_table(
     file = gmap.file, col_names = FALSE, show_col_types = FALSE
@@ -84,8 +88,7 @@ if (grepl("true_ibd", ibd.file, ignore.case = TRUE)) {
     ibd.file,
     min.bp.size,
     min.cm.size,
-    gmap.file,
-    sample.id.mode = sample.id.mode
+    gmap.file
   )
   gmap <- readr::read_table(
     file = gmap.file, col_names = FALSE, show_col_types = FALSE

@@ -193,7 +193,7 @@ unrels.tbl <- tibble(
     rep = as.integer(str_match(basename(file), "^HapMapII_GRCh38_(\\d+)_")[,2]),
     pop = str_match(basename(file), "^HapMapII_GRCh38_\\d+_([^_]+)_unrel_samples\\.txt$")[,2],
     ids = map(file, ~ readr::read_tsv(.x, col_names = FALSE, show_col_types = FALSE) %>%
-                transmute(ids = as.integer(str_remove(X1, "^tsk_"))) %>%
+                transmute(ids = as.character(X1)) %>%
                 pull(ids))
   ) %>%
   select(rep, pop, ids)

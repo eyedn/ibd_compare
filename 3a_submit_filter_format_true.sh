@@ -34,6 +34,8 @@ sbatch \
         "$MIN_BP_LEN" \
         "$MIN_CM_LEN" \
         "$NUM_REPS" \
+        "$SIM_ID_CONTRACT_FILE" \
+        "$SIM_ID_CONTRACT" \
         "${TMAPS[@]}" \
         -- \
         "${POPS[@]}"

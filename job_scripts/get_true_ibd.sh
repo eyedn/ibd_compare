@@ -41,7 +41,11 @@ ooa_tree_dir="$4"
 true_dir="$5"  
 sample_size="$6"
 num_reps="$7"
-shift 7
+contract_file="$8"
+id_contract="$9"
+shift 9
+source /home1/karatas/ibd_compare/other_scripts/require_sim_id_contract.sh \
+    "$contract_file" "$id_contract"
 
 # read maps until "--", then read pops after
 maps=()
@@ -110,7 +114,8 @@ for idx in "${!pops[@]}"; do
 
     log_msg "generating true ibd segments in ${out_tsv}"
     python /home1/karatas/ibd_compare/job_scripts/get_true_ibd.py \
-        "$temp_ts" "$out_tsv" "$chr" "$min_span" "$max_time" "$start" "$end"
+        "$temp_ts" "$out_tsv" "$chr" "$min_span" "$max_time" "$start" "$end" \
+        "$pop"
 done
 
 log_msg "done with ${gmap} rep=${rep}"

@@ -36,7 +36,11 @@ chr="$4"
 min_bp_len="$5" 
 min_cm_len="$6" 
 num_reps="$7"
-shift 7
+contract_file="$8"
+id_contract="$9"
+shift 9
+source /home1/karatas/ibd_compare/other_scripts/require_sim_id_contract.sh \
+    "$contract_file" "$id_contract"
 
 # read maps until "--", then read pops after
 maps=()

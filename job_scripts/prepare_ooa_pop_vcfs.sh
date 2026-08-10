@@ -32,7 +32,9 @@ pop_info_dir="$3"
 chr="$4"
 sample_size="$5"
 num_reps="$6"
-shift 6
+contract_file="$7"
+id_contract="$8"
+shift 8
 
 tmaps=()
 while [[ $# -gt 0 && "$1" != "--" ]]; do
@@ -74,9 +76,28 @@ for pop in "${pops[@]}"; do
             printf '%s_%s\n' "${pop}" "${sample_num}" >> "${sample_ids}"
         done
     fi
+    expected_ids="${sample_ids}.expected"
+    {
+        for sample_num in $(seq 1 "${sample_size}"); do
+            printf '%s_%s\n' "${pop}" "${sample_num}"
+        done
+    } > "${expected_ids}"
+    cmp -s "${sample_ids}" "${expected_ids}" || {
+        echo "ERROR: stale or mixed sample IDs in ${sample_ids}" >&2
+        exit 1
+    }
+    rm -f "${expected_ids}"
     if [[ ! -s "${out_vcf}" || ( ! -s "${out_vcf}.tbi" && ! -s "${out_vcf}.csi" ) ]]; then
         bcftools view -S "${sample_ids}" --threads "${threads}" \
             -Oz -o "${out_vcf}" "${source_vcf}"
         tabix -p vcf "${out_vcf}"
     fi
+    bcftools query -l "${out_vcf}" > "${out_vcf}.samples"
+    cmp -s "${sample_ids}" "${out_vcf}.samples" || {
+        echo "ERROR: VCF ID contract mismatch in ${out_vcf}" >&2
+        exit 1
+    }
+    rm -f "${out_vcf}.samples"
 done
+printf '%s\n' "${id_contract}" > "${contract_file}.tmp"
+mv -f "${contract_file}.tmp" "${contract_file}"

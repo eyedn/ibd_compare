@@ -49,7 +49,11 @@ rap_min_len="${12}"
 rap_window_size="${13}"
 rap_num_runs="${14}"
 rap_num_successes="${15}"
-shift 15
+contract_file="${16}"
+id_contract="${17}"
+shift 17
+source /home1/karatas/ibd_compare/other_scripts/require_sim_id_contract.sh \
+    "$contract_file" "$id_contract"
 
 # read TMAPs until "--", then imaps until "--", then pops
 tmaps=()
@@ -158,6 +162,18 @@ rapid_ibdendshot_out="${rapid_ff_dir}/rapid_${tmap_label}_${imap_label}_${pop}_$
 
 mkdir -p "$rapid_ff_dir"
 
+write_empty_standard_bed() {
+    printf '%s\n' $'chr\tbp.str\tbp.end\tbp.len\tcM.str\tcM.end\tcM.len\tsam1\thap1\tsam2\thap2' > "$1"
+}
+
+has_gzip_records() {
+    gzip -cd "$1" | awk 'NR { found = 1; exit } END { exit !found }'
+}
+
+has_ibdends_segments() {
+    gzip -cd "$1" | awk 'NR > 1 { found = 1; exit } END { exit !found }'
+}
+
 # rapid -> ibd-ends (convert to hapibd-like format first)
 module purge
 ml openjdk/25.0.2
@@ -170,19 +186,28 @@ zcat "$rapid_nonbed" | \
     awk 'BEGIN{OFS="\t"} ($6 >= 0 && $7 >= 0 && $6 <= $7) { print $2, $4+1, $3, $5+1, $1, $6, $7, $8 }' | \
     gzip -c > "$rapid_nonbed_hapibdformat"
 
-log_msg "rapid: filtering segments using ibd-ends (pop=${pop} rep=${rep} tmap=${tmap_label} imap=${imap_label})"
-java -Xmx"${ibdends_xmx}" -jar ~/software/ibd-ends/ibd-ends.jar \
-    gt="$vcf" \
-    ibd="$rapid_nonbed_hapibdformat" \
-    map="$hapibd_gmap" \
-    min-maf="${ibdends_min_maf}" \
-    nthreads="${ibdends_threads}" \
-    out="$rapid_ibdends_prefix"
+if ! has_gzip_records "$rapid_nonbed_hapibdformat"; then
+    write_empty_standard_bed "$rapid_out"
+    write_empty_standard_bed "$rapid_hot_out"
+    write_empty_standard_bed "$rapid_ibdends_out"
+    write_empty_standard_bed "$rapid_hotibdends_out"
+    write_empty_standard_bed "$rapid_ibdendshot_out"
+    gzip -f "$rapid_out" "$rapid_hot_out" "$rapid_ibdends_out" \
+        "$rapid_hotibdends_out" "$rapid_ibdendshot_out"
+    log_msg "no rapid segments; wrote empty standard outputs"
+    exit 0
+fi
 
-log_msg "rapid: generating ${rapid_ibdends_ibd} from ${rapid_ibdends_prefix}.ibd.gz"
-zcat "${rapid_ibdends_prefix}.ibd.gz" | \
-    awk 'BEGIN{OFS="\t"} NR>1 {print $5,$10,$11,$1,$2,$3,$4,$12}' | \
-    gzip -c > "$rapid_ibdends_ibd"
+log_msg "rapid: filtering segments using ibd-ends (pop=${pop} rep=${rep} tmap=${tmap_label} imap=${imap_label})"
+if has_gzip_records "$rapid_nonbed_hapibdformat"; then
+    java -Xmx"${ibdends_xmx}" -jar ~/software/ibd-ends/ibd-ends.jar \
+        gt="$vcf" ibd="$rapid_nonbed_hapibdformat" map="$hapibd_gmap" \
+        min-maf="${ibdends_min_maf}" nthreads="${ibdends_threads}" \
+        out="$rapid_ibdends_prefix"
+    zcat "${rapid_ibdends_prefix}.ibd.gz" | \
+        awk 'BEGIN{OFS="\t"} NR>1 {print $5,$10,$11,$1,$2,$3,$4,$12}' | \
+        gzip -c > "$rapid_ibdends_ibd"
+fi
 
 # format/filter (R)
 module purge
@@ -200,38 +225,49 @@ Rscript "/home1/karatas/ibd_compare/job_scripts/convert_std_bed_to_hapibd.R" \
     "$rapid_hot_out" "$rapid_hot_hapibdformat"
 
 log_msg "rapid: format+filter ibd-ends adjusted calls (hapibd-style map here)"
-Rscript "/home1/karatas/ibd_compare/job_scripts/filter_and_format.R" \
-    "$min_bp_len" "$min_cm_len" "$hot_bin_size" "$hot_bin_sd" \
-    "$rapid_ibdends_ibd" "$hapibd_gmap" \
-    "$rapid_ibdends_out" "$rapid_ibdendshot_out" \
-    "TRUE" "TRUE"
+if [[ -s "${rapid_ibdends_prefix}.ibd.gz" ]] && \
+    has_ibdends_segments "${rapid_ibdends_prefix}.ibd.gz"; then
+    Rscript "/home1/karatas/ibd_compare/job_scripts/filter_and_format.R" \
+        "$min_bp_len" "$min_cm_len" "$hot_bin_size" "$hot_bin_sd" \
+        "$rapid_ibdends_ibd" "$hapibd_gmap" "$rapid_ibdends_out" \
+        "$rapid_ibdendshot_out" "TRUE" "TRUE"
+else
+    write_empty_standard_bed "$rapid_ibdends_out"
+    write_empty_standard_bed "$rapid_ibdendshot_out"
+fi
 
 module purge
 ml openjdk/25.0.2
 
 log_msg "rapid: filtering hot-filtered segments using ibd-ends"
-java -Xmx"${ibdends_xmx}" -jar ~/software/ibd-ends/ibd-ends.jar \
-    gt="$vcf" \
-    ibd="$rapid_hot_hapibdformat" \
-    map="$hapibd_gmap" \
-    min-maf="${ibdends_min_maf}" \
-    nthreads="${ibdends_threads}" \
-    out="$rapid_hot_ibdends_prefix"
+if has_gzip_records "$rapid_hot_hapibdformat"; then
+    java -Xmx"${ibdends_xmx}" -jar ~/software/ibd-ends/ibd-ends.jar \
+        gt="$vcf" ibd="$rapid_hot_hapibdformat" map="$hapibd_gmap" \
+        min-maf="${ibdends_min_maf}" nthreads="${ibdends_threads}" \
+        out="$rapid_hot_ibdends_prefix"
+fi
 
 log_msg "rapid: generating ${rapid_hot_ibdends_ibd} from ${rapid_hot_ibdends_prefix}.ibd.gz"
-zcat "${rapid_hot_ibdends_prefix}.ibd.gz" | \
-    awk 'BEGIN{OFS="\t"} NR>1 {print $5,$10,$11,$1,$2,$3,$4,$12}' | \
-    gzip -c > "$rapid_hot_ibdends_ibd"
+if [[ -s "${rapid_hot_ibdends_prefix}.ibd.gz" ]] && \
+    has_ibdends_segments "${rapid_hot_ibdends_prefix}.ibd.gz"; then
+    zcat "${rapid_hot_ibdends_prefix}.ibd.gz" | \
+        awk 'BEGIN{OFS="\t"} NR>1 {print $5,$10,$11,$1,$2,$3,$4,$12}' | \
+        gzip -c > "$rapid_hot_ibdends_ibd"
+fi
 
 module purge
 ml rstats/4.5.1
 
 log_msg "rapid: formatting hot-filtered ibd-ends adjusted calls"
-Rscript "/home1/karatas/ibd_compare/job_scripts/filter_and_format.R" \
-    "$min_bp_len" "$min_cm_len" "$hot_bin_size" "$hot_bin_sd" \
-    "$rapid_hot_ibdends_ibd" "$hapibd_gmap" \
-    "$rapid_hotibdends_out" "/tmp/rapid_hotibdends_unused.bed" \
-    "TRUE" "FALSE"
+if [[ -s "$rapid_hot_ibdends_ibd" ]]; then
+    Rscript "/home1/karatas/ibd_compare/job_scripts/filter_and_format.R" \
+        "$min_bp_len" "$min_cm_len" "$hot_bin_size" "$hot_bin_sd" \
+        "$rapid_hot_ibdends_ibd" "$hapibd_gmap" \
+        "$rapid_hotibdends_out" "/tmp/rapid_hotibdends_unused.bed" \
+        "TRUE" "FALSE"
+else
+    write_empty_standard_bed "$rapid_hotibdends_out"
+fi
 
 gzip -f \
     "$rapid_out" \

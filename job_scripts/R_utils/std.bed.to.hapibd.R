@@ -11,9 +11,7 @@
 
 library(tidyverse)
 
-std.bed.to.hapibd <- function(fname.in, fname.out,
-                              sample.id.mode = c("simulation", "empirical")) {
-  sample.id.mode <- match.arg(sample.id.mode)
+std.bed.to.hapibd <- function(fname.in, fname.out) {
   req.cols <- c(
     "chr", "bp.str", "bp.end", "bp.len", "cM.str", "cM.end", "cM.len",
     "sam1", "hap1", "sam2", "hap2"
@@ -31,30 +29,12 @@ std.bed.to.hapibd <- function(fname.in, fname.out,
     )
   }
 
-  # Keep the simulation-only tsk_* contract separate from empirical labels.
-  format.sample.ids <- function(sample_ids) {
-    sample_ids <- as.character(sample_ids)
-
-    if (sample.id.mode == "empirical") {
-      return(sample_ids)
-    }
-
-    sample_ids_int <- suppressWarnings(as.integer(sample_ids))
-    if (any(is.na(sample_ids_int))) {
-      stop(
-        "simulation sample.id.mode requires integer-compatible sample IDs"
-      )
-    }
-
-    paste0("tsk_", sample_ids_int)
-  }
-
   hapibd.calls <- calls %>%
     arrange(bp.str, bp.end) %>%
     transmute(
-      sam1 = format.sample.ids(sam1),
+      sam1 = as.character(sam1),
       hap1 = as.integer(hap1),
-      sam2 = format.sample.ids(sam2),
+      sam2 = as.character(sam2),
       hap2 = as.integer(hap2),
       chr = chr,
       bp.str = as.integer(bp.str),

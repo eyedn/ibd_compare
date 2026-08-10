@@ -29,13 +29,6 @@ kinship.mat2tbl <- function(mat, rep.idx, pop.name){
   sam1 <- rownames(mat)[idx[, 1]]
   sam2 <- colnames(mat)[idx[, 2]]
 
-  sam1.int <- suppressWarnings(as.integer(sam1))
-  sam2.int <- suppressWarnings(as.integer(sam2))
-  if (!any(is.na(c(sam1.int, sam2.int)))) {
-    sam1 <- sam1.int
-    sam2 <- sam2.int
-  }
-  
   tbl <- tibble(
     rep = rep.idx,
     pop = pop.name,

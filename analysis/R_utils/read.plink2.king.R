@@ -19,8 +19,8 @@ read.plink2.king <- function(path) {
       kinship = KINSHIP
     ) %>%
     mutate(
-      sam1 = as.integer(str_remove(sam1, "^tsk_")),
-      sam2 = as.integer(str_remove(sam2, "^tsk_"))
+      sam1 = as.character(sam1),
+      sam2 = as.character(sam2)
     ) %>%
     select(sam1, sam2, kinship)
 }

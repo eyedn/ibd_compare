@@ -39,7 +39,12 @@ rap_min_len="$7"
 rap_window_size="$8"
 rap_num_runs="$9"
 rap_num_successes="${10}"
-shift 10
+contract_file="${11}"
+id_contract="${12}"
+shift 12
+
+source /home1/karatas/ibd_compare/other_scripts/require_sim_id_contract.sh \
+    "$contract_file" "$id_contract"
 
 # read tmaps until "--", then imaps until "--", then filtering until "--", then pops
 tmaps=()
@@ -82,7 +87,6 @@ tmap="${tmaps[$tmap_idx]}"
 imap="${imaps[$imap_idx]}"
 filt="${filtering[$filt_idx]}"
 software="rapid"
-pop_start=$(( pop_idx * sample_size ))
 
 # labels (unchanged)
 if [[ "$tmap" == *HapMapII_GRCh38* ]]; then tmap_label="hapmap"
@@ -106,7 +110,6 @@ imap=${imap}
 software=${software}
 filt=${filt}
 pop=${pop}
-pop_start=${pop_start}
 num_reps=${num_reps}
 software_dir_base=${software_dir_base}"
 
@@ -162,4 +165,4 @@ module purge
 ml rstats/4.5.1
 Rscript "/home1/karatas/ibd_compare/job_scripts/true_vs_inference_aggregate.R" \
     "$manifest" "$tmap_label" "$chr" "$sample_size" "$agg_out" \
-    "$filt" "$pop" "$pop_start"
+    "$filt" "$pop"

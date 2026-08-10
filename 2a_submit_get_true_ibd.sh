@@ -35,6 +35,8 @@ sbatch \
         "$TRUE_DIR" \
         "$SAMPLE_SIZE" \
         "$NUM_REPS" \
+        "$SIM_ID_CONTRACT_FILE" \
+        "$SIM_ID_CONTRACT" \
         "${TMAPS[@]}" \
         -- \
         "${POPS[@]}"

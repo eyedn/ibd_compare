@@ -12,11 +12,7 @@
 library(tidyverse)
 
 compute.kinship.coeffs <- function(ibd, n.diploids, genome.seg.len.cM,
-                                   sample.id.mode = c(
-                                     "simulation", "empirical"
-                                   ),
-                                   sample.ids = NULL) {
-  sample.id.mode <- match.arg(sample.id.mode)
+                                   population = NULL, sample.ids = NULL) {
   
   message("computing IBD-based kinship with ", n.diploids, " diploids over a ", genome.seg.len.cM, "cM length of genome")
   req.cols <- c("chr", "sam1", "hap1", "sam2", "hap2",
@@ -26,17 +22,14 @@ compute.kinship.coeffs <- function(ibd, n.diploids, genome.seg.len.cM,
     stop("ibd must contain columns: ", paste(req.cols, collapse = ", "))
   }
 
-  if (sample.id.mode == "simulation") {
-    if (is.null(n.diploids)) {
-      stop("simulation kinship requires n.diploids")
+  if (is.null(sample.ids)) {
+    if (is.null(population) || !nzchar(population)) {
+      stop("simulation kinship requires a population label")
     }
-  } else {
-    if (is.null(sample.ids)) {
-      sample.ids <- sort(unique(c(ibd$sam1, ibd$sam2)))
-    }
-    sample.ids <- as.character(sample.ids)
-    n.diploids <- length(sample.ids)
+    sample.ids <- paste0(population, "_", seq_len(n.diploids))
   }
+  sample.ids <- as.character(sample.ids)
+  n.diploids <- length(sample.ids)
 
   # extract necessary coli,ms
   ibd.condense <- ibd %>%
@@ -87,30 +80,18 @@ compute.kinship.coeffs <- function(ibd, n.diploids, genome.seg.len.cM,
     )
   
   # matrix output
-  if (sample.id.mode == "simulation") {
-    kin.mat <- matrix(0, nrow = n.diploids, ncol = n.diploids)
-  } else {
-    kin.mat <- matrix(
-      0,
-      nrow = n.diploids,
-      ncol = n.diploids,
-      dimnames = list(sample.ids, sample.ids)
-    )
-  }
+  kin.mat <- matrix(
+    0,
+    nrow = n.diploids,
+    ncol = n.diploids,
+    dimnames = list(sample.ids, sample.ids)
+  )
 
   for (i in seq_len(nrow(pair.summary))) {
-    if (sample.id.mode == "simulation") {
-      s1 <- suppressWarnings(as.integer(pair.summary$sam1[i])) + 1L
-      s2 <- suppressWarnings(as.integer(pair.summary$sam2[i])) + 1L
+    s1 <- match(pair.summary$sam1[i], sample.ids)
+    s2 <- match(pair.summary$sam2[i], sample.ids)
 
-      if (is.na(s1) || is.na(s2)) next
-      if (s1 < 1L || s1 > n.diploids || s2 < 1L || s2 > n.diploids) next
-    } else {
-      s1 <- match(pair.summary$sam1[i], sample.ids)
-      s2 <- match(pair.summary$sam2[i], sample.ids)
-
-      if (is.na(s1) || is.na(s2)) next
-    }
+    if (is.na(s1) || is.na(s2)) next
 
     kin.mat[s1, s2] <- pair.summary$kinship[i]
     kin.mat[s2, s1] <- pair.summary$kinship[i]
@@ -118,14 +99,6 @@ compute.kinship.coeffs <- function(ibd, n.diploids, genome.seg.len.cM,
   
   diag(kin.mat) <- 0.5
 
-  if (sample.id.mode == "simulation") {
-    pair.summary <- pair.summary %>%
-      mutate(
-        sam1 = as.integer(sam1),
-        sam2 = as.integer(sam2)
-      )
-  }
-  
   list(
     kinship.long   = pair.summary,
     kinship.matrix = kin.mat

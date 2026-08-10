@@ -158,12 +158,12 @@ filter.ibd.by.hot.bins <- function(
         cat("No hot bins detected; calls unchanged.\n")
         calls.filtered <- calls %>% mutate(cM.str = as.numeric(cM.str), cM.end = as.numeric(cM.end))
     } else {
-        flag.vec <- integer(n.bins + 1L)
+        flag.vec <- integer(n.bins)
         flag.vec[flagged.bins] <- 1L
-        flag.cum <- cumsum(flag.vec)
+        flag.cum <- c(0L, cumsum(flag.vec))
 
         overlap.flagged <-
-            (flag.cum[bin.hi] - flag.cum[pmax(bin.lo - 1L, 0L)]) > 0L
+            (flag.cum[bin.hi + 1L] - flag.cum[bin.lo]) > 0L
 
         calls.filtered <- calls.norm %>%
             filter(!overlap.flagged) %>%

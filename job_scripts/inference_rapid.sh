@@ -38,7 +38,11 @@ rapid_map_dir="$6"
 outdir="$7"
 num_reps="$8"
 chr="$9"
-shift 9
+contract_file="${10}"
+id_contract="${11}"
+shift 11
+source /home1/karatas/ibd_compare/other_scripts/require_sim_id_contract.sh \
+    "$contract_file" "$id_contract"
 
 # read TMAPs until "--", then read imaps until "--", thenread pops
 tmaps=()
@@ -135,6 +139,7 @@ for pop in "${pops[@]}"; do
         # early exit if no ibd segments were called
         if [[ $(zcat "${ibd_out}/results.max.gz" | wc -l) -eq 0 ]]; then
                 log_msg "no ibd segments detected for $pop on rep$rep; continue"
+                gzip -c </dev/null > "$ibd_bed"
                 continue
         fi
 

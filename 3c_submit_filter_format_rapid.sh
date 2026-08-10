@@ -63,6 +63,8 @@ sbatch \
         "$RAP_WINDOW_SIZE" \
         "$RAP_NUM_RUNS" \
         "$RAP_NUM_SUCCESSES" \
+        "$SIM_ID_CONTRACT_FILE" \
+        "$SIM_ID_CONTRACT" \
         "${TMAPS[@]}" \
         -- \
         "${IMAPS[@]}" \
@@ -102,6 +104,8 @@ sbatch \
         "$RAP_WINDOW_SIZE" \
         "$RAP_NUM_RUNS" \
         "$RAP_NUM_SUCCESSES" \
+        "$SIM_ID_CONTRACT_FILE" \
+        "$SIM_ID_CONTRACT" \
         "${TMAPS[@]}" \
         -- \
         "${IMAPS[@]}" \

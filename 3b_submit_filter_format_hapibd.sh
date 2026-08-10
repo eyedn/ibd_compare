@@ -65,6 +65,8 @@ sbatch \
         "$HAP_MIN_OUTPUT" \
         "$HAP_MIN_MARKERS" \
         "$HAP_MIN_MAC" \
+        "$SIM_ID_CONTRACT_FILE" \
+        "$SIM_ID_CONTRACT" \
         "${TMAPS[@]}" \
         -- \
         "${IMAPS[@]}" \
@@ -105,6 +107,8 @@ sbatch \
         "$HAP_MIN_OUTPUT" \
         "$HAP_MIN_MARKERS" \
         "$HAP_MIN_MAC" \
+        "$SIM_ID_CONTRACT_FILE" \
+        "$SIM_ID_CONTRACT" \
         "${TMAPS[@]}" \
         -- \
         "${IMAPS[@]}" \

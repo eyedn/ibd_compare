@@ -33,9 +33,9 @@ read.true <- function(true.fname,  min.bp.len = 0, min.cM.len = 0, gmap) {
     mutate(
       bp.str = as.integer(bp.str),
       bp.end = as.integer(bp.end),
-      sam1 = as.integer(str_extract(sam1, "\\d+$")),
+      sam1 = as.character(sam1),
       hap1   = as.integer(hap1),
-      sam2 = as.integer(str_extract(sam2, "\\d+$")),,
+      sam2 = as.character(sam2),
       hap2   = as.integer(hap2),
       bp.len = as.integer(bp.len)
     ) %>% 

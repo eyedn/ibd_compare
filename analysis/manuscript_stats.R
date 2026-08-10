@@ -71,7 +71,7 @@ read.manuscript.unrels <- function(pop.info.dir) {
           col_names = FALSE,
           show_col_types = FALSE
         ) %>%
-          transmute(ids = as.integer(str_remove(X1, "^tsk_"))) %>%
+          transmute(ids = as.character(X1)) %>%
           pull(ids)
       )
     ) %>%

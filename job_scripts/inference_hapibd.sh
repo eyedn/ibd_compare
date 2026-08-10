@@ -39,7 +39,12 @@ outdir="$7"
 vcf_dir="$8"
 num_reps="$9"
 chr="${10}"
-shift 10
+contract_file="${11}"
+id_contract="${12}"
+shift 12
+
+source /home1/karatas/ibd_compare/other_scripts/require_sim_id_contract.sh \
+    "$contract_file" "$id_contract"
 
 # read tmaps until "--", then read imaps until "--", then read pops
 tmaps=()
@@ -148,9 +153,10 @@ for pop in "${pops[@]}"; do
                 exit 1
         fi
 
-        # continue if no ibd segments were called (header-only or empty)
+        # Preserve an empty BED artifact for downstream format/filter workers.
         if [[ $(zcat "$ibd_gz" | wc -l) -eq 0 ]]; then
-                log_msg "no ibd segments detected for ${pop} on rep${rep}; continue"
+                log_msg "no ibd segments detected for ${pop} on rep${rep}"
+                gzip -c /dev/null > "$ibd_bed"
                 continue
         fi
 

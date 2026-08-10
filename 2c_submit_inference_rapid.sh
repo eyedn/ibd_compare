@@ -40,6 +40,8 @@ sbatch \
     "$OUTDIR" \
     "$NUM_REPS" \
     "$CHR" \
+    "$SIM_ID_CONTRACT_FILE" \
+    "$SIM_ID_CONTRACT" \
     "${TMAPS[@]}" \
     -- \
     "${IMAPS[@]}" \

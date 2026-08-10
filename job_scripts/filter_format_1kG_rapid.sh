@@ -129,6 +129,14 @@ pops=${pops[*]}
 ibdends_xmx=${ibdends_xmx}
 ibdends_threads=${ibdends_threads}"
 
+write_empty_standard_bed() {
+    printf '%s\n' $'chr\tbp.str\tbp.end\tbp.len\tcM.str\tcM.end\tcM.len\tsam1\thap1\tsam2\thap2' > "$1"
+}
+
+has_gzip_records() {
+    gzip -cd "$1" | awk 'NR { found = 1; exit } END { exit !found }'
+}
+
 for pop in "${pops[@]}"; do
     vcf="${vcf_dir}/chr${chr}/${pop}.vcf.gz"
     rapid_gmap="${rapid_map_dir}/pop${pop}_chr${chr}_imap${imap}.map"
@@ -175,6 +183,18 @@ imap=${imap_label}"
         awk 'BEGIN{OFS="\t"} ($6 >= 0 && $7 >= 0 && $6 <= $7) { print $2, $4+1, $3, $5+1, $1, $6, $7, $8 }' | \
         gzip -c > "$rapid_nonbed_hapibdformat"
 
+    if ! has_gzip_records "$rapid_nonbed_hapibdformat"; then
+        write_empty_standard_bed "$rapid_out"
+        write_empty_standard_bed "$rapid_hot_out"
+        write_empty_standard_bed "$rapid_ibdends_out"
+        write_empty_standard_bed "$rapid_hotibdends_out"
+        write_empty_standard_bed "$rapid_ibdendshot_out"
+        gzip -f "$rapid_out" "$rapid_hot_out" "$rapid_ibdends_out" \
+            "$rapid_hotibdends_out" "$rapid_ibdendshot_out"
+        log_msg "no rapid segments; wrote empty standard outputs for ${pop}"
+        continue
+    fi
+
     log_msg "rapid: filtering segments using ibd-ends
 pop=${pop}
 chr=${chr}
@@ -203,14 +223,14 @@ imap=${imap_label}"
         "$min_bp_len" "$min_cm_len" "$hot_bin_size" "$hot_bin_sd" \
         "$rapid_ibd" "$rapid_gmap" \
         "$rapid_out" "$rapid_hot_out" \
-        "FALSE" "TRUE" "empirical"
+        "FALSE" "TRUE"
 
     log_msg "rapid: converting hot-filtered calls to hapibd format
 pop=${pop}
 chr=${chr}
 imap=${imap_label}"
     Rscript "/home1/karatas/ibd_compare/job_scripts/convert_std_bed_to_hapibd.R" \
-        "$rapid_hot_out" "$rapid_hot_hapibdformat" "empirical"
+        "$rapid_hot_out" "$rapid_hot_hapibdformat"
 
     log_msg "rapid: format+filter ibd-ends adjusted calls
 pop=${pop}
@@ -220,7 +240,15 @@ imap=${imap_label}"
         "$min_bp_len" "$min_cm_len" "$hot_bin_size" "$hot_bin_sd" \
         "$rapid_ibdends_ibd" "$hapibd_gmap" \
         "$rapid_ibdends_out" "$rapid_ibdendshot_out" \
-        "TRUE" "TRUE" "empirical"
+        "TRUE" "TRUE"
+
+    if ! has_gzip_records "$rapid_hot_hapibdformat"; then
+        write_empty_standard_bed "$rapid_hotibdends_out"
+        gzip -f "$rapid_out" "$rapid_hot_out" "$rapid_ibdends_out" \
+            "$rapid_hotibdends_out" "$rapid_ibdendshot_out"
+        log_msg "no hot-filtered rapid segments; wrote empty hot ibd-ends output"
+        continue
+    fi
 
     module purge
     ml openjdk/25.0.2
@@ -253,7 +281,7 @@ imap=${imap_label}"
         "$min_bp_len" "$min_cm_len" "$hot_bin_size" "$hot_bin_sd" \
         "$rapid_hot_ibdends_ibd" "$hapibd_gmap" \
         "$rapid_hotibdends_out" "/tmp/rapid_hotibdends_unused.bed" \
-        "TRUE" "FALSE" "empirical"
+        "TRUE" "FALSE"
 
     gzip -f \
         "$rapid_out" \

@@ -13,9 +13,7 @@ library(tidyverse)
 source("job_scripts/R_utils/interp.cM.R")
 source("job_scripts/R_utils/parse.sample.ids.R")
 
-read.hapibd.bed <- function(fname, min.bp.len = 0, min.cM.len = 0, gmap,
-                            sample.id.mode = c("simulation", "empirical")) {
-  sample.id.mode <- match.arg(sample.id.mode)
+read.hapibd.bed <- function(fname, min.bp.len = 0, min.cM.len = 0, gmap) {
 
   # read in ibd calls
   hapibd.calls <- readr::read_tsv(
@@ -35,17 +33,9 @@ read.hapibd.bed <- function(fname, min.bp.len = 0, min.cM.len = 0, gmap,
     mutate(
       bp.str = as.integer(bp.str),
       bp.end = as.integer(bp.end),
-      sam1 = parse.sample.ids(
-        sam1,
-        sample.id.mode,
-        "hap-IBD simulation input contains non-integer sample IDs"
-      ),
+      sam1 = parse.sample.ids(sam1),
       hap1 = as.integer(hap1),
-      sam2 = parse.sample.ids(
-        sam2,
-        sample.id.mode,
-        "hap-IBD simulation input contains non-integer sample IDs"
-      ),
+      sam2 = parse.sample.ids(sam2),
       hap2 = as.integer(hap2),
       cM.len = as.numeric(cM.len),
       bp.len = bp.end - bp.str

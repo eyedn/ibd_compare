@@ -119,6 +119,13 @@ hapibd_ff_dir="${common_ff_dir}/${hapibd_dir_base}"
 
 mkdir -p "$common_ff_dir" "$hapibd_ff_dir"
 
+# Write the standard BED schema for paths with no callable segments.
+write_empty_standard_bed() {
+    printf '%s\n' \
+        $'chr\tbp.str\tbp.end\tbp.len\tcM.str\tcM.end\tcM.len\tsam1\thap1\tsam2\thap2' \
+        > "$1"
+}
+
 log_msg "filter_format_1kG_hapibd task
 task_id=${tid}
 chr=${chr}
@@ -158,6 +165,29 @@ for pop in "${pops[@]}"; do
         exit 1
     }
 
+    # Format raw calls before ibd-ends so an empty raw result can short-circuit.
+    module purge
+    ml rstats/4.5.1
+    log_msg "hapibd: format+filter raw calls
+pop=${pop}
+chr=${chr}
+imap=${imap_label}"
+    Rscript "/home1/karatas/ibd_compare/job_scripts/filter_and_format.R" \
+        "$min_bp_len" "$min_cm_len" "$hot_bin_size" "$hot_bin_sd" \
+        "$hapibd_ibd" "$hapibd_gmap" \
+        "$hapibd_out" "$hapibd_hot_out" \
+        "TRUE" "TRUE"
+
+    if [[ $(tail -n +2 "$hapibd_out" | wc -l) -eq 0 ]]; then
+        log_msg "hapibd: raw calls empty; skipping ibd-ends"
+        write_empty_standard_bed "$hapibd_ibdends_out"
+        write_empty_standard_bed "$hapibd_hotibdends_out"
+        write_empty_standard_bed "$hapibd_ibdendshot_out"
+        gzip -f "$hapibd_out" "$hapibd_hot_out" "$hapibd_ibdends_out" \
+            "$hapibd_hotibdends_out" "$hapibd_ibdendshot_out"
+        continue
+    fi
+
     module purge
     ml openjdk/25.0.2
 
@@ -180,23 +210,20 @@ imap=${imap_label}"
 
     module purge
     ml rstats/4.5.1
-
-    log_msg "hapibd: format+filter raw calls
-pop=${pop}
-chr=${chr}
-imap=${imap_label}"
-    Rscript "/home1/karatas/ibd_compare/job_scripts/filter_and_format.R" \
-        "$min_bp_len" "$min_cm_len" "$hot_bin_size" "$hot_bin_sd" \
-        "$hapibd_ibd" "$hapibd_gmap" \
-        "$hapibd_out" "$hapibd_hot_out" \
-        "TRUE" "TRUE" "empirical"
-
     log_msg "hapibd: converting hot-filtered calls to hapibd format
 pop=${pop}
 chr=${chr}
 imap=${imap_label}"
     Rscript "/home1/karatas/ibd_compare/job_scripts/convert_std_bed_to_hapibd.R" \
-        "$hapibd_hot_out" "$hapibd_hot_hapibdformat" "empirical"
+        "$hapibd_hot_out" "$hapibd_hot_hapibdformat"
+
+    if [[ $(tail -n +2 "$hapibd_hot_out" | wc -l) -eq 0 ]]; then
+        log_msg "hapibd: hot-filtered calls empty; skipping hot ibd-ends"
+        write_empty_standard_bed "$hapibd_hotibdends_out"
+        gzip -f "$hapibd_out" "$hapibd_hot_out" "$hapibd_ibdends_out" \
+            "$hapibd_hotibdends_out" "$hapibd_ibdendshot_out"
+        continue
+    fi
 
     module purge
     ml openjdk/25.0.2
@@ -229,7 +256,7 @@ imap=${imap_label}"
         "$min_bp_len" "$min_cm_len" "$hot_bin_size" "$hot_bin_sd" \
         "$hapibd_ibdends_ibd" "$hapibd_gmap" \
         "$hapibd_ibdends_out" "$hapibd_ibdendshot_out" \
-        "TRUE" "TRUE" "empirical"
+        "TRUE" "TRUE"
 
     log_msg "hapibd: formatting hot-filtered ibd-ends adjusted calls
 pop=${pop}
@@ -239,7 +266,7 @@ imap=${imap_label}"
         "$min_bp_len" "$min_cm_len" "$hot_bin_size" "$hot_bin_sd" \
         "$hapibd_hot_ibdends_ibd" "$hapibd_gmap" \
         "$hapibd_hotibdends_out" "/tmp/hapibd_hotibdends_unused.bed" \
-        "TRUE" "FALSE" "empirical"
+        "TRUE" "FALSE"
 
     gzip -f \
         "$hapibd_out" \

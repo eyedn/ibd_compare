@@ -33,7 +33,11 @@ rapid_map_dir="$2"
 ref_dir="$3"
 chr="$4"
 num_reps="$5"
-shift 5
+contract_file="$6"
+id_contract="$7"
+shift 7
+source /home1/karatas/ibd_compare/other_scripts/require_sim_id_contract.sh \
+    "$contract_file" "$id_contract"
 
 tmaps=()
 while [[ $# -gt 0 && "$1" != "--" ]]; do

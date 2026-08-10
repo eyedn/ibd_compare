@@ -29,5 +29,7 @@ sbatch \
     /home1/karatas/ibd_compare/job_scripts/combine_tvi.sh \
         "$TVI_DIR" \
         "$out_agg" \
-        "$out_per_rep"
+        "$out_per_rep" \
+        "$SIM_ID_CONTRACT_FILE" \
+        "$SIM_ID_CONTRACT"
 log_msg "submitted combine_tvi job"
