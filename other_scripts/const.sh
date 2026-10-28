@@ -32,7 +32,7 @@ CHR=18
 REF_DIR="${HOME}/references"
 # Population-prefixed labels are the default simulation ID contract.
 SIM_ID_CONTRACT="population_ids"
-OUTDIR="${SCRATCH}/ibd_compare_chr${CHR}_ooa"
+OUTDIR="/home1/karatas/scratch/ibd_compare_chr${CHR}_ooa"
 SIM_ID_CONTRACT_FILE="${OUTDIR}/.simulation_id_contract"
 VCF_DIR="${OUTDIR}/vcfs"
 POP_INFO_DIR="${OUTDIR}/pop_info"
@@ -40,8 +40,8 @@ RAPID_MAP_DIR="${OUTDIR}/rapid_maps"
 TRUE_DIR="${OUTDIR}/true_ibd"
 COMMON_FF_DIR="${OUTDIR}/filter_format"
 TVI_DIR="${COMMON_FF_DIR}/true_vs_inference"
-ONEKG_IBD_INIT_INFERENCE_DIR="${SCRATCH}/ibd_compare_init_1kG"
-ONEKG_IBD_COMPARE_DIR="${SCRATCH}/ibd_compare_1kG"
+ONEKG_IBD_INIT_INFERENCE_DIR="/home1/karatas/scratch/ibd_compare_init_1kG"
+ONEKG_IBD_COMPARE_DIR="/home1/karatas/scratch/ibd_compare_1kG"
 
 # Job-array and filtering resources.
 MAX_JOBS=100

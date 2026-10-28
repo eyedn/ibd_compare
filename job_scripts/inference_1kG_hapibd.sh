@@ -161,7 +161,7 @@ out=${prefix}"
         exit 1
     }
 
-    tmpdir="${SCRATCH:-/tmp}/bedtmp_${SLURM_JOB_ID}_${SLURM_ARRAY_TASK_ID:-$$}"
+    tmpdir="/home1/karatas/scratch/bedtmp_${SLURM_JOB_ID}_${SLURM_ARRAY_TASK_ID:-$$}"
     mkdir -p "${tmpdir}"
     tmp_bed="${ibd_bed}.tmp"
 
