@@ -34,6 +34,7 @@ sbatch \
         "$OOA_TREE_DIR" \
         "$TRUE_DIR" \
         "$SAMPLE_SIZE" \
+        "$ANALYSIS_SAMPLE_SIZE" \
         "$NUM_REPS" \
         "$SIM_ID_CONTRACT_FILE" \
         "$SIM_ID_CONTRACT" \

@@ -14,6 +14,9 @@
 set -euo pipefail
 source /home1/karatas/ibd_compare/other_scripts/const.sh
 source /home1/karatas/ibd_compare/other_scripts/log_msg.sh
+source /home1/karatas/ibd_compare/other_scripts/software_profiles.sh
+select_software_profile rapid "$@"
+
 
 total_tasks=$(( ${#TMAPS[@]} * ${#IMAPS[@]} * ${#FILTERING[@]} * ${#POPS[@]} ))
 
@@ -27,7 +30,7 @@ sbatch \
         "$POP_INFO_DIR" \
         "$TVI_DIR" \
         "$CHR" \
-        "$SAMPLE_SIZE" \
+        "$ANALYSIS_SAMPLE_SIZE" \
         "$NUM_REPS" \
         "$RAP_MIN_LEN" \
         "$RAP_WINDOW_SIZE" \

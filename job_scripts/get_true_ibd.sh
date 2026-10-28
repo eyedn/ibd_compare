@@ -40,10 +40,11 @@ chr="$3"
 ooa_tree_dir="$4"
 true_dir="$5"  
 sample_size="$6"
-num_reps="$7"
-contract_file="$8"
-id_contract="$9"
-shift 9
+analysis_sample_size="$7"
+num_reps="$8"
+contract_file="$9"
+id_contract="${10}"
+shift 10
 source /home1/karatas/ibd_compare/other_scripts/require_sim_id_contract.sh \
     "$contract_file" "$id_contract"
 
@@ -109,7 +110,7 @@ fi
 for idx in "${!pops[@]}"; do
     pop="${pops[$idx]}"
     start=$(( idx * sample_size ))
-    end=$(( (idx + 1) * sample_size - 1 ))
+    end=$(( start + analysis_sample_size - 1 ))
     out_tsv="${true_dir}/${gmap}_${rep}_chr${chr}_${pop}.tsv"
 
     log_msg "generating true ibd segments in ${out_tsv}"

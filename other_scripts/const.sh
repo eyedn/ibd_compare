@@ -17,8 +17,14 @@ TMAPS=("HapMapII_GRCh38")
 POPS=(AFR EUR ADX)
 NONADMIXED_POP_LABELS=(AFR EUR)
 ADMIXED_POP_LABEL="ADX"
-NUM_REPS=50
+NUM_REPS=2  # 50 replicates are available in total.
 SAMPLE_SIZE=500
+ANALYSIS_SAMPLE_SIZE=50
+[[ "$ANALYSIS_SAMPLE_SIZE" =~ ^[1-9][0-9]*$ ]] &&
+    (( ANALYSIS_SAMPLE_SIZE <= SAMPLE_SIZE )) || {
+    echo "ERROR: ANALYSIS_SAMPLE_SIZE must be 1 through SAMPLE_SIZE" >&2
+    exit 1
+}
 CHR=18
 
 # IBD-comparison outputs are deliberately separate from OOA inputs.
@@ -48,8 +54,8 @@ ADMIXED_IBDENDS_THREADS=4
 ADMIXED_IBDENDS_XMX="96G"
 
 # IBD ground-truth specifications.
-MAX_TIME=75
-MIN_SPAN=100000
+MAX_TIME=250  # generations
+MIN_SPAN=200000  # base pairs
 MIN_BP_LEN=0
 MIN_CM_LEN=2
 
@@ -62,8 +68,8 @@ HOT_BIN_SD=3
 KIN_CUTOFF="${KIN_CUTOFF:-0.0442}"
 
 # hap-IBD parameters.
-HAP_MIN_SEED=2.0
-HAP_MAX_GAP=1000
+HAP_MIN_SEED=2.0    # mutable by software_profiles.sh
+HAP_MAX_GAP=1000    # mutable by software_profiles.sh
 HAP_MIN_EXTEND=1.0
 HAP_MIN_OUTPUT=2.0
 HAP_MIN_MARKERS=100
@@ -71,7 +77,7 @@ HAP_MIN_MAC=2
 
 # RaPID parameters.
 RAP_MIN_LEN=2
-RAP_WINDOW_SIZE=100
+RAP_WINDOW_SIZE=100 # mutable by software_profiles.sh
 RAP_NUM_RUNS=10
 RAP_NUM_SUCCESSES=2
 
