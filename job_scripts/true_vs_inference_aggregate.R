@@ -132,6 +132,9 @@ for (i in seq_len(n.reps)) {
   
   true.ibd <- read.ibd(true.file)
   inf.ibd  <- read.ibd(inf.file)
+  if (nrow(inf.ibd) == 0) {
+    message("zero inferred segments (rep=", rep, "): ", inf.file)
+  }
   cov.res  <- read.cov.res(cov.file)
   
   # confusion metrics (base + windowed) ----
