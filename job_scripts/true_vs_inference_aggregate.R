@@ -9,7 +9,6 @@
 # ______________________________________________________________________________
 
 
-# pattern: Mixed (needs refactoring)
 
 library(tidyverse)
 library(glue)

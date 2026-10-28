@@ -8,7 +8,6 @@
 # zero_inferred_ibd.R
 # ______________________________________________________________________________
 
-# pattern: Imperative Shell
 # Run from the repository root: Rscript tests/zero_inferred_ibd.R
 
 suppressPackageStartupMessages(library(tidyverse))

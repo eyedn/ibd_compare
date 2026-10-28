@@ -8,7 +8,6 @@
 # manuscript_stats_helpers.R
 # ______________________________________________________________________________
 
-# pattern: Functional Core
 
 library(tidyverse)
 

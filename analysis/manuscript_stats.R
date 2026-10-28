@@ -8,7 +8,6 @@
 # manuscript_stats.R
 # ______________________________________________________________________________
 
-# pattern: Imperative Shell
 
 library(tidyverse)
 library(glue)
