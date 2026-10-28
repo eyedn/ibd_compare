@@ -11,8 +11,9 @@
 ###############################################################################
 
 # Read-only OOA simulation inputs.
-OOA_TREE_DIR="${SCRATCH}/OOA_NAAdmixture_small/trees"
-OOA_VCF_DIR="${SCRATCH}/OOA_NAAdmixture_small/vcfs"
+OOA_INPUT_DIR="/home1/karatas/scratch/OOA_NAAdmixture_2T12Consistent"
+OOA_TREE_DIR="${OOA_INPUT_DIR}/trees"
+OOA_VCF_DIR="${OOA_INPUT_DIR}/vcfs"
 TMAPS=("HapMapII_GRCh38")
 POPS=(AFR EUR ADX)
 NONADMIXED_POP_LABELS=(AFR EUR)
@@ -89,6 +90,6 @@ ONEKG_VCF_DIR="${ONEKG_IBD_INIT_INFERENCE_DIR}/vcfs"
 ONEKG_RAPID_MAP_DIR="${ONEKG_IBD_INIT_INFERENCE_DIR}/rapid_maps"
 ONEKG_POPS=(ASW CEU YRI)
 ONEKG_CHRS=(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22)
-ONEKG_SOURCE_VCF_DIR="/home1/karatas/proj/1000GenomeNYGC_hg38_mooney/vcfs_strictMask"
+ONEKG_SOURCE_VCF_DIR="/home1/karatas/1000GenomeNYGC_hg38/vcfs_strictMask"
 ONEKG_UNREL_DIR="/home1/karatas/proj/1000GenomeNYGC_RmSamplesGarlic/unrels"
-ONEKG_ALLSAMPS_DIR="/home1/karatas/proj/1000GenomeNYGC_hg38_mooney/FileInformation/pops/allSamps"
+ONEKG_ALLSAMPS_DIR="/home1/karatas/1000GenomeNYGC_hg38/FileInformation/pops/allSamps"
