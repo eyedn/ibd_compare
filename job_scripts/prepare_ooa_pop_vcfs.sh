@@ -101,5 +101,8 @@ for pop in "${pops[@]}"; do
     }
     rm -f "${out_vcf}.samples"
 done
-printf '%s\n' "${id_contract}" > "${contract_file}.tmp"
-mv -f "${contract_file}.tmp" "${contract_file}"
+# publish atomically with a temporary file owned by this task.
+contract_tmp=$(mktemp "${contract_file}.tmp.XXXXXX")
+trap 'rm -f "${contract_tmp}"' EXIT
+printf '%s\n' "${id_contract}" > "${contract_tmp}"
+mv -f "${contract_tmp}" "${contract_file}"
