@@ -44,31 +44,61 @@ min_output=${HAP_MIN_OUTPUT}
 min_markers=${HAP_MIN_MARKERS}
 min_mac=${HAP_MIN_MAC}"
 
-sbatch \
-    --chdir=/home1/karatas/ibd_compare \
-    --job-name="1kGhapFF" \
-    --cpus-per-task="${NONADMIXED_CPUS_PER_TASK}" \
-    --mem="${NONADMIXED_MEM}" \
-    --export=ALL,IBDENDS_XMX="${NONADMIXED_IBDENDS_XMX}",IBDENDS_THREADS="${NONADMIXED_IBDENDS_THREADS}",IBDENDS_MIN_MAF="${IBDENDS_MIN_MAF}" \
-    --array="1-${total_tasks}%${MAX_JOBS}" \
-    --exclude=d11-05,d11-06,d11-07,b23-11,b23-13,b18-08 \
-    job_scripts/filter_format_1kG_hapibd.sh \
-        "$ONEKG_IBD_INIT_INFERENCE_DIR" \
-        "$ONEKG_VCF_DIR" \
-        "$ONEKG_IBD_COMPARE_DIR" \
-        "$REF_DIR" \
-        "$MIN_BP_LEN" \
-        "$MIN_CM_LEN" \
-        "$HOT_BIN_SIZE" \
-        "$HOT_BIN_SD" \
-        "$HAP_MIN_SEED" \
-        "$HAP_MAX_GAP" \
-        "$HAP_MIN_EXTEND" \
-        "$HAP_MIN_OUTPUT" \
-        "$HAP_MIN_MARKERS" \
-        "$HAP_MIN_MAC" \
-        "${ONEKG_CHRS[@]}" \
-        -- \
-        "${IMAPS[@]}" \
-        -- \
-        "${ONEKG_POPS[@]}"
+# eachs path has its own MAX_JOBS cap; the two roots run independently.
+hot_jid=""
+ibdends_jid=""
+for filter_path in hot ibdends hotibdends ibdendshot; do
+    dependency_args=()
+    dependency="none"
+    case "$filter_path" in
+        hotibdends) dependency="afterok:${hot_jid}" ;;
+        ibdendshot) dependency="afterok:${ibdends_jid}" ;;
+    esac
+    if [[ "$dependency" != none ]]; then
+        dependency_args=("--dependency=${dependency}")
+    fi
+    job_id=$(sbatch \
+        --parsable \
+        ${dependency_args[@]+"${dependency_args[@]}"} \
+        --chdir=/home1/karatas/ibd_compare \
+        --job-name="1kGhapFF_${filter_path}" \
+        --cpus-per-task="${NONADMIXED_CPUS_PER_TASK}" \
+        --mem="${NONADMIXED_MEM}" \
+        --export=ALL,IBDENDS_XMX="${NONADMIXED_IBDENDS_XMX}",IBDENDS_THREADS="${NONADMIXED_IBDENDS_THREADS}",IBDENDS_MIN_MAF="${IBDENDS_MIN_MAF}" \
+        --array="1-${total_tasks}%${MAX_JOBS}" \
+        --exclude=d11-05,d11-06,d11-07,b23-11,b23-13,b18-08 \
+        job_scripts/filter_format_1kG_hapibd.sh \
+            "$filter_path" \
+            "$ONEKG_IBD_INIT_INFERENCE_DIR" \
+            "$ONEKG_VCF_DIR" \
+            "$ONEKG_IBD_COMPARE_DIR" \
+            "$REF_DIR" \
+            "$MIN_BP_LEN" \
+            "$MIN_CM_LEN" \
+            "$HOT_BIN_SIZE" \
+            "$HOT_BIN_SD" \
+            "$HAP_MIN_SEED" \
+            "$HAP_MAX_GAP" \
+            "$HAP_MIN_EXTEND" \
+            "$HAP_MIN_OUTPUT" \
+            "$HAP_MIN_MARKERS" \
+            "$HAP_MIN_MAC" \
+            "${ONEKG_CHRS[@]}" \
+            -- \
+            "${IMAPS[@]}" \
+            -- \
+            "${ONEKG_POPS[@]}"
+    )
+    job_id="${job_id%%;*}"
+    [[ "$job_id" =~ ^[0-9]+$ ]] || {
+        echo "ERROR: invalid sbatch job ID: $job_id" >&2
+        exit 1
+    }
+    case "$filter_path" in
+        hot) hot_jid="$job_id" ;;
+        ibdends) ibdends_jid="$job_id" ;;
+        hotibdends) hotibdends_jid="$job_id" ;;
+        ibdendshot) ibdendshot_jid="$job_id" ;;
+    esac
+    log_msg "submitted 1kG hapibd path=$filter_path; jid=$job_id; dep=$dependency"
+done

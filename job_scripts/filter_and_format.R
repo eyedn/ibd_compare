@@ -99,7 +99,10 @@ if (grepl("true_ibd", ibd.file, ignore.case = TRUE)) {
 # print ibd segments in BED format ----
 readr::write_tsv(calls, ff.out, col_names = TRUE)
 
-if (do.hot.filter) {
+if (do.hot.filter && nrow(calls) == 0) {
+  # length thresholds can remove all rows from a nonempty input ----
+  readr::write_tsv(empty.calls, ff.hot.out, col_names = TRUE)
+} else if (do.hot.filter) {
   # filter out hot bins (bins with too great of a number of segemnts) ----
   chr.len.cm <- max(as.numeric(gmap$cM), na.rm = TRUE)
   hot.all <- filter.ibd.by.hot.bins(
